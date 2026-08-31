@@ -1,0 +1,32 @@
+:root { /* default */
+    --bg-color: #f1f5f9;
+    --text-color: #1e293b;
+    --card-bg: white;
+    --border-color: #ddd;
+    --header-bg: #1e293b;
+    --sidebar-bg: white;
+}
+
+[data-theme="dark"] {
+    --bg-color: #0f172a;
+    --text-color: #e2e8f0;
+    --card-bg: #1e293b;
+    --border-color: #334155;
+    --header-bg: #0f172a;
+    --sidebar-bg: #1e293b;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+   background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.2s, color 0.2s;
+    margin: 0;
+}
+
+.page-layout {
+    display: flex;
+}

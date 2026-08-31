@@ -1,0 +1,26 @@
+main {
+    flex: 1;
+    padding: 30px;
+}
+
+section {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    padding: 25px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    transition: 0.2s, background-color 0.2s, color 0.2s;
+}   
+
+section:hover {
+    transform: translateY(-3px);
+}
+
+section h2 {
+    margin-top: 0;
+}
+
+section p {
+    line-height: 1.6;
+}
+

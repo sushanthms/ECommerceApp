@@ -1,0 +1,152 @@
+.sidebar {
+    flex-shrink: 0;
+    background-color: var(--sidebar-bg);
+    color: var(--text-color);
+    min-height: calc(100vh - 72px);
+    border-right: 1px solid var(--border-color);
+    overflow: hidden;
+    transition: width 0.3s ease, background-color 0.2s, color 0.2s;
+}
+
+.sidebar.open {
+    width: 220px;
+}
+
+.sidebar.close {
+    width: 64px;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 60px;
+    padding: 0 20px;
+}
+
+.sidebar-header h2 {
+    margin: 0;
+    line-height: 1;
+    color: var(--text-color);
+    white-space: nowrap;
+}
+
+/* Title text fades out as the rail shrinks, instead of abruptly disappearing */
+.sidebar.close .sidebar-title {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.sidebar-toggle {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--text-color);
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.sidebar-list {
+    list-style: none;
+    padding: 0 12px;
+    margin: 0;
+    white-space: nowrap; /* keeps link text from wrapping mid-collapse */
+    transition: opacity 0.2s ease;
+}
+
+.sidebar.close .sidebar-list {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.sidebar li {
+    margin-bottom: 10px;
+}
+
+.sidebar a {
+    display: block;
+    padding: 10px;
+    color: var(--text-color);
+    text-decoration: none;
+    border-radius: 6px;
+    transition: 0.2s;
+}
+
+.sidebar a:hover {
+    background-color: rgba(128, 128, 128, 0.15);
+}
+
+.sidebar a.active {
+    background-color: #447cf5;
+    color: white;
+}
+
+.sidebar a.active:hover {
+    background-color: #1d4ed8;
+}
+
+@media (max-width: 768px) {
+
+    header {
+        padding: 12px 18px;
+    }
+
+    nav {
+        display: none;
+    }
+
+    .sidebar {
+        position: absolute;
+        top: 72px;
+        left: 0;
+        width: 100%;
+        min-height: auto;
+        border-right: none;
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+        z-index: 50;
+    }
+
+    .sidebar.close {
+        width: 100%;
+        min-height: auto;
+    }
+
+    .sidebar-header {
+        padding: 0 18px;
+    }
+
+    .sidebar.close .sidebar-title {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .sidebar-list {
+        overflow: hidden;
+        max-height: 500px;
+        opacity: 1;
+        transition: max-height 0.3s ease;
+        padding: 0 16px;
+    }
+
+    .sidebar.close .sidebar-list {
+        max-height: 0;
+        opacity: 0;
+        padding: 0 16px;
+    }
+
+    .sidebar-list a {
+        font-size: 16px;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .sidebar-list li {
+        margin-bottom: 0;
+    }
+
+    .sidebar-list li:last-child a {
+        border-bottom: none;
+    }
+}

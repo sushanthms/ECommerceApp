@@ -1,0 +1,48 @@
+# =========================
+# Visual Studio
+# =========================
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# =========================
+# .NET
+# =========================
+**/bin/
+**/obj/
+
+# =========================
+# React / Node
+# =========================
+**/node_modules/
+**/dist/
+
+# =========================
+# Environment / Secrets
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# ASP.NET Development config
+# =========================
+appsettings.Development.json
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+
+# Personal learning notes
+Backend.txt
+ECommerceFrontend/Frontend.txt
+ECommerceFrontend/WebPage.txt
