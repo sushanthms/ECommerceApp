@@ -10,19 +10,26 @@ namespace ECommerceBackend.Data
         {
         }
 
-        public DbSet<User> Users { get; set; }// DbSet means table with User objects
-
+        public DbSet<User> Users { get; set; }// DbSet means table with User objects. AppDbContext has access to the User entities/table.
         public DbSet<Product> Products { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
+        public DbSet<Order> Orders { get; set; }
+
+        public DbSet<OrderItem> OrderItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Product>()
-                .Property(p => p.Price)
+            .Property(p => p.Price)
+            .HasPrecision(18, 2);
+
+            modelBuilder.Entity<Order>()
+                .Property(o => o.TotalAmount)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<OrderItem>()
+                .Property(o => o.Price)
                 .HasPrecision(18, 2);
         }
     }
 }
-// Users is the collection table in SSMS
-// User is the C# model
-
-// Install-Package CsvHelper

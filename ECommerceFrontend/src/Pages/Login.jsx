@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import "./Login.css";
 
-function Login() {
+function Login({showToast}) {
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -51,7 +51,7 @@ function Login() {
             else {
                 navigate("/home");
             }
-
+            showToast("Login successful!");
         } catch (error) {
 
             if (error.response) {

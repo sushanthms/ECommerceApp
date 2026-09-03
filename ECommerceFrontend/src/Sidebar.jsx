@@ -1,6 +1,6 @@
 import "./Sidebar.css"
 
-function Sidebar({ menuOpen, setMenuOpen }) {
+function Sidebar({ menuOpen, setMenuOpen, onCartClick }) {
     return (
         <aside className={menuOpen ? "sidebar open" : "sidebar close"}>
             <div className="sidebar-header">
@@ -11,7 +11,7 @@ function Sidebar({ menuOpen, setMenuOpen }) {
             <ul className="sidebar-list">
                 <li><a href="/Home" className="active">Overview</a></li>
                 <li><a href="#">My Orders</a></li>
-                <li><a href="#">Cart</a></li>
+                <li><a href="#" onClick={onCartClick}>My Cart</a></li>
                 <li><a href="#">Offers</a></li>
                 <li><a href="#">My Profile</a></li>
                 <li><a href="#">Settings</a></li>

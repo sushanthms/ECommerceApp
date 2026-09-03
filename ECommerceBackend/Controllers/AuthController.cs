@@ -90,6 +90,7 @@ namespace ECommerceBackend.Controllers
             // building the access token
             var claims = new[]
                 {
+                    // new Claim(type,value)
                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                     new Claim(ClaimTypes.Name, user.Name),
                     new Claim(ClaimTypes.Email, user.Email),

@@ -24,3 +24,11 @@ export const updateProduct = async (id, product, token) => {
     });
     return response.data;
 };
+
+export const searchProducts = async (search) => {
+    const response = await axios.get(
+        `${API_URL}/search?search=${encodeURIComponent(search)}`
+    );
+
+    return response.data;
+};

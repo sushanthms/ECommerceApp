@@ -1,7 +1,8 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Header.css";
 
-function Header({ menuOpen, setMenuOpen, darkMode, setDarkMode }) {
+function Header({ menuOpen, setMenuOpen, darkMode, setDarkMode, role, onCartClick }) {
 
     const navigate = useNavigate();
 
@@ -10,8 +11,16 @@ function Header({ menuOpen, setMenuOpen, darkMode, setDarkMode }) {
 
     const user = userData ? JSON.parse(userData) : null;
 
-    const handleLogout = () => {
+    useEffect(() => {
+        document.documentElement.setAttribute(
+            "data-theme",
+            darkMode ? "dark" : "light"
+        );
 
+        localStorage.setItem("theme", darkMode ? "dark" : "light");
+    }, [darkMode]);
+
+    const handleLogout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
 
@@ -21,28 +30,32 @@ function Header({ menuOpen, setMenuOpen, darkMode, setDarkMode }) {
     return (
         <header>
             <h1>Web Page</h1>
+
             <button className="mobile-dashboard-toggle" onClick={() => setMenuOpen(prev => !prev)}>☰ Dashboard</button>
 
-            <nav>   
-                <a href="#">Home</a>
+            <nav>
+                {role === "Admin" ? (<a href="/admin">Home</a>
+                ) : (
+                    <a href="/home">Home</a>
+                    )}
                 <a href="#">Products</a>
-                <a href="#">Blog</a>
                 <a href="#">Community</a>
+
+                {role === "User" && (
+                    <a href="#" onClick={(e) => { e.preventDefault();onCartClick();}}>🛒 Cart</a>
+                )}
+
                 {!token ? (
-
                     <button className="login-btn" onClick={() => navigate("/login")}>Login</button>
-
                 ) : (
                     <>
                         <span className="user-name">{user?.name}</span>
-
                         <button className="logout-btn" onClick={handleLogout}>Logout</button>
                     </>
-
                 )}
             </nav>
-            
-            <button className="theme-toggle" onClick={() => setDarkMode(prev => !prev)}>{darkMode ? "☀️" : "🌙"}</button>
+
+            <button className="theme-toggle" onClick={() => setDarkMode(prev => !prev)} > {darkMode ? "☀️" : "🌙"}</button>
         </header>
     );
 }

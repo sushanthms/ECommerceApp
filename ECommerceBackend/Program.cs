@@ -4,35 +4,33 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-using System.Text;
+using System.Text; // allows Encoding
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")
-    ));// makes the connection available for use throughout the app.
-
-// Add services to the container.
+    ));
 
 builder.Services.AddControllers();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme) // It tells it is using JWT Bearer tokens as the authentication method
-    .AddJwtBearer(options =>// bearer means it holds or carries token for authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = true,
+            ValidateIssuer = true,// checking
             ValidateAudience = true,
             ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
+            ValidateIssuerSigningKey = true,// checks the signature, signature is for the jwt.
 
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
 
-            IssuerSigningKey = new SymmetricSecurityKey(
+            IssuerSigningKey = new SymmetricSecurityKey(// for checking the token we need key
                 Encoding.UTF8.GetBytes(
-                    builder.Configuration["Jwt:Key"]! // ! means it tells to trust it, this won't be null
+                    builder.Configuration["Jwt:Key"]!
                 )
             )
         };
@@ -58,7 +56,7 @@ builder.Services.AddSwaggerGen(options =>
         {
             [new OpenApiSecuritySchemeReference("Bearer", document)] = []
         });
-});
+}); 
 
 builder.Services.AddCors(options =>
 {
@@ -92,7 +90,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors("ReactPolicy");
 app.UseAuthentication();
-app.UseAuthorization();// to use admin and user authorization
+app.UseAuthorization();
 app.MapControllers();// finds the controllers and maps their routes to HTTP endpoints.
 
 app.Run();

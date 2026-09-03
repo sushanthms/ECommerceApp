@@ -88,11 +88,10 @@ function Register() {
 
                         <input type="text" value={name}
                             onChange={(e) => {
-                                const value = e.target.value;
+                                const value = e.target.value;//When we type each letter, the onChange block runs first. Then, because setName() or setNameError() changes state, React re-renders the component, and during that re-render React evaluates the JSX around the input, including {nameError && (...)}.
 
                                 setName(value);
 
-                                // Live name validation
                                 if (!/^[A-Za-z ]*$/.test(value)) {
                                     setNameError(
                                         "Name should contain only alphabets."

@@ -4,13 +4,13 @@ using ECommerceBackend.Data;
 using ECommerceBackend.Models;
 using ECommerceBackend.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;// IActionResult
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
 namespace ECommerceBackend.Controllers
 {
-    [ApiController]
+    [ApiController]// it gives the next line feature
     [Route("api/[controller]")]
     public class ProductController : ControllerBase
     {
@@ -20,7 +20,7 @@ namespace ECommerceBackend.Controllers
         {
             _context = context;
         }
-
+        // POST /api/Product/upload
         [HttpPost("upload")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UploadCsv(IFormFile file)
@@ -41,13 +41,13 @@ namespace ECommerceBackend.Controllers
 
                 using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
                 {
-                    HeaderValidated = null,
+                    HeaderValidated = null,// disables CsvHelper's default behavior of throwing an exception if the CSV headers don't exactly match the DTO's property names
                     MissingFieldFound = null,
                     TrimOptions = TrimOptions.Trim
                 });
 
                 var csvProducts = csv.GetRecords<ProductCsvDto>().ToList();
-
+                // gives the data to UpsertProductsAsync fucntion
                 var (added, updated) = await UpsertProductsAsync(csvProducts);
 
                 return Ok(new
@@ -77,12 +77,32 @@ namespace ECommerceBackend.Controllers
             return Ok(products);
         }
 
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchProducts(string search)
+        {
+            if (string.IsNullOrWhiteSpace(search))
+            {
+                return await GetProducts();
+            }
+
+            search = search.ToLower();
+
+            var products = await _context.Products
+                .Where(p =>
+                    p.Name.ToLower().Contains(search) ||
+                    p.Category.ToLower().Contains(search))
+                .ToListAsync();
+
+            return Ok(products);
+        }
+
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddProduct(ProductCsvDto dto)
         {
             var product = new Product
             {
+                SKU = dto.SKU ?? string.Empty,
                 Name = dto.Name ?? string.Empty,
                 Description = dto.Description ?? string.Empty,
                 Price = dto.Price,
@@ -108,6 +128,29 @@ namespace ECommerceBackend.Controllers
                 return NotFound();
             }
 
+            var sku = dto.SKU?.Replace(" ", "").Trim() ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(sku))
+            {
+                return BadRequest(new
+                {
+                    message = "SKU is required."
+                });
+            }
+
+            var skuExists = await _context.Products
+                .AnyAsync(p => p.SKU.Trim().ToLower() == sku.ToLower() && p.Id != id);// the product from the for loop and the product we are updating
+            //  p.Id != id means in for loop we get a product which is the product we are updating, so we have to skip it.
+            // excludes the product we're currently editing from the check.
+            if (skuExists)
+            {
+                return BadRequest(new
+                {
+                    message = "This SKU already exists."
+                });
+            }
+
+            product.SKU = sku;
             product.Name = dto.Name ?? string.Empty;
             product.Description = dto.Description ?? string.Empty;
             product.Price = dto.Price;
@@ -119,36 +162,39 @@ namespace ECommerceBackend.Controllers
 
             return Ok(product);
         }
-
-        // Shared by the CSV upload endpoint. Matches by Name (case-insensitive):
-        // existing product = update its fields, new name = insert a new row.
+        // it is a function not an api endpoint
         public async Task<(int added, int updated)> UpsertProductsAsync(List<ProductCsvDto> csvProducts)
         {
             var existingProducts = await _context.Products
-                .GroupBy(p => p.Name.ToLower())
+                .GroupBy(p => p.SKU.ToLower())
                 .ToDictionaryAsync(g => g.Key, g => g.First());
 
             int added = 0, updated = 0;
 
             foreach (var x in csvProducts)
             {
-                var name = x.Name ?? string.Empty;
-                var key = name.ToLower();
-
+                var sku = x.SKU ?? string.Empty;
+                var key = sku.ToLower();
+                // key is the the current product name stored in the dictionary. 
+                // if block looks into the existingProducts dictionary and usiing that key it searches if same products is present in the csv file
                 if (existingProducts.TryGetValue(key, out var existing))
                 {
+                    existing.SKU = sku;
+                    existing.Name = x.Name ?? string.Empty;
                     existing.Price = x.Price;
                     existing.Stock = x.Stock;
                     existing.Description = x.Description ?? string.Empty;
                     existing.Category = x.Category ?? string.Empty;
                     existing.ImageUrl = x.ImageUrl ?? string.Empty;
+
                     updated++;
                 }
                 else
                 {
                     var newProduct = new Product
                     {
-                        Name = name,
+                        SKU = sku,
+                        Name = x.Name ?? string.Empty,
                         Description = x.Description ?? string.Empty,
                         Price = x.Price,
                         Stock = x.Stock,
