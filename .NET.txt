@@ -1,0 +1,28 @@
+ASP .NET CORE
+in this project we built Web API using .net and website frontend using React
+
+program.cs file configures and starts the application
+
+Controller is the request handler. handles HTTP requests
+
+Entity Framework Core communicates with the SQL server. It makes the database interaction easier using C#.
+var users = await _context.Users.ToListAsync();
+EF Core converts this kind of C# operation into appropriate SQL/database operation.
+
+.NET is the platform that provides the runtime, libraries, and tools for building/running the code.
+ASP.NET Core is the web framework on .NET that is uses to build the API.
+
+.NET SDk contains the tools to create, build, and develop .NET applications.
+It contains compiler, .NET CLI, build tools, project templates, libraries, tools.
+
+dotnet create new webapi
+it creates a project template. it creates program.cs, appsettings.json, projectname.csproj
+projectname.csproj contains information about the project such as packages, dependencies, project configurations.
+
+dotnet run
+it reads the csproj file, restores required packages, compiles the C# code, creates application, starts the application, kestrel web server starts
+
+NuGet is the package ecosystem/package manager for .NET.
+
+Program.cs is where the ASP.NET Core application is configured and started.
+

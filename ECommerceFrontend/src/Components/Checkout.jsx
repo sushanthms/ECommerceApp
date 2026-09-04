@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 import Header from "../Header.jsx";
+import Sidebar from "../Sidebar.jsx";
 import { getCart } from "../Services/CartService.jsx";
 import "./Checkout.css";
 
@@ -128,9 +129,11 @@ const handleChange = (e) => {
     return (
         <>
             <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="User" onCartClick={() => navigate("/cart")}/>
+            <div className="page-layout">
+                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} onCartClick={() => navigate("/cart")}/>
 
             <div className="checkout-page">
-
+                
                 <h1>Checkout</h1>
 
                 {loading ? (
@@ -190,7 +193,6 @@ const handleChange = (e) => {
             <input type="text" name="pincode" value={customerDetails.pincode} onChange={handleChange}placeholder="Enter pincode"/>
             {errors.pincode && (<p className="error-message">{errors.pincode}</p>)}
         </div>
-        <button type="submit" className="place-order-btn">Place Order</button>
 
     </form>
 
@@ -212,7 +214,7 @@ const handleChange = (e) => {
                                     </p>
                                 </div>
                             ))}
-
+                            <button type="submit" className="place-order-btn">Place Order</button>
                             <div className="checkout-total">
                                 <h2>Total: ₹{total.toFixed(2)}</h2>
                             </div>
@@ -222,6 +224,7 @@ const handleChange = (e) => {
                     </div>
                 )}
 
+            </div>
             </div>
         </>
     );

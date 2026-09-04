@@ -87,6 +87,7 @@
     background-color: var(--sidebar-bg);
     border: 1px solid var(--border-color);
     border-radius: 10px;
+    cursor: pointer;
 }
 
 .product-image {

@@ -150,14 +150,15 @@ useEffect(() => {
                                         <strong>₹{product.price}</strong>
                                         <p>Stock: {product.stock}</p>
                                         <p>Category: {product.category}</p>
+
                                         <button onClick={(e) => {e.stopPropagation();
-                                        if (addedProducts.includes(product.id)) {
-                                            navigate("/cart");
-                                        } else {
-                                            handleAddToCart(product.id);
-                                        }
-                                        }}>
-                                            {addedProducts.includes(product.id)? "Go to Cart": "Add to Cart"}
+                                            if (addedProducts.includes(product.id)) {
+                                                navigate("/cart");
+                                            } else {
+                                                handleAddToCart(product.id);
+                                            }
+                                            }}>
+                                                {addedProducts.includes(product.id)? "Go to Cart": "Add to Cart"}
                                         </button>
                                         
                                         

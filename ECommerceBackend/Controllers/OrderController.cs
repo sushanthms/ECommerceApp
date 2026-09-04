@@ -9,7 +9,7 @@ using System.Security.Claims;
 namespace ECommerceBackend.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/[controller]")] 
     [Authorize(Roles = "User")]
     public class OrderController : ControllerBase
     {

@@ -31,7 +31,7 @@ function Header({ menuOpen, setMenuOpen, darkMode, setDarkMode, role, onCartClic
         <header>
             <h1>Web Page</h1>
 
-            <button className="mobile-dashboard-toggle" onClick={() => setMenuOpen(prev => !prev)}>☰ Dashboard</button>
+            
 
             <nav>
                 {role === "Admin" ? (<a href="/admin">Home</a>

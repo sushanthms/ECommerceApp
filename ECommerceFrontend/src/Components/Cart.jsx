@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import Header from "../Header.jsx";
+import Sidebar from "../Sidebar.jsx";
 import { getCart, updateCartItemQuantity, removeFromCart } from "../Services/CartService.jsx";
 import "./Cart.css";
 
@@ -59,10 +60,12 @@ function Cart({showToast}) {
     return (
         <>
         <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="User" onCartClick={() => navigate("/cart")}/>
-    
-        <div className="cart-page">
+    <div className="page-layout">
+        <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} onCartClick={() => navigate("/cart")}/>
 
-            <h1>My Cart</h1>
+        <div className="cart-page">
+    
+            <h1>🛒 My Cart</h1>
 
             {loading ? (
                 <p>Loading...</p>
@@ -119,6 +122,7 @@ function Cart({showToast}) {
                 </>
             )}
 
+        </div>
         </div>
         </>
     );

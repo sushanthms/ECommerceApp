@@ -1,6 +1,12 @@
+.page-layout {
+    display: flex;
+    width: 100%;
+    min-height: calc(100vh - 72px);
+}
 .checkout-page {
-    min-height: 100vh;
-    padding: 40px 60px;
+    flex:1;
+    width: 100%;
+    padding: 40px;
     background-color: var(--bg-color);
     color: var(--text-color);
 }
@@ -12,7 +18,7 @@
 }
 
 .checkout-content {
-    max-width: 900px;
+   width: 100%;
 }
 
 .checkout-items {
@@ -98,10 +104,6 @@
     opacity: 0.5;
 }
 
-.form-group textarea {
-    resize: vertical;
-}
-
 .form-group input:focus,
 .form-group textarea:focus {
     outline: none;
@@ -125,7 +127,9 @@
 
 .place-order-btn {
     border: none;
-    padding: 12px 25px;
+    margin-top: 70px;
+    margin-left: 30px;
+    padding: 15px 30px;
     border-radius: 8px;
     background-color: #447cf5;
     color: white;
