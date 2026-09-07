@@ -16,7 +16,7 @@ function AdminHome({showToast}) {
     const navigate = useNavigate();
 
     const [menuOpen, setMenuOpen] = useState(true);
-    const [darkMode, setDarkMode] = useState(false);
+    const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
 
     const [file, setFile] = useState(null);
     const [products, setProducts] = useState([]);

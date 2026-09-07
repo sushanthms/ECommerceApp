@@ -11,10 +11,7 @@ import "./UserHome.css";
 function UserHome({ showToast }) {
 
     const [menuOpen, setMenuOpen] = useState(true);
-
-    const [darkMode, setDarkMode] = useState(
-        localStorage.getItem("theme") === "dark"
-    );
+    const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
 
     const [search, setSearch] = useState("");
     const [searchResults, setSearchResults] = useState([]);

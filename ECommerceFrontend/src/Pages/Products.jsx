@@ -25,10 +25,7 @@ function Products({ showToast }) {
     const navigate = useNavigate();
 
     useEffect(() => {
-        document.documentElement.setAttribute(
-            "data-theme",
-            darkMode ? "dark" : "light"
-        );
+        document.documentElement.setAttribute("data-theme",darkMode ? "dark" : "light");
     }, [darkMode]);
 
     useEffect(() => {
@@ -86,23 +83,11 @@ function Products({ showToast }) {
 
     return (
         <>
-            <Header
-                menuOpen={menuOpen}
-                setMenuOpen={setMenuOpen}
-                darkMode={darkMode}
-                setDarkMode={setDarkMode}
-                role="User"
-                onCartClick={() => navigate("/cart")}
-            />
+            <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="User" onCartClick={() => navigate("/cart")}/>
 
             <div className="page-layout">
 
-                <Sidebar
-                    menuOpen={menuOpen}
-                    setMenuOpen={setMenuOpen}
-                    onCartClick={() => navigate("/cart")}
-                    role="User"
-                />
+                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} onCartClick={() => navigate("/cart")} role="User"/>
 
                 <main className="main-content">
 
@@ -113,35 +98,21 @@ function Products({ showToast }) {
 
                     <div className="search-section">
 
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={(e) => handleSearch(e.target.value)}
-                            placeholder="Search products or categories..."
-                        />
+                        <input type="text" value={search} onChange={(e) => handleSearch(e.target.value)} placeholder="Search products or categories..."/>
 
                     </div>
 
                     <div className="filter-section">
 
-                        <select
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                        >
+                        <select value={category} onChange={(e) => setCategory(e.target.value)}>
 
-                            <option value="">
-                                All Categories
-                            </option>
+                            <option value="">All Categories</option>
 
                             {[...new Set(products.map(
                                 (product) => product.category
                             ))]
                                 .filter(Boolean)
-                                .map((cat) => (
-                                    <option key={cat} value={cat}>
-                                        {cat}
-                                    </option>
-                                ))}
+                                .map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
 
                         </select>
 
@@ -185,10 +156,7 @@ function Products({ showToast }) {
 
                                                 <span
                                                     className="product-fallback"
-                                                    style={{
-                                                        display: product.imageUrl
-                                                            ? "none"
-                                                            : "flex"
+                                                    style={{display: product.imageUrl ? "none": "flex"
                                                     }}
                                                 >
                                                     📦

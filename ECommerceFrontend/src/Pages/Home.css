@@ -1,97 +1,96 @@
 .public-home {
-min-height: 100vh;
-background-color: #f8fafc;
+    min-height: 100vh;
+    background-color: var(--bg-color);
 }
 
 .public-header {
-display: flex;
-align-items: center;
-justify-content: space-between;
-padding: 15px 30px;
-background-color: #1e293b;
-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 30px;
+    background-color: var(--header-bg);
+    color: white;
 }
 
 .public-header h1 {
-margin: 0;
+    margin: 0;
 }
 
 .public-header nav {
-display: flex;
-justify-content: space-between;
-align-items: center;
-gap: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 25px;
 }
 
 .public-header nav a {
-color: white;
-text-decoration: none;
-padding: 8px 12px;
-border-radius: 5px;
+    color: white;
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 5px;
 }
 
 .public-header nav a:hover {
-background-color: #334155;
+    background-color: var(--border-color);
 }
 
 .public-login-btn {
-border: none;
-background-color: #2563eb;
-color: white;
-padding: 10px 18px;
-border-radius: 6px;
-cursor: pointer;
-font-size: 15px;
+    border: none;
+    background-color: var(--button-color);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
 }
 
 .public-login-btn:hover {
-background-color: #1d4ed8;
+    background-color: var(--button-hover);
 }
 
 .public-main {
-display: flex;
-justify-content: center;
-align-items: center;
-min-height: calc(100vh - 70px);
-padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 70px);
+    padding: 20px;
 }
 
 .hero-section {
-text-align: center;
-max-width: 700px;
+    text-align: center;
+    max-width: 700px;
 }
 
 .hero-section h1 {
-font-size: 42px;
-margin-bottom: 15px;
+    font-size: 42px;
+    margin-bottom: 15px;
+    color: var(--text-color);
 }
 
 .hero-section p {
-font-size: 18px;
-color: #64748b;
-margin-bottom: 25px;
+    font-size: 18px;
+    color: var(--text-muted);
+    margin-bottom: 25px;
 }
 
 @media (max-width: 768px) {
+    .public-header {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+    }
 
-.public-header {
-    flex-direction: column;
-    gap: 15px;
-    padding: 15px;
-}
+    .public-header nav {
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
 
-.public-header nav {
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
+    .hero-section h1 {
+        font-size: 32px;
+    }
 
-.hero-section h1 {
-    font-size: 32px;
-}
-
-.hero-section p {
-    font-size: 16px;
-}
-
+    .hero-section p {
+        font-size: 16px;
+    }
 }

@@ -18,19 +18,17 @@ function AdminOrderDetails() {
     const { id } = useParams();
 
     const [order, setOrder] = useState(location.state?.order || null);// order object
-
     const [loading, setLoading] = useState(!location.state?.order);// if order was not passed then loading is true and shows Loading.
-
     const [menuOpen, setMenuOpen] = useState(true);
-
     const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
 // even if the id is updated by clicking view orders or by directly typing admin/orders/7 the process in AdminOrderDetails is same
-// if we click view order, the order objec will be passed to the AdminOrderDetails page, if we directly type admin/Orders/7 the order object will be fetched from the backend
+// if we click view order, the order object will be passed to the AdminOrderDetails page, if we directly type admin/Orders/7 the order object will be fetched from the backend
     useEffect(() => {
-        // If order was already passed from AdminOrders, there is no need to call the API.
-        if (order) {// calling api is done when we open url like this /admin/orders/7, now the order id 7 need to be fetched from the backend
-            return;// returning from the useEffect
+        if (order.id === Number(id)) {// order.id is from the stored order state which happened in previous useEffect run
+            return;
         }
+    setLoading(true);
+
      const loadOrder = async () => {
 
             try {
@@ -53,7 +51,7 @@ function AdminOrderDetails() {
 
         loadOrder();
 
-    }, [id, order]);
+    }, [id]);
 
     if (loading) {
         return (<p>Loading order...</p>);

@@ -14,7 +14,7 @@ return (
 
             <nav>
                 <a href="#">Home</a>
-                <a href="#">Products</a>
+                <a href="/products">Products</a>
                 <a href="#">Community</a>
             </nav>
 

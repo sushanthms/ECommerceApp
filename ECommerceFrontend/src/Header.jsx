@@ -34,12 +34,9 @@ function Header({ menuOpen, setMenuOpen, darkMode, setDarkMode, role, onCartClic
             
 
             <nav>
-                {role === "Admin" ? (<a href="/admin">Home</a>
-                ) : (
-                    <a href="/home">Home</a>
-                    )}
-                <a href="#">Products</a>
-                <a href="#">Community</a>
+                {role === "Admin" ? (<a href="#" onClick={(e) => { e.preventDefault(); navigate("/admin"); }}>Home</a>) : (<a href="#" onClick={(e) => { e.preventDefault(); navigate("/home"); }}>Home</a>)}
+                {role === "User" && (<a href="#" onClick={(e) => { e.preventDefault(); navigate("/products"); }}>Products</a>)}
+                {role === "User" && (<a href="#" onClick={(e) => { e.preventDefault(); navigate("/community"); }}>Community</a>)}
 
                 {role === "User" && (
                     <a href="#" onClick={(e) => { e.preventDefault();onCartClick();}}>🛒 Cart</a>

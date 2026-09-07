@@ -4,6 +4,7 @@
 }
 
 /* Welcome */
+
 .welcome-section {
     margin-bottom: 28px;
 }
@@ -16,6 +17,7 @@
 }
 
 /* Search */
+
 .home-search-section {
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -53,24 +55,23 @@
 
 .home-search-box input:focus {
     outline: none;
-    border-color: var(--accent-color);
+    border-color: var(--button-color);
 }
 
 .home-search-box button {
     padding: 13px 22px;
     border: none;
     border-radius: 10px;
-    background-color: var(--accent-color);
+    background-color: var(--button-color);
     color: #fff;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
-    transition: background-color 0.15s ease;
 }
 
 .home-search-box button:hover {
-    background-color: var(--accent-hover);
+    background-color: var(--button-hover);
 }
 
 .home-search-box .clear-search-btn {
@@ -80,11 +81,12 @@
 }
 
 .home-search-box .clear-search-btn:hover {
-    background-color: var(--accent-soft);
+    background-color: rgba(68, 124, 245, 0.1);
     color: var(--text-color);
 }
 
-/* Search results */
+/* Search Results */
+
 .search-results-section {
     margin-bottom: 32px;
 }
@@ -121,7 +123,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--accent-soft);
+    background-color: rgba(68, 124, 245, 0.1);
     border-radius: 8px;
     overflow: hidden;
     margin-bottom: 12px;
@@ -144,7 +146,7 @@
 .search-result-card strong {
     display: block;
     font-size: 17px;
-    color: var(--price-color, var(--text-color));
+    color: var(--text-color);
     margin-bottom: 4px;
 }
 
@@ -157,20 +159,21 @@
 .search-result-card button {
     width: 100%;
     padding: 10px;
-    border: 1px solid var(--accent-color);
+    border: 1px solid var(--button-color);
     border-radius: 8px;
     background-color: transparent;
-    color: var(--accent-color);
+    color: var(--button-color);
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .search-result-card button:hover {
-    background-color: var(--accent-color);
+    background-color: var(--button-color);
     color: #fff;
 }
+
+/* User Banner */
 
 .user-banner-slider {
     overflow: hidden;
@@ -215,7 +218,11 @@
     gap: 10px;
     padding: 40px;
     color: #fff;
-    background: linear-gradient(to right, rgba(32, 29, 26, 0.75), transparent 70%);
+    background: linear-gradient(
+        to right,
+        rgba(32, 29, 26, 0.75),
+        transparent 70%
+    );
 }
 
 .user-banner-content h2 {
@@ -236,14 +243,14 @@
     padding: 12px 24px;
     border: none;
     border-radius: 8px;
-    background: var(--accent-color);
+    background: var(--button-color);
     color: #fff;
     font-weight: 600;
     cursor: pointer;
 }
 
 .user-banner-content button:hover {
-    background: var(--accent-hover);
+    background: var(--button-hover);
 }
 
 @keyframes scrollBanners {
@@ -251,6 +258,9 @@
         transform: translateX(-50%);
     }
 }
+
+/* Categories */
+
 .categories-section {
     margin-bottom: 36px;
 }
@@ -287,7 +297,7 @@
 .category-card:hover {
     box-shadow: var(--shadow-md);
     transform: translateY(-3px);
-    border-color: var(--accent-color);
+    border-color: var(--button-color);
 }
 
 .category-icon {
@@ -307,6 +317,8 @@
     color: var(--text-muted);
     margin: 0;
 }
+
+/* Home Section */
 
 .home-section {
     background-color: var(--card-bg);
@@ -333,19 +345,19 @@
     padding: 13px 28px;
     border: none;
     border-radius: 10px;
-    background-color: var(--accent-color);
+    background-color: var(--button-color);
     color: #fff;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.15s ease;
 }
 
 .home-section button:hover {
-    background-color: var(--accent-hover);
+    background-color: var(--button-hover);
 }
 
-/* Fallback icon shared with search results */
+/* Fallback Icon */
+
 .product-fallback {
     display: flex;
     align-items: center;
@@ -355,6 +367,7 @@
 }
 
 /* Responsive */
+
 @media (max-width: 1024px) {
     .categories-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -405,7 +418,11 @@
     .user-banner-content {
         padding: 24px;
         justify-content: flex-end;
-        background: linear-gradient(to top, rgba(32, 29, 26, 0.85), transparent 70%);
+        background: linear-gradient(
+            to top,
+            rgba(32, 29, 26, 0.85),
+            transparent 70%
+        );
     }
 
     .user-banner-content h2 {

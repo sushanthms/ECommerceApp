@@ -31,7 +31,6 @@
     white-space: nowrap;
 }
 
-/* Title text fades out as the rail shrinks, instead of abruptly disappearing */
 .sidebar.close .sidebar-title {
     opacity: 0;
     pointer-events: none;
@@ -52,7 +51,7 @@
     list-style: none;
     padding: 0 12px;
     margin: 0;
-    white-space: nowrap; /* keeps link text from wrapping mid-collapse */
+    white-space: nowrap;
     transition: opacity 0.2s ease;
 }
 
@@ -71,20 +70,21 @@
     color: var(--text-color);
     text-decoration: none;
     border-radius: 6px;
-    transition: 0.2s;
+    transition: background-color 0.2s, color 0.2s;
 }
 
 .sidebar a:hover {
-    background-color: rgba(128, 128, 128, 0.15);
+    background-color: rgba(59, 130, 246, 0.1);
 }
 
 .sidebar a.active {
-    background-color: #447cf5;
+    background-color: var(--button-color);
     color: white;
+    font-weight: 600;
 }
 
 .sidebar a.active:hover {
-    background-color: #1d4ed8;
+    background-color: var(--button-hover);
 }
 
 @media (max-width: 768px) {
@@ -104,7 +104,7 @@
         width: 100%;
         min-height: auto;
         border-right: none;
-        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+        box-shadow: var(--shadow-md);
         z-index: 50;
     }
 
@@ -126,7 +126,7 @@
         overflow: hidden;
         max-height: 500px;
         opacity: 1;
-        transition: max-height 0.3s ease;
+        transition: max-height 0.3s ease, opacity 0.3s ease;
         padding: 0 16px;
     }
 
