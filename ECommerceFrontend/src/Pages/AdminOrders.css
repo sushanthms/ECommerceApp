@@ -1,0 +1,66 @@
+.admin-orders-page {
+    width: 100%;
+    padding: 30px;
+    box-sizing: border-box;
+}
+
+.back-btn {
+    margin-bottom: 20px;
+    padding: 8px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--sidebar-bg);
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+.back-btn:hover {
+    background-color: rgba(68, 124, 245, 0.1);
+}
+
+.admin-orders-page h1 {
+    margin-bottom: 20px;
+    color: var(--text-color);
+}
+
+.orders-table-container {
+    width: 100%;
+    overflow-x: auto;
+
+    background-color: var(--sidebar-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+}
+
+.orders-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.orders-table th,
+.orders-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+    color: var(--text-color);
+}
+
+.orders-table th {
+    background-color: rgba(128, 128, 128, 0.08);
+    font-weight: 600;
+}
+
+.orders-table td button {
+    padding: 7px 14px;
+    border: none;
+    border-radius: 6px;
+
+    background-color: #447cf5;
+    color: white;
+
+    cursor: pointer;
+}
+
+.orders-table td button:hover {
+    background-color: #1d4ed8;
+}

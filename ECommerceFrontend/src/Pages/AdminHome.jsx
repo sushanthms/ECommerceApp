@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 import Header from "../Header.jsx";
@@ -10,6 +11,8 @@ import "./AdminHome.css";
 const API_URL = `${import.meta.env.VITE_API_URL}/Product`;
 
 function AdminHome({showToast}) {
+
+    const navigate = useNavigate();
 
     const [menuOpen, setMenuOpen] = useState(true);
     const [darkMode, setDarkMode] = useState(false);
@@ -214,7 +217,7 @@ function AdminHome({showToast}) {
             <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="Admin" />
 
             <div className="page-layout">
-                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} role="Admin" />
 
                 <main className="main-content">
 
@@ -309,6 +312,13 @@ function AdminHome({showToast}) {
                         )}
 
                         {formSuccess && <p className="success-message">{formSuccess}</p>}
+                    </div>
+
+                    <div className="orders-section">
+                        <div className="section-heading">
+                            <h2>Manage Orders</h2>
+                            <button className="view-orders-btn" onClick={() => navigate("/admin/orders")}>View Orders</button>
+                        </div>
                     </div>
 
                     <div className="search-section">

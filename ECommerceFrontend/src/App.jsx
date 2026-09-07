@@ -11,6 +11,8 @@ import AdminHome from "./Pages/AdminHome.jsx";
 import ProductDetails from "./Components/ProductDetails.jsx";
 import Cart from "./Components/Cart.jsx";
 import Checkout from "./Components/Checkout.jsx";
+import AdminOrders from "./Pages/AdminOrders.jsx";
+import AdminOrderDetails from "./Pages/AdminOrderDetails.jsx";
 import Toast from "./Components/Toast.jsx";
 
 import "./style.css";
@@ -44,6 +46,8 @@ const showToast = (message) => {
         <Route path="/product/:id" element={ <ProtectedRoute allowedRole="User"><ProductDetails showToast={showToast}/></ProtectedRoute>} />
         <Route path="/cart" element={<ProtectedRoute allowedRole="User"><Cart showToast={showToast} /></ProtectedRoute>} />
         <Route path="/checkout" element={<ProtectedRoute allowedRole="User"><Checkout showToast={showToast} /></ProtectedRoute>}/>
+        <Route path="/admin/orders" element={<ProtectedRoute allowedRole="Admin"><AdminOrders /></ProtectedRoute>}/>
+        <Route path="/admin/orders/:id"element={<ProtectedRoute allowedRole="Admin"><AdminOrderDetails /></ProtectedRoute>}/>
         
       </Routes>
 

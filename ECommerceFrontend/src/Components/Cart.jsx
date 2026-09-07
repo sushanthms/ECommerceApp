@@ -48,6 +48,7 @@ function Cart({showToast}) {
     const handleRemove = async (cartItemId) => {
         try {
             await removeFromCart(cartItemId);
+            showToast("Item removed from the Cart");
             await loadCart();
         } catch (error) {
             console.error("Error removing item:", error);
@@ -84,11 +85,12 @@ function Cart({showToast}) {
                                 <div className="cart-item-image">{item.imageUrl ? (
                                     <img src={item.imageUrl} alt={item.name} onError={(e) => {
                                         e.target.style.display = "none";
-                                        e.target.nextSibling.style.display = "block";
+                                        e.target.nextSibling.style.display = "block";// next sibling means {item.imageUrl && <span style={{ display: "none" }}>📦</span>}
                                     }}/>
-                                ) : (<span>📦</span>// when image url is broken this line does not get executed
-// about next line(next span). when image url is broken it gives error and the next sibling/line is made as dispaly block.
-// we wrote it none because when imageurl is preset it should not get displayed. present means it is correct. if it was broken we would have got error and made this line as display block.
+                                ) : (<span>📦</span>// this displays when there is no imageUrl. when image url is broken this line does not get executed
+// about next line(next span). when image url is broken it gives error and the next sibling/line is made as display block.
+// we wrote it none because when imageurl is present and correct span should not get displayed.
+// in next line imageUrl is present so we check item.imageUrl &&. span is made block by previous line. and imageUrl is present and broken so below span is displayed
                                 )}
                                 {item.imageUrl && <span style={{ display: "none" }}>📦</span>}
                                 </div>

@@ -114,13 +114,14 @@
 }
 
 .cart-summary {
-    max-width: 900px;
+    display: flex;
+    gap: 15px;
+    max-width: 1000px;
     margin-top: 30px;
     padding: 25px;
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    display: flex;
     justify-content: space-between;
     align-items: center;
 }

@@ -10,7 +10,6 @@ namespace ECommerceBackend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")] 
-    [Authorize(Roles = "User")]
     public class OrderController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -21,6 +20,7 @@ namespace ECommerceBackend.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> CreateOrder(CreateOrderDto dto)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -93,6 +93,48 @@ namespace ECommerceBackend.Controllers
                 orderId = order.Id,
                 totalAmount = order.TotalAmount
             });
+        }
+        // Orders table has userid, userid is the foriegn key, using userid it accessess Users table and can get the details of the user. public User User { get; set; } this helps to navigate from the Order to User table
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllOrders()
+        {
+            var orders = await _context.Orders
+                .Include(o => o.User)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                .OrderByDescending(o => o.OrderDate)
+                .Select(o => new
+                {
+                    o.Id,
+                    o.UserId,
+
+                    CustomerName = o.User.Name,
+                    CustomerEmail = o.User.Email,
+
+                    o.DeliveryName,
+                    o.Phone,
+                    o.Address,
+                    o.City,
+                    o.State,
+                    o.Pincode,
+
+                    o.TotalAmount,
+                    o.Status,
+                    o.OrderDate,
+
+                    OrderItems = o.OrderItems.Select(oi => new
+                    {
+                        oi.Id,
+                        oi.ProductId,
+                        ProductName = oi.Product.Name,
+                        oi.Quantity,
+                        oi.Price
+                    })
+                })
+                .ToListAsync();
+
+            return Ok(orders);
         }
     }
 }

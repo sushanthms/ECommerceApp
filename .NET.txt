@@ -26,3 +26,15 @@ NuGet is the package ecosystem/package manager for .NET.
 
 Program.cs is where the ASP.NET Core application is configured and started.
 
+var builder=WebApplication.CreateBuilder(args);
+Creates a builder
+creating and configuring a web application. CreateBuilder creates a builder object that we use to configure our application.
+command-line arguments can be passed to the application. application can use command-line configuration if needed.
+
+builder.Services is where we register services that our application needs.
+
+builder.Services.AddControllers(); It adds controller services to the application's service collection
+
+A service is generally a class/object that performs some work for our application.
+ASP.NET Core has a Dependency Injection container that keeps track of these services.
+
