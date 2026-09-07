@@ -66,7 +66,7 @@ function ProductDetails() {
 
     const handleAddToCart = async () => {
         try {
-            await addToCart(product.id);
+            await addToCart(product.id, quantity);
             setAddedToCart(true);
         } catch (error) {
             alert(
@@ -147,7 +147,7 @@ function ProductDetails() {
 
                         <p className="tax">Inclusive of all taxes</p>
 
-                        <p className="stock">✓ {product.stock} items available</p>
+                        <p className="stock">✓ {product.stock - (cartItem?.quantity || 0)} more items available</p>
 
                         <div className="quantity"><span>Quantity:</span>
 
@@ -155,7 +155,7 @@ function ProductDetails() {
 
                             <span>{quantity}</span>
 
-                            <button disabled={quantity === product.stock} onClick={() =>handleQuantityChange((quantity + 1))}>+</button>
+                           <button disabled={quantity === product.stock} onClick={() => handleQuantityChange(quantity + 1)}>+</button>
                         </div>
 
                         <div className="product-buttons">
@@ -173,7 +173,7 @@ function ProductDetails() {
 
                             <button className="buy-btn" onClick={async () => {
                                 if (!addedToCart) {
-                                        await addToCart(product.id);
+                                        await addToCart(product.id, quantity);
                                     }
                                     navigate("/cart");
                                 }}

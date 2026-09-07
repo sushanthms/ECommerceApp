@@ -10,7 +10,7 @@ const authHeader = () => {
 export const addToCart = async (productId) => {
     const response = await axios.post(
         API_URL,
-        { productId: productId },
+        { productId: productId, quantity: quantity },
         { headers: authHeader() }
     );
 

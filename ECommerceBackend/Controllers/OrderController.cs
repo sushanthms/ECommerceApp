@@ -118,7 +118,7 @@ namespace ECommerceBackend.Controllers
                     o.City,
                     o.State,
                     o.Pincode,
-
+                        
                     o.TotalAmount,
                     o.Status,
                     o.OrderDate,

@@ -8,6 +8,7 @@ import Login from "./Pages/Login.jsx";
 import Register from "./Pages/Register.jsx";
 import UserHome from "./Pages/UserHome.jsx";
 import AdminHome from "./Pages/AdminHome.jsx";
+import Products from "./Pages/Products.jsx";
 import ProductDetails from "./Components/ProductDetails.jsx";
 import Cart from "./Components/Cart.jsx";
 import Checkout from "./Components/Checkout.jsx";
@@ -43,6 +44,7 @@ const showToast = (message) => {
         <Route path="/register" element={<Register showToast={showToast} />} />
         <Route path="/home" element={ <ProtectedRoute allowedRole="User"> <UserHome showToast={showToast}/> </ProtectedRoute> } />
         <Route path="/admin" element={<ProtectedRoute allowedRole="Admin"> <AdminHome showToast={showToast} /> </ProtectedRoute>} />
+        <Route path="/products" element={<ProtectedRoute allowedRole="User"><Products showToast={showToast} /></ProtectedRoute>}/>
         <Route path="/product/:id" element={ <ProtectedRoute allowedRole="User"><ProductDetails showToast={showToast}/></ProtectedRoute>} />
         <Route path="/cart" element={<ProtectedRoute allowedRole="User"><Cart showToast={showToast} /></ProtectedRoute>} />
         <Route path="/checkout" element={<ProtectedRoute allowedRole="User"><Checkout showToast={showToast} /></ProtectedRoute>}/>

@@ -38,6 +38,11 @@ namespace ECommerceBackend.Controllers
                 return NotFound("Product not found.");
             }
 
+            if (dto.Quantity <= 0)
+            {
+                return BadRequest(new { message = "Quantity must be at least 1." });
+            }
+
             var existingCartItem = await _context.CartItems
                 .FirstOrDefaultAsync(c =>
                     c.UserId == userId &&
@@ -45,14 +50,14 @@ namespace ECommerceBackend.Controllers
 
             int currentQuantityInCart = existingCartItem?.Quantity ?? 0;// ternaray operation. true means existingCartItem.Quantity or false means 0
 
-            if (currentQuantityInCart + 1 > product.Stock)
+            if (currentQuantityInCart + dto.Quantity > product.Stock)
             {
-                return BadRequest(new { message = $"Only {product.Stock} in stock." });
+                return BadRequest(new { message = $"Only {product.Stock - currentQuantityInCart} more available." });
             }
 
             if (existingCartItem != null)
             {
-                existingCartItem.Quantity++;
+                existingCartItem.Quantity += dto.Quantity;
             }
             else
             {
@@ -60,7 +65,7 @@ namespace ECommerceBackend.Controllers
                 {
                     UserId = userId,
                     ProductId = dto.ProductId,
-                    Quantity = 1
+                    Quantity = dto.Quantity
                 };
 
                 _context.CartItems.Add(cartItem);
