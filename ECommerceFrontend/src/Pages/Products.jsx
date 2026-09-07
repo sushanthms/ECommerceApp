@@ -169,24 +169,13 @@ function Products({ showToast }) {
                                     )
                                     .map((product) => (
 
-                                        <div
-                                            key={product.id}
-                                            className="product-card"
-                                            onClick={() =>
-                                                navigate(
-                                                    `/product/${product.id}`
-                                                )
-                                            }
-                                        >
+                                        <div key={product.id} className="product-card" onClick={() =>navigate(`/product/${product.id}`)}>
 
                                             <div className="product-image">
 
                                                 {product.imageUrl ? (
 
-                                                    <img
-                                                        src={product.imageUrl}
-                                                        alt={product.name}
-                                                        onError={(e) => {
+                                                    <img src={product.imageUrl} alt={product.name} onError={(e) => {
                                                             e.target.style.display = "none";
                                                             e.target.nextSibling.style.display = "flex";
                                                         }}
@@ -208,31 +197,11 @@ function Products({ showToast }) {
                                             </div>
 
                                             <h3>{product.name}</h3>
-
-                                            <p>{product.description}</p>
-
-                                            <strong>
-                                                ₹{product.price}
-                                            </strong>
-
-                                            <p>
-                                                Stock: {product.stock}
-                                            </p>
-
-                                            <p>
-                                                Category: {product.category}
-                                            </p>
-
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    navigate(
-                                                        `/product/${product.id}`
-                                                    );
-                                                }}
-                                            >
-                                                View Product
-                                            </button>
+                                            <p>{product.description.length > 100 ? product.description.substring(0, 100) + "..." : product.description}</p>
+                                            <strong>₹{product.price}</strong>
+                                            <p>Stock: {product.stock}</p>
+                                            <p>Category: {product.category}</p>
+                                            <button onClick={(e) => {e.stopPropagation(); navigate(`/product/${product.id}`);}}>View Product</button>
 
                                         </div>
 

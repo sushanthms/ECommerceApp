@@ -1,10 +1,11 @@
 import "./Toast.css";
 
-function Toast({ message }) {
-    if (!message) return null;
+function Toast({ message, type }) {
+    if (!message) 
+        return null;
 
     return (
-        <div className="toast">
+        <div className={`toast toast-${type}`}>
             {message}
         </div>
     );

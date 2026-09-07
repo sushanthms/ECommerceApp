@@ -1,10 +1,19 @@
-:root { /* default */
-    --bg-color: #f1f5f9;
-    --text-color: #1e293b;
-    --card-bg: white;
-    --border-color: #ddd;
-    --header-bg: #1e293b;
-    --sidebar-bg: white;
+:root {
+    --bg-color: #fbf9f5;
+    --text-color: #201d1a;
+    --text-muted: #6f6a63;
+
+    --card-bg: #ffffff;
+    --sidebar-bg: #ffffff;
+    --header-bg: #5c5b5a;
+
+    --border-color: #ece8e0;
+
+    --accent-color: #b8641f;
+    --accent-hover: #96501a;
+    --accent-soft: #f7e9d9;
+
+    --link-color: #1f6f6b;
 }
 
 [data-theme="dark"] {

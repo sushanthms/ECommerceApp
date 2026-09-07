@@ -5,8 +5,18 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Text; // allows Encoding
+using Serilog;
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.File(
+        "Logs/ecommerce-.log",
+        rollingInterval: RollingInterval.Day
+    )
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(

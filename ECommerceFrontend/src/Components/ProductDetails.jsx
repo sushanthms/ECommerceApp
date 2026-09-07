@@ -6,7 +6,7 @@ import "./ProductDetails.css";
 import Header from "../Header.jsx";
 import Sidebar from "../Sidebar.jsx";
 
-function ProductDetails() {
+function ProductDetails({showToast}) {
 
     const { id } = useParams();
     const navigate = useNavigate();
@@ -68,6 +68,7 @@ function ProductDetails() {
         try {
             await addToCart(product.id, quantity);
             setAddedToCart(true);
+            showToast("Added to cart", "success");
         } catch (error) {
             alert(
                 error.response?.data?.message ||
@@ -86,7 +87,7 @@ function ProductDetails() {
         return;
     }
 
-    if (!cartItem) {
+    if (!cartItem) {    
         setQuantity(newQuantity);
         return;
     }

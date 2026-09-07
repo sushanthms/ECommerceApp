@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "../Header.jsx";
 import Sidebar from "../Sidebar.jsx";
 import { searchProducts } from "../Services/ProductService.jsx";
+import { getBanners } from "../Services/BannerService.jsx";
 
 import "./UserHome.css";
 
@@ -17,6 +18,7 @@ function UserHome({ showToast }) {
 
     const [search, setSearch] = useState("");
     const [searchResults, setSearchResults] = useState([]);
+    const [banners, setBanners] = useState([]);
 
     const userData = localStorage.getItem("user");
     const user = userData ? JSON.parse(userData) : null;
@@ -59,39 +61,18 @@ function UserHome({ showToast }) {
 
     }, [search]);
 
-    const banners = [
-        {
-            id: 1,
-            title: "Explore Our Latest Products",
-            description:
-                "Discover something new from our collection.",
-            buttonText: "Shop Now",
-            imageUrl:
-                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQyowgKf-lbgqIlWo_oLHaRFtF9RbRPi4hmPyBe9cSjxQ&s=10s",
-            link: "/products"
-        },
-        {
-            id: 2,
-            title: "Home & Furniture",
-            description:
-                "Upgrade your home with our latest collection.",
-            buttonText: "Explore Furniture",
-            imageUrl:
-                "https://via.placeholder.com/1200x400?text=Home+%26+Furniture",
-            link: "/products?category=Furniture"
-        },
-        {
-            id: 3,
-            title: "Special Offers",
-            description:
-                "Check out our available products and offers.",
-            buttonText: "View Products",
-            imageUrl:
-                "https://via.placeholder.com/1200x400?text=Special+Offers",
-            link: "/products"
+    useEffect(() => {
+    const loadBanners = async () => {
+        try {
+            const data = await getBanners();
+            setBanners(data);
+        } catch (error) {
+            console.error("Error loading banners:", error);
         }
-    ];
+    };
 
+    loadBanners();
+}, []);
 
     return (
         <>
@@ -105,8 +86,6 @@ function UserHome({ showToast }) {
 
                     <div className="welcome-section">
                         <h2>Welcome, {user?.name}! 👋</h2>
-                        <p>Discover products, manage your orders,and enjoy exclusive offers.</p>
-                        <button onClick={() => navigate("/products")}>View All Products</button>
                     </div>
 
                     <div className="home-search-section">
@@ -161,24 +140,20 @@ function UserHome({ showToast }) {
                         </div>
                     )}
 
-                    <div className="banner-section">
+                    <div className="user-banner-slider">
+                        <div className="user-banner-track">
+                            {[...banners, ...banners].map((banner, index) => (
+                                <div className="user-banner" key={`${banner.id}-${index}`} onClick={() => navigate(banner.link)}>
+                                    <img src={banner.imageUrl} alt={banner.title} />
 
-                        {banners.map((banner) => (
-
-                            <div key={banner.id} className="home-banner"style={{backgroundImage:`url(${banner.imageUrl})`}}>
-
-                                <div className="banner-overlay">
-
-                                    <h2>{banner.title}</h2>
-                                    <p>{banner.description}</p>
-                                    <button onClick={() =>navigate(banner.link)}>{banner.buttonText}</button>
-
+                                    <div className="user-banner-content">
+                                        <h2>{banner.title}</h2>
+                                        <p>{banner.description}</p>
+                                        <button>{banner.buttonText}</button>
+                                    </div>
                                 </div>
-
-                            </div>
-
-                        ))}
-
+                            ))}
+                        </div>
                     </div>
 
                     <div className="categories-section">

@@ -123,10 +123,9 @@ function Cart({showToast}) {
                     </div>
                 </>
             )}
-
-        </div>
-        </div>
-        </>
+            </div>
+            </div>
+    </>
     );
 }
 

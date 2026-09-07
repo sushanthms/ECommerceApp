@@ -2,13 +2,13 @@
 using ECommerceBackend.Data;
 using ECommerceBackend.DTOs;
 using ECommerceBackend.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;// ASP.NET Core's web framework tools. ControllerBase, [ApiController], IActionResult
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.AspNetCore.Authorization;
 
 namespace ECommerceBackend.Controllers
 {
@@ -18,28 +18,32 @@ namespace ECommerceBackend.Controllers
     {
         private readonly AppDbContext _context;// dependency injection. Declares a private field called _context to hold a reference to the database.
         private readonly IConfiguration _configuration;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(
-            AppDbContext context,
-            IConfiguration configuration)
+        public AuthController(AppDbContext context, IConfiguration configuration, ILogger<AuthController> logger)
         {
             _context = context;
             _configuration = configuration;
+            _logger = logger;
         }
         // Registration of User
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDto request)// IActionResult knows how to produce/send the HTTP response. describes what should be sent
         {
+           try { 
             var existingUser = await _context.Users
                 .FirstOrDefaultAsync(u => u.Email == request.Email);
             // searches through the table, and gives the first matching row or null if no row matches.
             if (existingUser != null)// if a user is alreday registered existingUser stores taht otherwise it stores null. if existingUser is not null then that user is present
             {
+                _logger.LogWarning("Registration failed. Email already registered: {Email}", request.Email);
+
                 return BadRequest(new
                 {
                     message = "Email is already registered."
                 });
             }
+
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
             var user = new User
@@ -54,10 +58,26 @@ namespace ECommerceBackend.Controllers
 
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation("User registered successfully. UserId: {UserId}, Email: {Email}", user.Id, user.Email);
+
             return Ok(new
             {
                 message = "Registration successful."
             });
+        }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error occurred while registering user. Email: {Email}",
+                    request.Email
+                );
+
+                return StatusCode(500, new
+                {
+                    message = "An unexpected error occurred."
+                });
+            }
         }
 
         // Login of User and Admin
@@ -69,6 +89,7 @@ namespace ECommerceBackend.Controllers
 
             if (user == null)
             {
+                _logger.LogWarning("Login failed. User not found for email: {Email}", request.Email);
                 return Unauthorized(new
                 {
                     message = "Invalid email or password."
@@ -82,6 +103,7 @@ namespace ECommerceBackend.Controllers
 
             if (!passwordValid)
             {
+                _logger.LogWarning("Login failed. Invalid password for email: {Email}", request.Email);
                 return Unauthorized(new
                 {
                     message = "Invalid email or password."
@@ -117,6 +139,7 @@ namespace ECommerceBackend.Controllers
             );
 
             var jwt = new JwtSecurityTokenHandler().WriteToken(token);// token is an in-memory object, so converting it to jwt string
+            _logger.LogInformation("User logged in successfully. UserId: {UserId}, Email: {Email}, Role: {Role}", user.Id, user.Email,user.Role);
 
             return Ok(new
             {

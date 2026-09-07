@@ -7,7 +7,7 @@ const authHeader = () => {
     return { Authorization: `Bearer ${token}` };
 };
 
-export const addToCart = async (productId) => {
+export const addToCart = async (productId, quantity) => {
     const response = await axios.post(
         API_URL,
         { productId: productId, quantity: quantity },

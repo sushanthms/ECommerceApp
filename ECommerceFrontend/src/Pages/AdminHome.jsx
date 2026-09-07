@@ -4,6 +4,7 @@ import axios from "axios";
 
 import Header from "../Header.jsx";
 import Sidebar from "../Sidebar.jsx";
+import AdminBanner from "../Components/AdminBanner.jsx";
 import { getProducts, addProduct, updateProduct, searchProducts } from "../Services/ProductService.jsx";
 
 import "./AdminHome.css";
@@ -20,7 +21,7 @@ function AdminHome({showToast}) {
     const [file, setFile] = useState(null);
     const [products, setProducts] = useState([]);
     const [search, setSearch] = useState("");
-
+    const [showAllProducts, setShowAllProducts] = useState(false);
 
     const [showForm, setShowForm] = useState(false);
 
@@ -54,7 +55,7 @@ function AdminHome({showToast}) {
     const handleUpload = async () => {
 
         if (!file) {
-            toast.error("Please select a CSV file.");
+            showToast("Please select a CSV file.", "warning");
             return;
         }
 
@@ -74,7 +75,7 @@ function AdminHome({showToast}) {
                 }
             );
 
-            showToast(response.data.message);
+            showToast(response.data.message, "success");
 
             setFile(null);
             loadProducts();
@@ -82,7 +83,7 @@ function AdminHome({showToast}) {
         } catch (error) {
 
             console.error("Upload error:", error);
-            toast.error(error.response?.data?.message || "Product upload failed.");
+            showToast(error.response?.data?.message || "Product upload failed.", "error");
         }
     };
 
@@ -165,11 +166,11 @@ function AdminHome({showToast}) {
             if (editingId) {
                 await updateProduct(editingId, productData, token);
                 setFormSuccess("Product updated successfully.");
-                showToast("Product updated successfully!");
+                showToast("Product updated successfully!", "success");
             } else {
                 await addProduct(productData, token);
                 setFormSuccess("Product added successfully.");
-                
+                showToast("Product added successfully!", "success");
             }
 
             resetForm();
@@ -223,8 +224,6 @@ function AdminHome({showToast}) {
 
                     <div className="welcome-section">
                         <h2>Welcome, {user?.name}!</h2>
-                        <p>You are logged in as an Admin.</p>
-                        <p>Email: {user?.email}</p>
                     </div>
 
                     <div className="upload-section">
@@ -298,13 +297,8 @@ function AdminHome({showToast}) {
                                 {formError && <p className="field-error">{formError}</p>}
 
                                 <div className="form-actions">
-                                    <button type="submit">
-                                        {editingId ? "Save Changes" : "Add Product"}
-                                    </button>
-
-                                    <button type="button" className="cancel-btn" onClick={handleCancel}>
-                                        Cancel
-                                    </button>
+                                    <button type="submit">{editingId ? "Save Changes" : "Add Product"}</button>
+                                    <button type="button" className="cancel-btn" onClick={handleCancel}>Cancel</button>
                                 </div>
 
                             </form>
@@ -321,41 +315,51 @@ function AdminHome({showToast}) {
                         </div>
                     </div>
 
+                    <AdminBanner />
+                    
+                    <div className="featured-section">
+
+                    <div className="section-heading">
+                        <h2>{showAllProducts ? "All Products" : "Products"}</h2>
+
+                        <button className="view-products-btn" onClick={() => setShowAllProducts(!showAllProducts)}>{showAllProducts ? "Show Less" : "View All Products"}</button>
+                    </div>
+
                     <div className="search-section">
                         <input type="text" value={search} onChange={(e) => handleSearch(e.target.value)} placeholder="Search products or categories..."/>
                     </div>
-                    
-                    <div className="featured-section">
 
                         {products.length === 0 ? (
                             <p>No products found.</p>
                         ) : (
                             <div className="product-grid">
-                                {products.map((product) => (
+                                {(showAllProducts ? products : products.slice(0, 6)).map((product) => (// when showallproducts is true this runs products.map, when showallproducts is false this runs products.slice
                                     <div key={product.id} className="product-card">
+
                                         <div className="product-image">
                                             {product.imageUrl ? (
-                                                <img src={product.imageUrl} alt={product.name}
-                                                    onError={(e) => {
+                                                <img src={product.imageUrl} alt={product.name} onError={(e) => {
                                                         e.target.style.display = "none";
                                                         e.target.nextSibling.style.display = "flex";
                                                     }}
                                                 />
                                             ) : null}
-                                            <span className="product-fallback" style={{ display: product.imageUrl ? "none" : "flex" }}>📦</span>
+
+                                            <span className="product-fallback" style={{display: product.imageUrl ? "none" : "flex"}}>📦</span>
                                         </div>
 
                                         <h3>{product.name}</h3>
-                                        <p>{product.description}</p>
+                                        <p>{product.description.length > 100 ? product.description.substring(0, 100) + "...": product.description}</p>
                                         <strong>₹{product.price}</strong>
                                         <p>Stock: {product.stock}</p>
                                         <p>Category: {product.category}</p>
-
                                         <button onClick={() => startEdit(product)}>Edit</button>
+
                                     </div>
                                 ))}
                             </div>
                         )}
+
                     </div>
 
                 </main>

@@ -100,6 +100,26 @@ namespace ECommerceBackend.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddProduct(ProductCsvDto dto)
         {
+            var sku = dto.SKU?.Replace(" ", "").Trim() ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(sku))
+            {
+                return BadRequest(new
+                {
+                    message = "SKU is required."
+                });
+            }
+            var skuExists = await _context.Products
+        .AnyAsync(p => p.SKU.Trim().ToLower() == sku.ToLower());
+
+            if (skuExists)
+            {
+                return BadRequest(new
+                {
+                    message = "This SKU already exists."
+                });
+            }
+
             var product = new Product
             {
                 SKU = dto.SKU ?? string.Empty,

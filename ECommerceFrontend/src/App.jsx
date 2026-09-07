@@ -21,23 +21,23 @@ import "./style.css";
 function App() {
   
   const [darkMode, setDarkMode] = useState(false);
-  const [toast, setToast] = useState("");
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
   }, [darkMode]);
 
-const showToast = (message) => {
-    setToast(message);
+const showToast = (message, type = "info") => {
+    setToast({ message, type });
 
     setTimeout(() => {
-        setToast("");
+        setToast(null);
     }, 3000);
 };
 // Gives the showToast function from App to Login file.
   return (
     <BrowserRouter>
-    <Toast message={toast} />
+    <Toast message={toast?.message} type={toast?.type} />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login showToast={showToast} />} />
