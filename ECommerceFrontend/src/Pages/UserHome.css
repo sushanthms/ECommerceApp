@@ -173,8 +173,6 @@
     color: #fff;
 }
 
-/* User Banner */
-
 .user-banner-slider {
     overflow: hidden;
     border-radius: 12px;
@@ -193,13 +191,13 @@
 
 .user-banner {
     position: relative;
+    flex-shrink: 0;
     width: 100%;
     max-width: 1200px;
     height: 300px;
     margin-right: 20px;
     border-radius: 12px;
     overflow: hidden;
-    flex-shrink: 0;
     cursor: pointer;
 }
 
@@ -218,30 +216,26 @@
     gap: 10px;
     padding: 40px;
     color: #fff;
-    background: linear-gradient(
-        to right,
-        rgba(32, 29, 26, 0.75),
-        transparent 70%
-    );
+    background: linear-gradient(to right, rgba(32, 29, 26, .75), transparent 70%);
 }
 
 .user-banner-content h2 {
-    font-size: 28px;
     margin: 0;
     max-width: 420px;
+    font-size: 28px;
 }
 
 .user-banner-content p {
-    font-size: 15px;
     margin: 0;
     max-width: 400px;
-    opacity: 0.9;
+    font-size: 15px;
+    opacity: .9;
 }
 
 .user-banner-content button {
     width: fit-content;
     padding: 12px 24px;
-    border: none;
+    border: 0;
     border-radius: 8px;
     background: var(--button-color);
     color: #fff;
@@ -254,12 +248,8 @@
 }
 
 @keyframes scrollBanners {
-    to {
-        transform: translateX(-50%);
-    }
+    to { transform: translateX(-50%); }
 }
-
-/* Categories */
 
 .categories-section {
     margin-bottom: 36px;

@@ -5,7 +5,7 @@ import axios from "axios";
 import Header from "../Header.jsx";
 import Sidebar from "../Sidebar.jsx";
 import AdminBanner from "../Components/AdminBanner.jsx";
-import { getProducts, addProduct, updateProduct, searchProducts } from "../Services/ProductService.jsx";
+import { getAdminProducts, addProduct, updateProduct, searchAdminProducts } from "../Services/ProductService.jsx";
 
 import "./AdminHome.css";
 
@@ -89,7 +89,7 @@ function AdminHome({showToast}) {
 
     const loadProducts = async () => {
         try {
-            const data = await getProducts();
+            const data = await getAdminProducts();
             setProducts(data);
         } catch (error) {
             console.error("Error loading products:", error);
@@ -196,10 +196,9 @@ function AdminHome({showToast}) {
     const timer = setTimeout(async () => {
         try {
             if (search.trim() === "") {
-                const data = await getProducts();
-                setProducts(data);
+                await loadProducts();
             } else {
-                const data = await searchProducts(search);
+                const data = await searchAdminProducts(search);
                 setProducts(data);
             }
         } catch (error) {
@@ -211,6 +210,94 @@ function AdminHome({showToast}) {
         clearTimeout(timer);
     };
 }, [search]);
+
+const handleHideProduct = async (id) => {
+    try {
+        const token = localStorage.getItem("token");
+
+        await axios.put(
+            `${API_URL}/${id}/hide`,
+            {},
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        showToast("Product hidden successfully.", "success");
+
+        loadProducts();
+    } catch (error) {
+        console.error("Hide product error:", error);
+
+        showToast(
+            error.response?.data?.message || "Failed to hide product.",
+            "error"
+        );
+    }
+};
+
+const handleRestoreProduct = async (id) => {
+    try {
+        const token = localStorage.getItem("token");
+
+        await axios.put(
+            `${API_URL}/${id}/restore`,
+            {},
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        showToast("Product made visible successfully.", "success");
+
+        loadProducts();
+    } catch (error) {
+        console.error("Restore product error:", error);
+
+        showToast(
+            error.response?.data?.message || "Failed to restore product.",
+            "error"
+        );
+    }
+};
+
+const handlePermanentDelete = async (id) => {
+    const confirmed = window.confirm(
+        "Are you sure you want to permanently delete this product? This cannot be undone."
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const token = localStorage.getItem("token");
+
+        await axios.delete(
+            `${API_URL}/${id}/permanent`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        showToast("Product permanently deleted.", "success");
+
+        loadProducts();
+    } catch (error) {
+        console.error("Permanent delete error:", error);
+
+        showToast(
+            error.response?.data?.message || "Failed to permanently delete product.",
+            "error"
+        );
+    }
+};
 
 
     return (
@@ -353,7 +440,32 @@ function AdminHome({showToast}) {
                                         <strong>₹{product.price}</strong>
                                         <p>Stock: {product.stock}</p>
                                         <p>Category: {product.category}</p>
+
+                                        <p className={product.isDeleted ? "product-status hidden" : "product-status visible"}>
+    Status: {product.isDeleted ? "Hidden" : "Visible"}
+</p>
+
+
                                         <button onClick={() => startEdit(product)}>Edit</button>
+
+                                        {product.isDeleted ? (
+    <button onClick={() => handleRestoreProduct(product.id)}>
+        Make Visible
+    </button>
+) : (
+    <button onClick={() => handleHideProduct(product.id)}>
+        Hide Product
+    </button>
+)}
+
+{product.isDeleted && (
+    <button
+        className="delete-product-btn"
+        onClick={() => handlePermanentDelete(product.id)}
+    >
+        Permanently Delete
+    </button>
+)}
 
                                     </div>
                                 ))}
