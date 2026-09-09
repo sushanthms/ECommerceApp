@@ -1,3 +1,47 @@
+A Web API acts as the communication layer between the frontend application and the database.
+
+E-commerce project:
+
+React Frontend
+      ↓
+   HTTP request
+      ↓
+ASP.NET Core Web API
+      ↓
+Entity Framework Core
+      ↓
+SQL Server
+
+web api avoids duplicate business logic. for react application and android application same web api logics works. user buy product
+
+Web API is a concept that works on HTTP protocol
+
+.NET has two frameworks to create Web API
+Asp.NET WebAPI 2
+Asp.NET Core(latest)
+
+REST is a set of priniciples that the web api follows
+URL structure
+HTTP verbs
+Status codes
+Stateless
+
+HTTP request contains url, http verb(methods), headers, body, data
+HTTP response contains status code, response headers, data
+
+HTTP verbs(methods)-GET, POST, PUT, PATCH, DELETE
+
+HTTP Status Codes
+1xx informational
+2xx successful
+3xx redirectional
+4xx client error
+5xx server error 
+
+
+
+
+
 ASP .NET CORE
 in this project we built Web API using .net and website frontend using React
 

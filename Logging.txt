@@ -1,0 +1,116 @@
+Logging
+
+Custom application logging using ASP.NET Core middleware + an interface + Dependency Injection + configurable storage.
+
+                    HTTP Request
+                         │
+                         ▼
+             RequestLoggingMiddleware
+                         │
+              collects request data
+                         │
+                         ▼
+                  ApplicationLog
+                         │
+                         ▼
+                 IApplicationLogger
+                    /           \
+                   /             \
+                  ▼               ▼
+            FileLogger      DatabaseLogger
+                  │               │
+                  ▼               ▼
+          ecommerce.log     ApplicationLogs
+                              SQL Server
+
+middleware collects information about an HTTP request, ApplicationLog carries that information
+IApplicationLogger defines what a logger must do
+either FileLogger or DatabaseLogger performs the actual storage depending on configuration.
+
+The middleware shouldn't care about the storage method.
+
+ApplicationLog.cs
+
+Container
+It represents one log record.
+
+EF Core convention decides Id is the key
+If that property's type is int, long, or a few other numeric types, EF Core assumes it should be database-generated
+
+nullable reference types
+string.empty means we are saying This string should have a value, and initially we give it an empty string instead of null
+public string HttpMethod { get; set; } = string.Empty; if no string. Empty we get this warning "non-nullable property must contain a non-null value when exiting constructor."
+
+IApplicationLogger.cs
+
+IApplicationLogger tells any class that implements it that they must have a method named exactly LogAsync, they must take exactly one parameter of type ApplicationLog, and they must return Task.
+It says how the method that handles the log object should look. defines the shape of the action/method, not the data
+ApplicationLog.cs says how the log object should look
+
+creating a rule called IApplicationLogger. Any class can choose to follow this rule
+
+Task LogAsync(ApplicationLog log); This is the rule. 
+It must have a method named LogAsync, it must accept one ApplicationLog object, and it is a Task (so it can run in the background without blocking the app).
+
+FileLogger and DatabaseLogger follows this rule
+
+ASP.NET Core has a built-in Dependency Injection container.
+
+GUID means Globally Unique Identifier
+
+?? is the null-coalescing operator. If the value on the left is null, it uses "Unknown".
+
+AddScoped means the lifetime of the dependency.
+there are three DI lifetimes. AddTransient, AddScoped, AddSingleton
+
+Path.Combine() creates the correct path using the operating system's path rules.
+
+context is the variable that refers to the current HttpContext.
+
+before-request work means the work performed before the middleware allows the request to continue to the rest of the pipeline.
+
+logger is a variable and also a reference to the IApplicationLogger
+
+logger.LogAsync(log)
+how does it know whether to execute FileLogger or DatabaseLogger?
+because of Dependency Injection. builder.Services.AddScoped<IApplicationLogger, FileLogger>();
+
+
+public DatabaseLogger(AppDbContext context)
+{
+    _context = context;
+}
+
+This is constructor injection.
+
+There is no interface
+in middleware we put if else condtion, we write inside
+if (provider is file)
+{
+    FileLogger logger = ...;
+    logger.LogAsync(log);
+}
+else
+{
+    DatabaseLogger logger = ...;
+    logger.LogAsync(log);
+}
+Now the middleware knows that these two classes exist.
+
+Using IApplicationLogger interface we now implement IApplicationLogger logger. now the middleware does not know about the classes, it only knows a logger is present that provides LogAsync fuction.
+
+Now how IApplicationLogger runs the code isnide log writing files.
+Think
+IApplicationLogger logger = new FileLogger();
+
+logger.LogAsync(log); runs the LogAsync() implementation belonging to the actual FileLogger object.
+
+The middleware calls LogAsync() through the IApplicationLogger interface reference, and that call is recahes to the actual logger implementation(log writing files), such as FileLogger.
+
+Delegate is a way to store a reference to a method so that the method can be called later.
+
+Task is a C#/.NET type that represents an operation that is happening or will finish in the future.
+
+RequestDelegate is a reference to a method that takes HttpContext and performs asynchronous request processing, represented by a Task.
+_next holds a reference to the next part of the middleware pipeline.
+_next holds a reference to the remaining pipeline.

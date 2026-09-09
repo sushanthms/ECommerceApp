@@ -1,4 +1,5 @@
-﻿using ECommerceBackend.Models;
+﻿using ECommerceBackend.Logging;
+using ECommerceBackend.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceBackend.Data
@@ -17,6 +18,7 @@ namespace ECommerceBackend.Data
 
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Banner> Banners { get; set; }
+        public DbSet<ApplicationLog> ApplicationLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getProducts } from "../Services/ProductService.jsx";
+import { getProductById } from "../Services/ProductService.jsx";
 import { addToCart, getCart, updateCartItemQuantity } from "../Services/CartService.jsx";
 import "./ProductDetails.css";
 import Header from "../Header.jsx";
@@ -20,22 +20,17 @@ function ProductDetails({showToast}) {
     const [quantity, setQuantity] = useState(1);
 
     useEffect(() => {
-        const loadProduct = async () => {// loads the product whose ID is in the URL.
-            try {
-                const products = await getProducts();
+    const loadProduct = async () => {
+        try {
+            const data = await getProductById(id);
+            setProduct(data);
+        } catch (error) {
+            console.error("Error loading product:", error);
+        }
+    };
 
-                const foundProduct = products.find(
-                    p => p.id === Number(id)
-                );
-
-                setProduct(foundProduct);
-            } catch (error) {
-                console.error("Error loading product:", error);
-            }
-        };
-
-        loadProduct();
-    }, [id]);
+    loadProduct();
+}, [id]);
 
     useEffect(() => {
     const checkCart = async () => {
@@ -65,17 +60,16 @@ function ProductDetails({showToast}) {
 }, [id]);
 
     const handleAddToCart = async () => {
-        try {
-            await addToCart(product.id, quantity);
-            setAddedToCart(true);
-            showToast("Added to cart", "success");
-        } catch (error) {
-            alert(
-                error.response?.data?.message ||
-                "Failed to add product to cart."
-            );
-        }
-    };
+    try {
+        const data = await addToCart(product.id, quantity);
+
+        setProduct({...product, stock: data.stock});
+        setAddedToCart(true);
+        showToast("Added to cart", "success");
+    } catch (error) {
+        alert(error.response?.data?.message || "Failed to add product to cart.");
+    }
+};
 
     if (!product) {
         return <p>Product not found.</p>;
@@ -83,18 +77,20 @@ function ProductDetails({showToast}) {
 
     const handleQuantityChange = async (newQuantity) => {
 
-    if (newQuantity < 1 || newQuantity > product.stock) {
+    const maxQuantity = (cartItem?.quantity || 0) + product.stock;
+
+    if (newQuantity < 1 || newQuantity > maxQuantity) {
         return;
     }
 
-    if (!cartItem) {    
+    if (!cartItem) {
         setQuantity(newQuantity);
         return;
     }
 
     try {
 
-        await updateCartItemQuantity(
+        const data = await updateCartItemQuantity(
             cartItem.id,
             newQuantity
         );
@@ -104,7 +100,12 @@ function ProductDetails({showToast}) {
         setCartItem({
             ...cartItem,
             quantity: newQuantity
-        });// updates the cartItem state with the new quantity
+        });
+
+        setProduct({
+            ...product,
+            stock: data.stock
+        });
 
     } catch (error) {
 
@@ -116,6 +117,7 @@ function ProductDetails({showToast}) {
         );
     }
 };
+
     return (
         <>
             <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="User" onCartClick={() => navigate("/cart")} />
@@ -124,7 +126,7 @@ function ProductDetails({showToast}) {
            
             <div className="product-details-page">
 
-                <button className="back-btn" onClick={() => navigate("/home")} >← Back to Products</button>
+                <button className="back-btn" onClick={() => navigate("/products")}>← Back to Products</button>
 
                 <div className="product-details">
 
@@ -148,7 +150,7 @@ function ProductDetails({showToast}) {
 
                         <p className="tax">Inclusive of all taxes</p>
 
-                        <p className="stock">✓ {product.stock - (cartItem?.quantity || 0)} more items available</p>
+                        <p className="stock">✓ {product.stock > 0 ? `✓ ${product.stock} more items available` : "Out of Stock"}</p>
 
                         <div className="quantity"><span>Quantity:</span>
 
@@ -156,7 +158,7 @@ function ProductDetails({showToast}) {
 
                             <span>{quantity}</span>
 
-                           <button disabled={quantity === product.stock} onClick={() => handleQuantityChange(quantity + 1)}>+</button>
+                           <button disabled={quantity === (cartItem?.quantity || 0) + product.stock} onClick={() => handleQuantityChange(quantity + 1)}>+</button>
                         </div>
 
                         <div className="product-buttons">

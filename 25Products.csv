@@ -1,0 +1,27 @@
+SKU,Name,Description,Price,Stock,Category,ImageUrl
+ELEC007,Wireless Earbuds,Compact true wireless earbuds with charging case,39.99,120,Electronics,https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ6LbqOnjYL8waibA4RxjfiDgRfFX8c8X8cF1xiow9j1A&s=10
+ELEC008,Smart Watch,Fitness smartwatch with heart rate and activity tracking,79.99,75,Electronics,https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQt7zhP5WNHM8W3tukihvuisix6fUCaa2AoZk6Nblx4dA&s=10
+ELEC009,USB Flash Drive,128GB USB 3.0 flash drive for fast file transfers,12.99,250,Electronics,https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRC1dDpM5fE3dB3Bgk1OdWBJnEkmpZ9ohj43Zbx5YuyUw&s=10
+ELEC010,Portable SSD,500GB portable solid state drive with USB-C connectivity,69.99,65,Electronics,https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRC1dDpM5fE3dB3Bgk1OdWBJnEkmpZ9ohj43Zbx5YuyUw&s=10
+ELEC011,Wireless Speaker,Portable Bluetooth speaker with deep bass and long battery life,49.99,90,Electronics,https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ0ITc1jXB1V7AS-SbXuaUCRZhljF9bMgGaNDyyIPDSyg&s
+ELEC012,LED Monitor,24-inch Full HD monitor with adjustable viewing angle,129.99,45,Electronics,https://example.com/images/led-monitor.jpg
+ACC004,Phone Case,Shockproof protective case compatible with modern smartphones,12.49,180,Accessories,https://example.com/images/phone-case.jpg
+ACC005,Wireless Charger,Fast wireless charging pad with compact design,19.99,150,Accessories,https://example.com/images/wireless-charger.jpg
+ACC006,Keyboard Wrist Rest,Soft memory foam wrist rest for comfortable typing,15.99,100,Accessories,https://example.com/images/keyboard-wrist-rest.jpg
+ACC007,Mouse Pad,Large non-slip desk mouse pad with smooth surface,11.99,220,Accessories,https://example.com/images/mouse-pad.jpg
+FURN003,Bookshelf,Five-tier wooden bookshelf for home or office storage,89.99,35,Furniture,https://example.com/images/bookshelf.jpg
+FURN004,Office Desk,Spacious computer desk with storage drawer,119.99,30,Furniture,https://example.com/images/office-desk.jpg
+FURN005,Ergonomic Footrest,Adjustable under-desk footrest for improved comfort,29.99,80,Furniture,https://example.com/images/ergonomic-footrest.jpg
+HOME007,Table Fan,Quiet electric table fan with three speed settings,32.99,85,Home,https://example.com/images/table-fan.jpg
+HOME008,Wall Clock,Modern minimalist wall clock with silent movement,18.99,140,Home,https://example.com/images/wall-clock.jpg
+HOME009,Storage Box,Stackable plastic storage box with secure lid,9.99,200,Home,https://example.com/images/storage-box.jpg
+HOME010,Vacuum Cleaner,Compact cordless vacuum cleaner for everyday cleaning,99.99,50,Home,https://example.com/images/vacuum-cleaner.jpg
+SPORT002,Dumbbell Set,Adjustable dumbbell set suitable for home workouts,59.99,60,Sports,https://example.com/images/dumbbell-set.jpg
+SPORT003,Resistance Bands,Set of five resistance bands for strength and mobility training,18.99,150,Sports,https://example.com/images/resistance-bands.jpg
+SPORT004,Sports Water Bottle,Large BPA-free sports bottle with leak-proof lid,13.99,175,Sports,https://example.com/images/sports-water-bottle.jpg
+GAME001,Gaming Mouse,High precision RGB gaming mouse with programmable buttons,44.99,95,Gaming,https://example.com/images/gaming-mouse.jpg
+GAME002,Gaming Headset,Over-ear gaming headset with surround sound and microphone,64.99,70,Gaming,https://example.com/images/gaming-headset.jpg
+GAME003,Gaming Keyboard,Mechanical gaming keyboard with RGB lighting and blue switches,74.99,55,Gaming,https://example.com/images/gaming-keyboard.jpg
+OFF001,Notebook,Hardcover ruled notebook for notes and everyday writing,7.99,300,Office,https://example.com/images/notebook.jpg
+OFF002,Desk Organizer,Multi-compartment desk organizer for stationery and accessories,16.99,125,Office,https://example.com/images/desk-organizer.jpg
+ELEC013,Smart Home Plug,Wi-Fi enabled smart plug with mobile app control and scheduling,22.99,110,Electronics,https://example.com/images/smart-home-plug.jpg

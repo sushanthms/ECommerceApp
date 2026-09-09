@@ -1,9 +1,18 @@
+* {
+    box-sizing: border-box;
+}
+
 .main-content {
     width: 100%;
+    min-width: 0;
     padding: 32px 40px;
 }
 
-/* Welcome */
+.page-layout {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
 
 .welcome-section {
     margin-bottom: 28px;
@@ -424,4 +433,10 @@
     .categories-grid {
         grid-template-columns: 1fr;
     }
+}
+
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
 }

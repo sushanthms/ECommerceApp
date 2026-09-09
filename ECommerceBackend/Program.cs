@@ -1,27 +1,34 @@
 using ECommerceBackend;
 using ECommerceBackend.Data;
+using ECommerceBackend.Logging;
+using ECommerceBackend.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Text; // allows Encoding
-using Serilog;
-
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.File(
-        "Logs/ecommerce-.log",
-        rollingInterval: RollingInterval.Day
-    )
-    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.Host.UseSerilog();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")
     ));
+
+var loggingProvider = builder.Configuration["LoggingSettings:Provider"];
+
+if (loggingProvider == "File")
+{
+    builder.Services.AddScoped<IApplicationLogger, FileLogger>();// means when somewhere logger is used, it understands it is referred to FileLogger
+}
+else if (loggingProvider == "Database")
+{
+    builder.Services.AddScoped<IApplicationLogger, DatabaseLogger>();// means when somewhere logger is used, it understands it is referred to DatabaseLogger
+}
+else
+{
+    throw new Exception("Invalid logging provider. Use File or Database.");
+}
 
 builder.Services.AddControllers();
 
@@ -97,10 +104,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+app.UseHttpsRedirection();// If an HTTP request should use HTTPS, it redirects it to HTTPS. 
+app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseCors("ReactPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers();// finds the controllers and maps their routes to HTTP endpoints.
+app.MapControllers();// This connects incoming HTTP requests to the  controllers. finds the controllers and maps their routes to HTTP endpoints.
 
 app.Run();

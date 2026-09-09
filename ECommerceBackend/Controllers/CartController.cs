@@ -34,7 +34,7 @@ namespace ECommerceBackend.Controllers
             // we use the dto parameter to access the ProductId property of the AddToCartDto object it refers to.
             var product = await _context.Products.FindAsync(dto.ProductId);
             if (product == null)
-            {   
+            {
                 return NotFound("Product not found.");
             }
 
@@ -71,12 +71,18 @@ namespace ECommerceBackend.Controllers
                 _context.CartItems.Add(cartItem);
             }
 
+            product.Stock -= dto.Quantity;
+
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Product added to cart." });
+            return Ok(new
+            {
+                message = "Product added to cart.",
+                stock = product.Stock
+            });
         }
 
-        [HttpGet]
+            [HttpGet]
         public async Task<IActionResult> GetCart()
         {
             // A claim is a key value, value is string, id is also converted to string and stored in claims
@@ -111,6 +117,7 @@ namespace ECommerceBackend.Controllers
         public async Task<IActionResult> UpdateQuantity(int id, UpdateCartItemDto dto)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
             if (userIdClaim == null)
             {
                 return Unauthorized();
@@ -129,21 +136,32 @@ namespace ECommerceBackend.Controllers
 
             if (dto.Quantity <= 0)
             {
+                cartItem.Product.Stock += cartItem.Quantity;
+
                 _context.CartItems.Remove(cartItem);
             }
             else
             {
-                if (dto.Quantity > cartItem.Product.Stock)
+                int quantityDifference = dto.Quantity - cartItem.Quantity;
+
+                if (quantityDifference > cartItem.Product.Stock)
                 {
-                    return BadRequest(new { message = $"Only {cartItem.Product.Stock} in stock." });
+                    return BadRequest(new
+                    {
+                        message = $"Only {cartItem.Product.Stock} more in stock."
+                    });
                 }
 
+                cartItem.Product.Stock -= quantityDifference;
                 cartItem.Quantity = dto.Quantity;
             }
 
             await _context.SaveChangesAsync();
 
-            return Ok();
+            return Ok(new
+            {
+                stock = cartItem.Product.Stock
+            });
         }
 
         // DELETE /api/Cart/{id}
@@ -151,6 +169,7 @@ namespace ECommerceBackend.Controllers
         public async Task<IActionResult> RemoveFromCart(int id)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
             if (userIdClaim == null)
             {
                 return Unauthorized();
@@ -159,6 +178,7 @@ namespace ECommerceBackend.Controllers
             int userId = int.Parse(userIdClaim.Value);
 
             var cartItem = await _context.CartItems
+                .Include(c => c.Product)
                 .FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
 
             if (cartItem == null)
@@ -166,10 +186,16 @@ namespace ECommerceBackend.Controllers
                 return NotFound();
             }
 
+            cartItem.Product.Stock += cartItem.Quantity;
+
             _context.CartItems.Remove(cartItem);
+
             await _context.SaveChangesAsync();
 
-            return Ok();
+            return Ok(new
+            {
+                stock = cartItem.Product.Stock
+            });
         }
     }
 }

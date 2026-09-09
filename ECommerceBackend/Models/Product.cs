@@ -19,5 +19,6 @@ namespace ECommerceBackend.Models
         public string Category { get; set; } = string.Empty;
 
         public string ImageUrl { get; set; } = string.Empty;
+        public bool IsDeleted { get; set; } = false;
     }
 }

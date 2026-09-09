@@ -44,7 +44,7 @@ function UserHome({ showToast }) {
                     return;
                 }
                 const data = await searchProducts(search);
-                setSearchResults(data);
+                setSearchResults(data.products);
 
             } catch (error) {
                 console.error("Error searching products:", error);

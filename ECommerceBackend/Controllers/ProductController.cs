@@ -1,5 +1,6 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
+using ECommerceBackend.Controllers;
 using ECommerceBackend.Data;
 using ECommerceBackend.Models;
 using ECommerceBackend.Models.DTOs;
@@ -7,13 +8,25 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;// IActionResult
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+// AppDbContext is created in program.cs
 
+// private readonly AppDbContext _context;
+// _context is a variable of type AppDbContext object. _context object is not yet created. _context is a variable now.
+// Creates a field called _context that will hold an AppDbContext object.  
+// public ProductController(AppDbContext context)
+// context is of type AppDbContext.context is the name used while receiving.  
+// _context is where the controller keeps the reference so it can use it later.  
+// _context = context;
+// Takes the AppDbContext object we received through context and stores it in _context.  
+// context receives a reference to an actual AppDbContext object. It does NOT receive the data inside the object, and it does not become a copy of the object.
+// readonly means the field can be assigned during initialization/constructor execution but shouldn't be reassigned afterward. later we use it by writing _context.Users
 namespace ECommerceBackend.Controllers
 {
     [ApiController]// it gives the next line feature
     [Route("api/[controller]")]
     public class ProductController : ControllerBase
     {
+        // AuthController depends on AppDbContext, and ASP.NET Core's DI container injects an AppDbContext object into the AuthController constructor.
         private readonly AppDbContext _context;
 
         public ProductController(AppDbContext context)
@@ -70,30 +83,205 @@ namespace ECommerceBackend.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetProducts()
+        public async Task<IActionResult> GetProducts(int page = 1, int pageSize = 20, string category = "")
         {
-            var products = await _context.Products.ToListAsync();
+            if (page < 1)
+            {
+                page = 1;
+            }
 
-            return Ok(products);
+            if (pageSize < 1 || pageSize > 100)
+            {
+                pageSize = 20;
+            }
+
+            var query = _context.Products
+                .Where(p => !p.IsDeleted);
+
+            if (!string.IsNullOrWhiteSpace(category))
+            {
+                category = category.Trim().ToLower();
+
+                query = query.Where(p =>
+                    p.Category.ToLower() == category);
+            }
+
+            var totalProducts = await query.CountAsync();
+
+            var totalPages = (int)Math.Ceiling(
+                (double)totalProducts / pageSize
+            );
+
+            var products = await query
+                .OrderBy(p => p.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                products,
+                page,
+                pageSize,
+                totalProducts,
+                totalPages
+            });
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetProduct(int id)
+        {
+            var product = await _context.Products
+                .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
+
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(product);
+        }
+
+        [HttpGet("admin")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllProductsForAdmin(int page = 1, int pageSize = 20)
+        {
+            if (page < 1)
+            {
+                page = 1;
+            }
+
+            if (pageSize < 1 || pageSize > 100)
+            {
+                pageSize = 20;
+            }
+
+            var query = _context.Products;
+
+            var totalProducts = await query.CountAsync();
+
+            var totalPages = (int)Math.Ceiling(
+                (double)totalProducts / pageSize
+            );
+
+            var products = await query
+                .OrderBy(p => p.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                products,
+                page,
+                pageSize,
+                totalProducts,
+                totalPages
+            });
         }
 
         [HttpGet("search")]
-        public async Task<IActionResult> SearchProducts(string search)
+        public async Task<IActionResult> SearchProducts(string search, int page = 1, int pageSize = 20, string category = "")
         {
-            if (string.IsNullOrWhiteSpace(search))
+            if (page < 1)
             {
-                return await GetProducts();
+                page = 1;
             }
 
-            search = search.ToLower();
+            if (pageSize < 1 || pageSize > 100)
+            {
+                pageSize = 20;
+            }
 
-            var products = await _context.Products
-                .Where(p =>
+            var query = _context.Products
+                .Where(p => !p.IsDeleted);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim().ToLower();
+
+                query = query.Where(p =>
                     p.Name.ToLower().Contains(search) ||
-                    p.Category.ToLower().Contains(search))
+                    p.Category.ToLower().Contains(search));
+            }
+
+            if (!string.IsNullOrWhiteSpace(category))
+            {
+                category = category.Trim().ToLower();
+
+                query = query.Where(p =>
+                    p.Category.ToLower() == category);
+            }
+
+            var totalProducts = await query.CountAsync();
+
+            var totalPages = (int)Math.Ceiling(
+                (double)totalProducts / pageSize
+            );
+
+            var products = await query
+                .OrderBy(p => p.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            return Ok(products);
+            return Ok(new
+            {
+                products,
+                page,
+                pageSize,
+                totalProducts,
+                totalPages
+            });
+        }
+
+        [HttpGet("admin/search")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> SearchProductsForAdmin(string search, int page = 1, int pageSize = 20)
+        {
+            if (page < 1)
+            {
+                page = 1;
+            }
+
+            if (pageSize < 1 || pageSize > 100)
+            {
+                pageSize = 20;
+            }
+
+            if (string.IsNullOrWhiteSpace(search))
+            {
+                return await GetAllProductsForAdmin(page, pageSize);
+            }
+
+            search = search.Trim().ToLower();
+
+            var query = _context.Products
+    .Where(p =>
+        p.Name.ToLower().Contains(search) ||
+        p.Category.ToLower().Contains(search) ||
+        p.SKU.ToLower().Contains(search));
+
+            var totalProducts = await query.CountAsync();
+
+            var totalPages = (int)Math.Ceiling(
+                (double)totalProducts / pageSize
+            );
+
+            var products = await query
+                .OrderBy(p => p.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                products,
+                page,
+                pageSize,
+                totalProducts,
+                totalPages
+            });
         }
 
         [HttpPost]
@@ -231,6 +419,73 @@ namespace ECommerceBackend.Controllers
             await _context.SaveChangesAsync();
 
             return (added, updated);
+        }
+
+        [HttpPut("{id}/hide")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> HideProduct(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+
+            if (product == null)
+            {
+                return NotFound(new { message = "Product not found" });
+            }
+
+            product.IsDeleted = true;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Product hidden successfully" });
+        }
+
+        [HttpPut("{id}/restore")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> RestoreProduct(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+
+            if (product == null)
+            {
+                return NotFound(new { message = "Product not found" });
+            }
+
+            product.IsDeleted = false;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Product made visible successfully" });
+        }
+
+        [HttpDelete("{id}/permanent")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> PermanentlyDeleteProduct(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+
+            if (product == null)
+            {
+                return NotFound(new { message = "Product not found" });
+            }
+
+            _context.Products.Remove(product);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Product permanently deleted" });
+        }
+
+        [HttpGet("categories")]
+        public async Task<IActionResult> GetCategories()
+        {
+            var categories = await _context.Products
+                .Where(p => !p.IsDeleted && !string.IsNullOrEmpty(p.Category))
+                .Select(p => p.Category)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToListAsync();
+
+            return Ok(categories);
         }
     }
 }
