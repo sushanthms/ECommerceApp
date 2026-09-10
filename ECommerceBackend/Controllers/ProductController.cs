@@ -95,15 +95,17 @@ namespace ECommerceBackend.Controllers
                 pageSize = 20;
             }
 
-            var query = _context.Products
-                .Where(p => !p.IsDeleted);
+            var query = _context.Products.Where(p => !p.IsDeleted);
 
             if (!string.IsNullOrWhiteSpace(category))
             {
-                category = category.Trim().ToLower();
+                var categories = category
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(c => c.Trim().ToLower())
+                    .ToList();
 
                 query = query.Where(p =>
-                    p.Category.ToLower() == category);
+                    categories.Contains(p.Category.ToLower()));
             }
 
             var totalProducts = await query.CountAsync();
@@ -207,10 +209,13 @@ namespace ECommerceBackend.Controllers
 
             if (!string.IsNullOrWhiteSpace(category))
             {
-                category = category.Trim().ToLower();
+                var categories = category
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(c => c.Trim().ToLower())
+                    .ToList();
 
                 query = query.Where(p =>
-                    p.Category.ToLower() == category);
+                    categories.Contains(p.Category.ToLower()));
             }
 
             var totalProducts = await query.CountAsync();

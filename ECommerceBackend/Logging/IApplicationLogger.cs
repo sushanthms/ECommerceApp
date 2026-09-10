@@ -1,7 +1,8 @@
 ﻿namespace ECommerceBackend.Logging
 {
-    public interface IApplicationLogger // I means interface, helps to read
+    public interface IApplicationLogger
     {
         Task LogAsync(ApplicationLog log);
+        Task LogMessageAsync(string message);
     }
 }

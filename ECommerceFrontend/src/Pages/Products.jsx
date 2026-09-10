@@ -178,7 +178,7 @@ const handlePageChange = (pageNumber) => {
                                         <div className="product-image">
 
                                             {product.imageUrl ? (
-                                                <img src={product.imageUrl} alt={product.name} onError={(e) => {
+                                                <img src={product.imageUrl} alt={product.name} loading="lazy" onError={(e) => {
                                                     e.target.style.display = "none";
                                                     e.target.nextSibling.style.display = "flex";
                                                 }} />
@@ -218,13 +218,7 @@ const handlePageChange = (pageNumber) => {
                                 pageNumber === "..." ? (
                                     <span key={`ellipsis-${index}`}>...</span>
                                 ) : (
-                                    <button
-                                        key={pageNumber}
-                                        className={page === pageNumber ? "active-page" : ""}
-                                        onClick={() => handlePageChange(pageNumber)}
-                                    >
-                                        {pageNumber}
-                                    </button>
+                                    <button key={pageNumber} className={page === pageNumber ? "active-page" : ""} onClick={() => handlePageChange(pageNumber)}>{pageNumber}</button>
                                 )
                             )}
                             

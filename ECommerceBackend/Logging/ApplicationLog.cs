@@ -3,6 +3,7 @@
     public class ApplicationLog
     {
         public int Id { get; set; }
+        public string Message { get; set; } = string.Empty;
 
         public string HttpMethod { get; set; } = string.Empty;
 
@@ -19,5 +20,8 @@
         public string ClientIp { get; set; } = string.Empty;
 
         public string CorrelationId { get; set; } = string.Empty;
+        public string ExceptionType { get; set; } = string.Empty;
+        public string ExceptionMessage { get; set; } = string.Empty;
+        public string StackTrace { get; set; } = string.Empty;
     }
 }

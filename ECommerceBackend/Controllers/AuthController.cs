@@ -1,6 +1,7 @@
 ﻿using BCrypt.Net;
 using ECommerceBackend.Data;
 using ECommerceBackend.DTOs;
+using ECommerceBackend.Logging;
 using ECommerceBackend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;// ASP.NET Core's web framework tools. ControllerBase, [ApiController], IActionResult
@@ -18,9 +19,9 @@ namespace ECommerceBackend.Controllers
     {
         private readonly AppDbContext _context;// dependency injection. Declares a private field called _context to hold a reference to the database.
         private readonly IConfiguration _configuration;
-        private readonly ILogger<AuthController> _logger;
+        private readonly IApplicationLogger _logger;
 
-        public AuthController(AppDbContext context, IConfiguration configuration, ILogger<AuthController> logger)
+        public AuthController(AppDbContext context, IConfiguration configuration, IApplicationLogger logger)
         {
             _context = context;
             _configuration = configuration;
@@ -36,13 +37,12 @@ namespace ECommerceBackend.Controllers
             // searches through the table, and gives the first matching row or null if no row matches.
             if (existingUser != null)// if a user is alreday registered existingUser stores taht otherwise it stores null. if existingUser is not null then that user is present
             {
-                _logger.LogWarning("Registration failed. Email already registered: {Email}", request.Email);
-
+                await _logger.LogMessageAsync("User registration failed - email already registered");
                 return BadRequest(new
-                {
-                    message = "Email is already registered."
-                });
-            }
+                    {
+                        message = "Email is already registered."
+                    });
+                }
 
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
@@ -57,22 +57,16 @@ namespace ECommerceBackend.Controllers
             _context.Users.Add(user);
 
             await _context.SaveChangesAsync();
-
-            _logger.LogInformation("User registered successfully. UserId: {UserId}, Email: {Email}", user.Id, user.Email);
+            await _logger.LogMessageAsync("User registration successful");
 
             return Ok(new
             {
                 message = "Registration successful."
             });
-        }
+            }
             catch (Exception ex)
             {
-                _logger.LogError(
-                    ex,
-                    "Error occurred while registering user. Email: {Email}",
-                    request.Email
-                );
-
+                await _logger.LogMessageAsync("User registration failed - unexpected error");
                 return StatusCode(500, new
                 {
                     message = "An unexpected error occurred."
@@ -89,7 +83,7 @@ namespace ECommerceBackend.Controllers
 
             if (user == null)
             {
-                _logger.LogWarning("Login failed. User not found for email: {Email}", request.Email);
+                await _logger.LogMessageAsync("User login failed");
                 return Unauthorized(new
                 {
                     message = "Invalid email or password."
@@ -103,7 +97,7 @@ namespace ECommerceBackend.Controllers
 
             if (!passwordValid)
             {
-                _logger.LogWarning("Login failed. Invalid password for email: {Email}", request.Email);
+                await _logger.LogMessageAsync("User login failed");
                 return Unauthorized(new
                 {
                     message = "Invalid email or password."
@@ -139,7 +133,7 @@ namespace ECommerceBackend.Controllers
             );
 
             var jwt = new JwtSecurityTokenHandler().WriteToken(token);// token is an in-memory object, so converting it to jwt string
-            _logger.LogInformation("User logged in successfully. UserId: {UserId}, Email: {Email}, Role: {Role}", user.Id, user.Email,user.Role);
+            await _logger.LogMessageAsync("User login successful");
 
             return Ok(new
             {

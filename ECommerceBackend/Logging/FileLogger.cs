@@ -2,7 +2,13 @@
 {
     public class FileLogger : IApplicationLogger
     {
-        private readonly object _lock = new object();
+        private static readonly object _lock = new object();
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        public FileLogger(IHttpContextAccessor httpContextAccessor)
+        {
+            _httpContextAccessor = httpContextAccessor;
+        }
 
         public Task LogAsync(ApplicationLog log)
         {
@@ -14,6 +20,7 @@
 
             var logMessage =
                 $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [Information] " +
+                $"Message: {log.Message} | " +
                 $"HTTP Request | " +
                 $"Method: {log.HttpMethod} | " +
                 $"Path: {log.RequestPath} | " +
@@ -22,7 +29,10 @@
                 $"StatusCode: {log.ResponseStatusCode} | " +
                 $"Duration: {log.ExecutionDuration}ms | " +
                 $"ClientIP: {log.ClientIp} | " +
-                $"CorrelationId: {log.CorrelationId}";
+                $"CorrelationId: {log.CorrelationId} | " +
+                $"ExceptionType: {log.ExceptionType} | " +
+                $"ExceptionMessage: {log.ExceptionMessage} | " +
+                $"StackTrace: {log.StackTrace}";
 
             lock (_lock)
             {
@@ -31,6 +41,13 @@
                     logMessage + Environment.NewLine
                 );
             }
+
+            return Task.CompletedTask;
+        }
+
+        public Task LogMessageAsync(string message)
+        {
+            _httpContextAccessor.HttpContext!.Items["LogMessage"] = message;
 
             return Task.CompletedTask;
         }

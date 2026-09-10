@@ -171,7 +171,7 @@ function UserHome({ showToast }) {
                                 <p>Explore furniture for your home.</p>
                             </div>
 
-                            <div className="category-card" onClick={() =>navigate("/products?category=Fashion")}>
+                            <div className="category-card" onClick={() =>navigate("/products?category=Beauty")}>
                                 <div className="category-icon">👕</div>
                                 <h3>Fashion</h3>
                                 <p>Discover the latest fashion products.</p>
@@ -183,10 +183,10 @@ function UserHome({ showToast }) {
                                 <p>Find useful electronic products.</p>
                             </div>
 
-                            <div className="category-card" onClick={() =>navigate("/products?category=Home%20%26%20Kitchen")}>
+                            <div className="category-card" onClick={() =>navigate("/products?category=Home,Electronics,Beauty,Furniture")}>
 
                                 <div className="category-icon">🏠</div>
-                                <h3>Home & Kitchen</h3>
+                                <h3>Home</h3>
                                 <p>Everything you need for your home.</p>
                             </div>
                         </div>

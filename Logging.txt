@@ -107,6 +107,8 @@ logger.LogAsync(log); runs the LogAsync() implementation belonging to the actual
 
 The middleware calls LogAsync() through the IApplicationLogger interface reference, and that call is recahes to the actual logger implementation(log writing files), such as FileLogger.
 
+A delegate in C# is a type that represents a reference to a method — essentially a type-safe function pointer.
+a delegate variable holds a reference to a method with a matching signature, and we can invoke that method through the variable.
 Delegate is a way to store a reference to a method so that the method can be called later.
 
 Task is a C#/.NET type that represents an operation that is happening or will finish in the future.
@@ -114,3 +116,92 @@ Task is a C#/.NET type that represents an operation that is happening or will fi
 RequestDelegate is a reference to a method that takes HttpContext and performs asynchronous request processing, represented by a Task.
 _next holds a reference to the next part of the middleware pipeline.
 _next holds a reference to the remaining pipeline.
+
+When we run the .NET project, ASP.NET Core builds the request pipeline and creates/links delegates internally, even though we don't write Delegate code.
+
+what does the next parameter do here, from where the next parameter get data to pass it to _next. private readonly RequestDelegate _next; public RequestLoggingMiddleware(RequestDelegate next) { _next = next; }
+
+from where does next get its value?
+ASP.NET Core gives it the value when it creates the middleware.
+next is the function that will continue the request to the next middleware
+
+context.Items is the temporary storage area for the current request.
+
+await _logger.LogMessageAsync("Some contextual info");
+This call happens while the HTTP request is still in progress
+_httpcontextAccessor gives the reference to the live HttpContext object
+
+Request
+   ↓
+RequestLoggingMiddleware
+   ↓
+Controller
+   ↓
+RequestLoggingMiddleware
+   ↓
+Logger
+   ↓
+File OR Database
+
+_logger.LogMessageAsync("User login successful"); actually calls FileLogger.LogMessageAsync(...)
+
+FileLogger.cs receives the message
+
+public Task LogMessageAsync(string message)
+{
+    _httpContextAccessor.HttpContext!.Items["LogMessage"] = message;
+    return Task.CompletedTask;
+}
+
+It is not written to the log file yet.
+It is only temporarily stored in the current request's HttpContext.Items.
+Because the middleware is going to finish creating the complete log after the controller finishes.
+
+First RequestLoggingMiddleware runs, and when it reaches _next(context), the request continues towards the controller.
+in the controller the flow reached here await _logger.LogMessageAsync("User registration failed - email already registered");
+we _logger is dependency injected from IApplicationLogger, IApplicationLogger knows whether to use FileLogger or DatabaseLogger.
+_logger means the FileLogger or DatabaseLogger behind it.
+Then the LogMessageAsync function of the FileLogger or DatabaseLogger runs.
+the log message is put isndie HttpContext Items.
+Now the FileLogger or DatabaseLogger runs return Task.CompletedTask;
+Now the code flow goes back to the Controller and runs the return block. return(User registration failed)
+Now the Controller block is finished and the code flow reaches the middleware
+the finally block in the middleware runs
+The stopwatch is stopped.
+middleware creates an ApplicationLog object
+Middleware calls await logger.LogAsync(log);
+The LogAsync() function of the FileLogger or DatabaseLogger runs
+
+If there was no interface, we have to directly inject FileLogger into the controller
+private readonly FileLogger _logger;
+
+public AuthController(AppDbContext context, FileLogger logger)
+{
+    _context = context;
+    _logger = logger;
+}
+
+then await _logger.LogMessageAsync("User registration failed..."); would call the FileLogger function.
+Now if we want to change from FileLogger to DatabaseLogger we have change the code in the constructors inside the controllers.
+
+With the interface, the controller and the constructor doesnot know whether they are using FileLogger or DatabaseLogger
+It gives the controller a common contract instead of tying it directly to FileLogger or DatabaseLogger.
+
+Task means a function or method that will complete after some time. Task is the type. 
+
+Is there is no Task word written behind the function/method name we should have return inside the function/metho. So if we use Task behind the function/method name we no need to write return.
+
+We can have return with Task.
+
+public async Task LogAsync(ApplicationLog log)
+
+{
+
+    _context.ApplicationLogs.Add(log);
+
+    await _context.SaveChangesAsync();
+
+}
+
+the C# compiler automatically creates and returns the completed Task when the method finishes.  
+return Task.CompletedTask; says “this method is finished.”

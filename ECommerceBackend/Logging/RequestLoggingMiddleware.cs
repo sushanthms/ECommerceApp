@@ -4,7 +4,7 @@ namespace ECommerceBackend.Logging
 {
     public class RequestLoggingMiddleware
     {
-        private readonly RequestDelegate _next;// RequestDelegate is the code that should process the request next.
+        private readonly RequestDelegate _next;
 
         public RequestLoggingMiddleware(RequestDelegate next)
         {
@@ -25,10 +25,16 @@ namespace ECommerceBackend.Logging
             }
 
             context.Response.Headers["X-Correlation-ID"] = correlationId;
+            Exception? exception = null;
 
             try
             {
                 await _next(context);
+            }
+            catch (Exception ex)
+            {
+                exception = ex;
+                throw;
             }
             finally
             {
@@ -36,6 +42,7 @@ namespace ECommerceBackend.Logging
 
                 var log = new ApplicationLog
                 {
+                    Message = context.Items["LogMessage"]?.ToString() ?? $"HTTP {context.Request.Method} request to {context.Request.Path} completed",
                     HttpMethod = context.Request.Method,
                     RequestPath = context.Request.Path,
                     QueryString = context.Request.QueryString.ToString(),
@@ -43,7 +50,10 @@ namespace ECommerceBackend.Logging
                     ResponseStatusCode = context.Response.StatusCode,
                     ExecutionDuration = stopwatch.ElapsedMilliseconds,
                     ClientIp = context.Connection.RemoteIpAddress?.ToString() ?? "Unknown",
-                    CorrelationId = correlationId
+                    CorrelationId = correlationId,
+                    ExceptionType = exception?.GetType().Name ?? "",
+                    ExceptionMessage = exception?.Message ?? "",
+                    StackTrace = exception?.StackTrace ?? ""
                 };
 
                 await logger.LogAsync(log);
