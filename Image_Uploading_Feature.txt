@@ -1,0 +1,65 @@
+One product can have multiple images. Admin can add them individually or through CSV + image files/folder.
+Product cards show one image and Product Details shows all images.
+
+Images are stored inside wwwroot/images/products
+
+The database tells us This image belongs to Product 43 and its URL is /images/products/abc.png.
+
+Product.cs
+public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
+ICollection<ProductImage> means A Product object has a collection of ProductImage objects.
+
+ProductImage.cs
+this model is about one image
+product id is the foreign key
+imageurl is /images/products/abc123.png
+
+public Product Product { get; set; } = null!;
+EF Core navigation property
+
+ProductCsvDto
+ImageFiles is one string
+ACC001_1.png|ACC001_2.png
+
+.Split('|') turns that into
+ACC001_1.png
+ACC001_2.png
+
+Individual Product add/update
+
+handleImageChange
+The browser gives us a FileList
+Array.from(...) converts it into a normal JavaScript array
+React can store it in state.
+
+
+const createdProduct = await addProduct(productData, token);
+
+if (imageFiles.length > 0) {
+    await uploadProductImages(
+        createdProduct.id,
+        imageFiles,
+        token
+    );
+}
+
+Create product
+      ↓
+get ProductId
+      ↓
+upload images using ProductId
+
+Backend:
+List<IFormFile> files
+
+Frontend:
+formData.append("files", file)
+
+Both names should match
+
+When we click Submit products, first products are uplaoded, then images are upaloded, even if both are uplaoded using same Submit button
+
+const createdProduct = await addProduct(productData, token);
+if (imageFiles.length > 0) {
+    await uploadProductImages(createdProduct.id, imageFiles, token);
+}

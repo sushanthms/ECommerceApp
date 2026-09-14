@@ -177,16 +177,17 @@ const handlePageChange = (pageNumber) => {
 
                                         <div className="product-image">
 
-                                            {product.imageUrl ? (
-                                                <img src={product.imageUrl} alt={product.name} loading="lazy" onError={(e) => {
-                                                    e.target.style.display = "none";
-                                                    e.target.nextSibling.style.display = "flex";
-                                                }} />
-                                            ) : null}
-
-                                            <span className="product-fallback" style={{ display: product.imageUrl ? "none" : "flex" }}>
-                                                📦
-                                            </span>
+                                            {product.images?.length > 0 ? (
+                                                <img
+                                                    src={`${import.meta.env.VITE_API_URL.replace("/api", "")}${product.images[0].imageUrl}`}
+                                                    alt={product.name}
+                                                    loading="lazy"
+                                                />
+                                            ) : (
+                                                <span className="product-fallback">
+                                                    📦
+                                                </span>
+                                            )}
 
                                         </div>
 

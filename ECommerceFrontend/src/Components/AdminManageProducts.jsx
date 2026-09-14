@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../Header.jsx";
 import Sidebar from "../Sidebar.jsx";
-import {uploadProducts, getAdminProducts, addProduct, updateProduct, searchAdminProducts, hideProduct, restoreProduct,permanentDeleteProduct} from "../Services/ProductService.jsx";
+import {uploadProducts, getAdminProducts, addProduct, uploadProductImages, updateProduct, searchAdminProducts, hideProduct, restoreProduct,permanentDeleteProduct} from "../Services/ProductService.jsx";
 
 import "./AdminManageProducts.css";
 
@@ -14,6 +14,8 @@ function AdminManageProducts({ showToast }) {
     const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
 
     const [file, setFile] = useState(null);
+    const [csvImageFiles, setCsvImageFiles] = useState([]);
+    const [csvFolderFiles, setCsvFolderFiles] = useState([]);
     const [products, setProducts] = useState([]);
     const [search, setSearch] = useState("");
 
@@ -32,7 +34,7 @@ function AdminManageProducts({ showToast }) {
     const [price, setPrice] = useState("");
     const [stock, setStock] = useState("");
     const [category, setCategory] = useState("");
-    const [imageUrl, setImageUrl] = useState("");
+    const [imageFiles, setImageFiles] = useState([]);
 
     const [formError, setFormError] = useState("");
     const [formSuccess, setFormSuccess] = useState("");
@@ -48,35 +50,50 @@ function AdminManageProducts({ showToast }) {
         setFile(event.target.files[0]);
     };
 
+    const handleCsvImageChange = (event) => {
+        setCsvImageFiles(Array.from(event.target.files));
+    };
+
+    const handleCsvFolderChange = (event) => {
+        setCsvFolderFiles(Array.from(event.target.files));
+    };
+
+    const handleImageChange = (event) => {// stores image files
+        setImageFiles(Array.from(event.target.files));
+    };
+
     const handleUpload = async () => {
 
-    if (!file) {
-        showToast("Please select a CSV file.", "warning");
-        return;
-    }
+        if (!file) {
+            showToast("Please select a CSV file.", "warning");
+            return;
+        }
 
-    try {
+        try {
 
-        const response = await uploadProducts(file);
+            const allCsvImages = [...csvImageFiles, ...csvFolderFiles];
+            const response = await uploadProducts(file, allCsvImages);
 
-        showToast(response.message, "success");
-        setFile(null);
+            showToast(response.message, "success");
+            setFile(null);
+            setCsvImageFiles([]);
+            setCsvFolderFiles([]);
 
-        setPage(1);
-        setSearch("");
-        setShowAllProducts(false);
+            setPage(1);
+            setSearch("");
+            setShowAllProducts(false);
 
-        await loadProducts(1, "");
+            await loadProducts(1, "");
 
-    } catch (error) {
+        } catch (error) {
 
-        console.error("Upload error:", error);
+            console.error("Upload error:", error);
 
-        showToast(
-            error.response?.data?.message || "Product upload failed.",
-            "error"
-        );
-    }
+            showToast(
+                error.response?.data?.message || "Product upload failed.",
+                "error"
+            );
+        }
 };
     const loadProducts = async (pageNumber = 1, searchValue = "") => {
 
@@ -208,7 +225,7 @@ const handlePageChange = (pageNumber) => {
         setPrice("");
         setStock("");
         setCategory("");
-        setImageUrl("");
+        setImageFiles([]);
         setFormError("");
     };
 
@@ -221,7 +238,7 @@ const handlePageChange = (pageNumber) => {
         setPrice(product.price);
         setStock(product.stock);
         setCategory(product.category);
-        setImageUrl(product.imageUrl);
+        setImageFiles([]);
         setFormError("");
         setFormSuccess("");
         setShowForm(true);
@@ -253,13 +270,12 @@ const handlePageChange = (pageNumber) => {
         const token = localStorage.getItem("token");
 
         const productData = {
-            sku,
+            sku,// this got values from set states
             name,
             description,
             price: parseFloat(price),
             stock: parseInt(stock),
-            category,
-            imageUrl
+            category
         };
 
         try {
@@ -268,14 +284,19 @@ const handlePageChange = (pageNumber) => {
 
                 await updateProduct(editingId, productData, token);
 
-                setFormSuccess("Product updated successfully.");
+                if (imageFiles.length > 0) {
+                await uploadProductImages(editingId, imageFiles,token);
+            }
                 showToast("Product updated successfully!", "success");
 
             } else {
 
-                await addProduct(productData, token);
+                const createdProduct = await addProduct(productData, token);
 
-                setFormSuccess("Product added successfully.");
+                if (imageFiles.length > 0) {
+                    await uploadProductImages(createdProduct.id, imageFiles, token);
+                }
+
                 showToast("Product added successfully!", "success");
             }
 
@@ -288,11 +309,7 @@ const handlePageChange = (pageNumber) => {
         } catch (error) {
 
             console.error("Save product error:", error);
-
-            setFormError(
-                error.response?.data?.message ||
-                "Failed to save product."
-            );
+            setFormError(error.response?.data?.message || "Failed to save product.");
         }
     };
 
@@ -370,21 +387,11 @@ const handlePageChange = (pageNumber) => {
 
     return (
         <>
-            <Header
-                menuOpen={menuOpen}
-                setMenuOpen={setMenuOpen}
-                darkMode={darkMode}
-                setDarkMode={setDarkMode}
-                role="Admin"
-            />
+            <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="Admin"/>
 
             <div className="page-layout">
 
-                <Sidebar
-                    menuOpen={menuOpen}
-                    setMenuOpen={setMenuOpen}
-                    role="Admin"
-                />
+                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} role="Admin"/>
 
                 <main className="main-content">
 
@@ -394,23 +401,22 @@ const handlePageChange = (pageNumber) => {
                         <p>Upload a CSV file containing product details.</p>
 
                         <div className="upload-controls">
-
-                            <input
-                                type="file"
-                                accept=".csv"
-                                onChange={handleFileChange}
-                            />
-
-                            <button onClick={handleUpload}>
-                                Upload Products
-                            </button>
-
+                         <label className="file-upload-btn">Choose CSV File<input type="file" accept=".csv" onChange={handleFileChange}/> </label>
+                         <label className="file-upload-btn">Choose Images<input type="file" accept="image/*" multiple onChange={handleCsvImageChange}/></label>
+                         <label className="file-upload-btn">Choose Image Folder<input type="file" accept="image/*" multiple webkitdirectory="" onChange={handleCsvFolderChange}/></label>
+                         <button onClick={handleUpload}>Upload Products</button>
                         </div>
 
                         {file && (
-                            <p className="selected-file">
-                                Selected file: {file.name}
-                            </p>
+                            <p className="selected-file">Selected file: {file.name}</p>
+                        )}
+
+                        {csvImageFiles.length > 0 && (
+                            <p className="selected-file">{csvImageFiles.length} product image(s) selected</p>
+                        )}
+
+                        {csvFolderFiles.length > 0 && (
+                            <p className="selected-file">{csvFolderFiles.length} image(s) selected from folder</p>
                         )}
 
                     </div>
@@ -441,130 +447,57 @@ const handlePageChange = (pageNumber) => {
                                     className="product-form"
                                 >
 
-                                    <h3>
-                                        {editingId ? "Edit Product" : "New Product"}
-                                    </h3>
-
-                                    <div className="form-item">
-
-                                        <label>SKU</label>
-
-                                        <input
-                                            type="text"
-                                            value={sku}
-                                            onChange={(e) => setSku(e.target.value)}
-                                            placeholder="Product SKU"
-                                        />
-
-                                    </div>
+                                    <h3>{editingId ? "Edit Product" : "New Product"}</h3>   
 
                                     <div className="form-row">
 
                                         <div className="form-item">
-
                                             <label>Name</label>
-
-                                            <input
-                                                type="text"
-                                                value={name}
-                                                onChange={(e) => setName(e.target.value)}
-                                                placeholder="Product name"
-                                            />
-
+                                            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Product name"/>
                                         </div>
 
                                         <div className="form-item">
-
                                             <label>Category</label>
-
-                                            <input
-                                                type="text"
-                                                value={category}
-                                                onChange={(e) => setCategory(e.target.value)}
-                                                placeholder="Category"
-                                            />
-
+                                            <input type="text" value={category} onChange={(e) => setCategory(e.target.value)}placeholder="Category"/>
                                         </div>
 
                                     </div>
 
                                     <div className="form-item">
-
                                         <label>Description</label>
-
-                                        <input
-                                            type="text"
-                                            value={description}
-                                            onChange={(e) => setDescription(e.target.value)}
-                                            placeholder="Description"
-                                        />
+                                        <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description"/>
 
                                     </div>
 
                                     <div className="form-row">
 
                                         <div className="form-item">
-
                                             <label>Price</label>
-
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                value={price}
-                                                onChange={(e) => setPrice(e.target.value)}
-                                                placeholder="0.00"
-                                            />
-
+                                            <input type="number" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00"/>
                                         </div>
 
                                         <div className="form-item">
-
                                             <label>Stock</label>
-
-                                            <input
-                                                type="number"
-                                                value={stock}
-                                                onChange={(e) => setStock(e.target.value)}
-                                                placeholder="0"
-                                            />
-
+                                            <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} placeholder="0"/>
                                         </div>
 
                                     </div>
 
                                     <div className="form-item">
-
-                                        <label>Image URL</label>
-
-                                        <input
-                                            type="text"
-                                            value={imageUrl}
-                                            onChange={(e) => setImageUrl(e.target.value)}
-                                            placeholder="https://..."
-                                        />
-
-                                    </div>
+                                        <label>Product Images</label>
+                                        <input type="file" accept="image/*" multiple onChange={handleImageChange}/>
+                                            {imageFiles.length > 0 && (
+                                                <p>{imageFiles.length} image(s) selected</p>
+                                            )}
+                                        </div>
 
                                     {formError && (
-                                        <p className="field-error">
-                                            {formError}
-                                        </p>
+                                        <p className="field-error">{formError}</p>
                                     )}
 
                                     <div className="form-actions">
-
-                                        <button type="submit">
-                                            {editingId ? "Save Changes" : "Add Product"}
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            className="cancel-btn"
-                                            onClick={handleCancel}
-                                        >
-                                            Cancel
-                                        </button>
-
+                                        <button type="submit">{editingId ? "Save Changes" : "Add Product"}</button>
+                                        <button type="button" className="cancel-btn" onClick={handleCancel}>Cancel</button>
                                     </div>
 
                                 </form>
@@ -587,10 +520,7 @@ const handlePageChange = (pageNumber) => {
                                         : "Products"}
                             </h2>
 
-                            <button
-                                className="view-products-btn"
-                                onClick={() => setShowAllProducts(!showAllProducts)}
-                            >
+                            <button className="view-products-btn" onClick={() => setShowAllProducts(!showAllProducts)}>
                                 {showAllProducts
                                     ? "Show Less"
                                     : "View All Products"}
@@ -599,14 +529,7 @@ const handlePageChange = (pageNumber) => {
                         </div>
 
                         <div className="search-section">
-
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={(e) => handleSearch(e.target.value)}
-                                placeholder="Search products, categories or SKU..."
-                            />
-
+                            <input type="text" value={search} onChange={(e) => handleSearch(e.target.value)} placeholder="Search products, categories or SKU..."/>
                         </div>
 
                         {products.length === 0 ? (
@@ -622,17 +545,14 @@ const handlePageChange = (pageNumber) => {
                                     : products.slice(0, 6)
                                 ).map((product) => (
 
-                                    <div
-                                        key={product.id}
-                                        className="product-card"
-                                    >
+                                    <div key={product.id} className="product-card">
 
                                         <div className="product-image">
 
-                                            {product.imageUrl ? (
+                                            {product.images?.length > 0 ? (
 
                                                 <img
-                                                    src={product.imageUrl}
+                                                    src={`${import.meta.env.VITE_API_URL.replace("/api", "")}${product.images[0].imageUrl}`}
                                                     alt={product.name}
                                                     onError={(e) => {
                                                         e.target.style.display = "none";
@@ -642,10 +562,9 @@ const handlePageChange = (pageNumber) => {
 
                                             ) : null}
 
-                                            <span
-                                                className="product-fallback"
+                                            <span className="product-fallback"
                                                 style={{
-                                                    display: product.imageUrl
+                                                    display: product.images?.length > 0
                                                         ? "none"
                                                         : "flex"
                                                 }}
@@ -682,44 +601,19 @@ const handlePageChange = (pageNumber) => {
                                                 : "Visible"}
                                         </p>
 
-                                        <button onClick={() => startEdit(product)}>
-                                            Edit
-                                        </button>
+                                        <button onClick={() => startEdit(product)}>Edit</button>
 
                                         {product.isDeleted ? (
 
-                                            <button
-                                                onClick={() =>
-                                                    handleRestoreProduct(product.id)
-                                                }
-                                            >
-                                                Make Visible
-                                            </button>
+                                            <button onClick={() =>handleRestoreProduct(product.id)}>Make Visible</button>
 
                                         ) : (
 
-                                            <button
-                                                onClick={() =>
-                                                    handleHideProduct(product.id)
-                                                }
-                                            >
-                                                Hide Product
-                                            </button>
+                                            <button onClick={() =>handleHideProduct(product.id)}>Hide Product</button>
 
                                         )}
 
-                                        {product.isDeleted && (
-
-                                            <button
-                                                className="delete-product-btn"
-                                                onClick={() =>
-                                                    handlePermanentDelete(product.id)
-                                                }
-                                            >
-                                                Permanently Delete
-                                            </button>
-
-                                        )}
+                                        {product.isDeleted && (<button className="delete-product-btn" onClick={() =>handlePermanentDelete(product.id)}>Permanently Delete</button>)}
 
                                     </div>
 
@@ -731,35 +625,19 @@ const handlePageChange = (pageNumber) => {
 
                         <div className="pagination-controls">
 
-    <button
-        onClick={handlePreviousPage}
-        disabled={page === 1}
-    >
-        ← Previous
-    </button>
+                            <button onClick={handlePreviousPage} disabled={page === 1}>← Previous</button>
 
-    {getPageNumbers().map((pageNumber, index) =>
-        pageNumber === "..." ? (
-            <span key={`ellipsis-${index}`}>...</span>
-        ) : (
-            <button
-                key={pageNumber}
-                className={page === pageNumber ? "active-page" : ""}
-                onClick={() => handlePageChange(pageNumber)}
-            >
-                {pageNumber}
-            </button>
-        )
-    )}
+                            {getPageNumbers().map((pageNumber, index) =>
+                                pageNumber === "..." ? (
+                                    <span key={`ellipsis-${index}`}>...</span>
+                                ) : (
+                                    <button key={pageNumber} className={page === pageNumber ? "active-page" : ""} onClick={() => handlePageChange(pageNumber)}>{pageNumber}</button>
+                                )
+                            )}
 
-    <button
-        onClick={handleNextPage}
-        disabled={page === totalPages}
-    >
-        Next →
-    </button>
+                            <button onClick={handleNextPage} disabled={page === totalPages}>Next →</button>
 
-</div>
+                        </div>
 
                     </div>
 

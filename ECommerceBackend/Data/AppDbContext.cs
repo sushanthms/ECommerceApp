@@ -13,13 +13,14 @@ namespace ECommerceBackend.Data
 
         public DbSet<User> Users { get; set; }// DbSet means table with User objects. AppDbContext has access to the User entities/table.
         public DbSet<Product> Products { get; set; }
+        public DbSet<ProductImage> ProductImages { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<Order> Orders { get; set; }
 
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Banner> Banners { get; set; }
         public DbSet<ApplicationLog> ApplicationLogs { get; set; }
-
+        public DbSet<Review> Reviews { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Product>()

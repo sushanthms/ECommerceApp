@@ -1,0 +1,89 @@
+.admin-reviews {
+    padding: 25px;
+}
+
+.admin-reviews h1 {
+    color: var(--text-color);
+    margin-bottom: 10px;
+}
+
+.admin-reviews > p {
+    color: var(--text-muted);
+    margin-bottom: 25px;
+}
+
+.review-filters {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.review-filters select {
+    padding: 10px 12px;
+    min-width: 180px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+.review-filters select:focus {
+    outline: none;
+    border-color: var(--button-color);
+}
+
+.admin-reviews .review {
+    position: relative;
+    padding: 20px;
+    margin-bottom: 15px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.admin-reviews .review h3 {
+    margin-top: 0;
+    margin-right: 100px;
+    color: var(--text-color);
+}
+
+.admin-reviews .review div {
+    color: #f5a623;
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.admin-reviews .review strong {
+    color: var(--text-color);
+}
+
+.admin-reviews .review p {
+    color: var(--text-muted);
+    margin: 10px 0;
+}
+
+.admin-reviews .review small {
+    color: var(--text-muted);
+}
+
+.admin-reviews .review button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    background: var(--button-color);
+    color: white;
+    cursor: pointer;
+}
+
+.admin-reviews .review button:hover {
+    opacity: 0.85;
+}
+
+.admin-reviews .no-reviews {
+    color: var(--text-muted);
+}

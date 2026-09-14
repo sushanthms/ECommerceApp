@@ -13,7 +13,7 @@ namespace ECommerceBackend.Logging
 
         public async Task InvokeAsync(HttpContext context, IApplicationLogger logger)
         {
-            var startTime = DateTime.UtcNow;
+            var startTime = DateTime.Now;
 
             var stopwatch = Stopwatch.StartNew();
 
@@ -43,6 +43,7 @@ namespace ECommerceBackend.Logging
                 var log = new ApplicationLog
                 {
                     Message = context.Items["LogMessage"]?.ToString() ?? $"HTTP {context.Request.Method} request to {context.Request.Path} completed",
+                    Level = exception != null ? "Error" : context.Items["LogLevel"]?.ToString() ?? "Information",
                     HttpMethod = context.Request.Method,
                     RequestPath = context.Request.Path,
                     QueryString = context.Request.QueryString.ToString(),

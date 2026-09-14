@@ -39,11 +39,11 @@ If that property's type is int, long, or a few other numeric types, EF Core assu
 
 nullable reference types
 string.empty means we are saying This string should have a value, and initially we give it an empty string instead of null
-public string HttpMethod { get; set; } = string.Empty; if no string. Empty we get this warning "non-nullable property must contain a non-null value when exiting constructor."
+public string HttpMethod { get; set; } = string.Empty; if no string.Empty we get this warning "non-nullable property must contain a non-null value when exiting constructor."
 
 IApplicationLogger.cs
 
-IApplicationLogger tells any class that implements it that they must have a method named exactly LogAsync, they must take exactly one parameter of type ApplicationLog, and they must return Task.
+IApplicationLogger tells any class that implements it they must have a method named exactly LogAsync, they must take exactly one parameter of type ApplicationLog, and they must return Task.
 It says how the method that handles the log object should look. defines the shape of the action/method, not the data
 ApplicationLog.cs says how the log object should look
 
@@ -83,7 +83,7 @@ public DatabaseLogger(AppDbContext context)
 
 This is constructor injection.
 
-There is no interface
+If there is no interface
 in middleware we put if else condtion, we write inside
 if (provider is file)
 {
@@ -97,15 +97,15 @@ else
 }
 Now the middleware knows that these two classes exist.
 
-Using IApplicationLogger interface we now implement IApplicationLogger logger. now the middleware does not know about the classes, it only knows a logger is present that provides LogAsync fuction.
+Using IApplicationLogger interface we implement IApplicationLogger logger. now the middleware does not know about the classes, it only knows a logger is present that provides LogAsync fuction.
 
-Now how IApplicationLogger runs the code isnide log writing files.
+Now how IApplicationLogger runs the code inside log writing files.
 Think
 IApplicationLogger logger = new FileLogger();
 
 logger.LogAsync(log); runs the LogAsync() implementation belonging to the actual FileLogger object.
 
-The middleware calls LogAsync() through the IApplicationLogger interface reference, and that call is recahes to the actual logger implementation(log writing files), such as FileLogger.
+The middleware calls LogAsync() through the IApplicationLogger interface reference, and that call recahes to the actual logger implementation(log writing files), such as FileLogger.
 
 A delegate in C# is a type that represents a reference to a method — essentially a type-safe function pointer.
 a delegate variable holds a reference to a method with a matching signature, and we can invoke that method through the variable.

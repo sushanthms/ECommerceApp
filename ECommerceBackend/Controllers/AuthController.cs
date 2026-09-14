@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace ECommerceBackend.Controllers
@@ -20,25 +21,27 @@ namespace ECommerceBackend.Controllers
         private readonly AppDbContext _context;// dependency injection. Declares a private field called _context to hold a reference to the database.
         private readonly IConfiguration _configuration;
         private readonly IApplicationLogger _logger;
-
+       
         public AuthController(AppDbContext context, IConfiguration configuration, IApplicationLogger logger)
         {
             _context = context;
             _configuration = configuration;
             _logger = logger;
         }
+
         // Registration of User
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDto request)// IActionResult knows how to produce/send the HTTP response. describes what should be sent
         {
-           try { 
-            var existingUser = await _context.Users
+           try {
+
+                var existingUser = await _context.Users
                 .FirstOrDefaultAsync(u => u.Email == request.Email);
             // searches through the table, and gives the first matching row or null if no row matches.
             if (existingUser != null)// if a user is alreday registered existingUser stores taht otherwise it stores null. if existingUser is not null then that user is present
             {
-                await _logger.LogMessageAsync("User registration failed - email already registered");
-                return BadRequest(new
+                    await _logger.LogMessageAsync($"User registration failed - email already registered: {request.Email}");
+                    return BadRequest(new
                     {
                         message = "Email is already registered."
                     });
@@ -55,9 +58,8 @@ namespace ECommerceBackend.Controllers
             };
 
             _context.Users.Add(user);
-
             await _context.SaveChangesAsync();
-            await _logger.LogMessageAsync("User registration successful");
+            await _logger.LogMessageAsync($"User registration successful - UserId: {user.Id}, Email: {user.Email}");
 
             return Ok(new
             {
@@ -66,7 +68,7 @@ namespace ECommerceBackend.Controllers
             }
             catch (Exception ex)
             {
-                await _logger.LogMessageAsync("User registration failed - unexpected error");
+                await _logger.LogMessageAsync($"User registration failed - unexpected error for Email: {request.Email}, Error: {ex.Message}");
                 return StatusCode(500, new
                 {
                     message = "An unexpected error occurred."
@@ -83,7 +85,7 @@ namespace ECommerceBackend.Controllers
 
             if (user == null)
             {
-                await _logger.LogMessageAsync("User login failed");
+                await _logger.LogMessageAsync($"User login failed - no account found for Email: {request.Email}");
                 return Unauthorized(new
                 {
                     message = "Invalid email or password."
@@ -97,7 +99,7 @@ namespace ECommerceBackend.Controllers
 
             if (!passwordValid)
             {
-                await _logger.LogMessageAsync("User login failed");
+                await _logger.LogMessageAsync($"User login failed - incorrect password for Email: {request.Email}, UserId: {user.Id}", "Warning");
                 return Unauthorized(new
                 {
                     message = "Invalid email or password."
@@ -133,7 +135,7 @@ namespace ECommerceBackend.Controllers
             );
 
             var jwt = new JwtSecurityTokenHandler().WriteToken(token);// token is an in-memory object, so converting it to jwt string
-            await _logger.LogMessageAsync("User login successful");
+            await _logger.LogMessageAsync($"User login successful - UserId: {user.Id}, Email: {user.Email}, Role: {user.Role}");
 
             return Ok(new
             {

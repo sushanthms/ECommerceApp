@@ -1,0 +1,60 @@
+const userOptions = reviews.filter(
+    (review, index, self) =>
+        index === self.findIndex(r => r.userId === review.userId)
+);
+The use of this code is to create a list of unique users for the User dropdown.
+This is only used to create the dropdown
+
+callback(currentItem, currentIndex, originalArray) this is the syntax
+reviews is the table containing all the reviews.
+filter() goes through every review to say true or false. review is the current review row, index is the position of that review
+self is the complete reviews table
+self.findIndex searches through all the reviews from start.
+r.userId is the userid of the review row we are checking currently using findIndex
+
+| Id | UserId | ProductId | Rating | Comment           |
+| -  | -----  | --------  | -----  | ----------------- |
+|  1 |      1 |         5 |      5 | Very good product |
+|  2 |      2 |         5 |      4 | Good quality      |
+|  3 |      2 |         8 |      5 | I liked it        |
+|  4 |      3 |         5 |      3 | Average product   |
+|  5 |      1 |         8 |      4 | Worth the price   |
+|  6 |      3 |        10 |      5 | Excellent         |
+
+const userOptions = reviews.filter(
+    (review, index, self) =>
+        index === self.findIndex(r => r.userId === review.userId)
+);
+
+callback(currentItem, currentIndex, originalArray) this is the syntax
+
+Outside Iteration 1
+review is row 0(0,1,2), index is the row 0 so index=0, self contains the whole table
+self.findIndex does inside iteration. r is the variable for inside iteration, review is the variable for outside iteration
+1===1 true, self.findIndex gives index value 0
+outside condtion checks 0===0 so true. first row is included for userOptions
+
+Outside Iteration 2
+review is row 1(0,1,2), index is the row 1 so index=1
+Inside iteration 1
+r.userId=1, review.userId=2
+1===2 is false
+Inside iteration 2
+r.userId=2, review.userId=2
+2===2 is true
+findIndex has value 1
+outside condition checks 1===1. true. second row is included for userOptions
+
+Outside Iteration 3
+review is row 3(0,1,2), index is the row 3 so index=2(0,1,2), r is the variable for inside iteration, r does iteration from row 0.
+inside iteration 1
+r.userId=1, review.userId=2
+1===2 is false
+inside iteration 2
+r.userId=2, review.userId=2(row 3)
+inside condition checks 2===2
+findIndex says true and gives value of the index as 1(it does checking from the row 0, inside condition is true at row 1)
+outside condition checks 2===1, so false. row 2(0,1,2) is not included. This prevents from displaying same username again.
+if outside condtion became false and inside condtion was true, it does not again do inside iteration
+
+zkjh lnlp wyda expe

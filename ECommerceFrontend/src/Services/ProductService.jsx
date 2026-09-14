@@ -35,15 +35,42 @@ export const addProduct = async (product, token) => {
     return response.data;
 };
 
-export const uploadProducts = async (file) => {
+// this upload function uploads csv files, individual images, and images folder
+export const uploadProducts = async (file, imageFiles) => {
 
     const token = localStorage.getItem("token");
 
     const formData = new FormData();
+
     formData.append("file", file);
+
+    imageFiles.forEach((image) => {
+        formData.append("images", image);
+    });
 
     const response = await axios.post(
         `${API_URL}/upload`,
+        formData,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }
+    );
+
+    return response.data;
+};
+
+// runs during the individual + Add Product when we select images
+export const uploadProductImages = async (productId, imageFiles, token) => {
+    const formData = new FormData();
+
+    imageFiles.forEach((file) => {
+        formData.append("files", file);
+    });
+
+    const response = await axios.post(
+        `${API_URL}/${productId}/images`,
         formData,
         {
             headers: {

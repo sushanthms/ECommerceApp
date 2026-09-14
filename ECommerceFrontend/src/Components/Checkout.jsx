@@ -156,9 +156,7 @@ function Checkout({ showToast }) {
                         <div>
                             <p>Your cart is empty.</p>
 
-                            <button onClick={() => navigate("/home")}>
-                                Continue Shopping
-                            </button>
+                            <button onClick={() => navigate("/home")}>Continue Shopping</button>
                         </div>
                     ) : (
                         <div className="checkout-content">

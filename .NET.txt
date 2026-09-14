@@ -38,10 +38,6 @@ HTTP Status Codes
 4xx client error
 5xx server error 
 
-
-
-
-
 ASP .NET CORE
 in this project we built Web API using .net and website frontend using React
 
@@ -82,3 +78,38 @@ builder.Services.AddControllers(); It adds controller services to the applicatio
 A service is generally a class/object that performs some work for our application.
 ASP.NET Core has a Dependency Injection container that keeps track of these services.
 
+Model binding is the process where ASP.NET Core takes the incoming request data and supplies it to the C# action parameters/models.
+public IActionResult Login(LoginModel model)
+model is NOT dependency injected. It checks whether the data matches the LoginModel DTO type.
+It is mainly checking/mapping the shape and types of the incoming data to the model.
+
+{
+    "email": "abc@gmail.com",
+    "password": "12345"
+}
+
+matches:
+
+public class LoginModel
+{
+    public string Email { get; set; }
+    public string Password { get; set; }
+}
+
+public AuthController(AppDbContext context)
+context is provided through Dependency Injection.
+
+_context is a variable that holds the AppDbContext object, which gives us access to the database.
+The AppDbContext object is passed into the constructor through the context parameter, and then we assign that same object to _context.
+So context and _context are two variables referring to the same AppDbContext object.
+
+Task represents an operation that will complete in the future.
+IActionResult represents the HTTP response that the controller sends back to the client. return Ok, return BadRequest, return Unauthorized.
+
+public async Task<IActionResult> Login(LoginModel model)
+This is an asynchronous controller action called Login. It receives a LoginModel from the request, performs asynchronous work, and returns an HTTP response.
+
+A DTO is an object that is used to carry only the data that needs to be transferred between the client and the backend.
+
+AppDbContext is the main EF Core object that represents the connection/session with the database.
+It contains DbSets representing the database tables.  

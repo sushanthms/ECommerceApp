@@ -1,0 +1,159 @@
+.page-layout {
+    display: flex;
+}
+
+.order-details-page {
+    flex: 1;
+    padding: 25px;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.order-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.order-top h2 {
+    margin: 0 0 5px;
+    font-size: 20px;
+}
+
+.order-top p {
+    margin: 0;
+    color: #777;
+    font-size: 15px;
+}
+
+.order-details-status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.order-details-status.pending {
+    background: #fff1d6;
+    color: #9a6700;
+}
+
+.order-details-status.delivered {
+    background: #e5f3e8;
+    color: #28733c;
+}
+
+.order-details-status.cancelled {
+    background: #f8dddd;
+    color: #a33a3a;
+}
+
+.order-details-card {
+    background: #fffdf8;
+    border: 1px solid #e5dfd2;
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 15px;
+}
+
+.order-details-card h3 {
+    margin: 0 0 12px;
+    color: #29251f;
+    font-size: 18px;
+}
+
+.order-detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee8dc;
+}
+
+.order-detail-item:last-child {
+    border-bottom: none;
+}
+
+.order-item-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.order-detail-image,
+.order-detail-image-fallback {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #e5dfd2;
+}
+
+.order-detail-image-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f5f0e6;
+    font-size: 32px;
+}
+
+.order-item-info h4 {
+    margin: 0 0 6px;
+    color: #29251f;
+    font-size: 16px;
+}
+
+.order-item-info p {
+    margin: 3px 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.order-detail-item strong {
+    font-size: 18px;
+    color: #29251f;
+}
+
+.order-address p {
+    margin: 5px 0;
+    color: #666;
+    font-size: 15px;
+}
+
+.order-address .delivery-name {
+    color: #29251f;
+    font-weight: 600;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    color: #666;
+}
+
+.total-row {
+    border-top: 1px solid #e5dfd2;
+    margin-top: 5px;
+    padding-top: 12px;
+    color: #29251f;
+}
+
+.total-row strong {
+    font-size: 20px;
+}
+
+.back-orders-button {
+    display: inline-block;
+    padding: 8px 14px;
+    background: #b4533c;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.back-orders-button:hover {
+    opacity: 0.9;
+}

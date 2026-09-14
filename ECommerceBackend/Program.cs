@@ -106,6 +106,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();// If an HTTP request should use HTTPS, it redirects it to HTTPS. 
+app.UseStaticFiles();
 app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseCors("ReactPolicy");
 app.UseAuthentication();

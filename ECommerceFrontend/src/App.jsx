@@ -14,8 +14,11 @@ import Cart from "./Components/Cart.jsx";
 import Checkout from "./Components/Checkout.jsx";
 import AdminOrders from "./Pages/AdminOrders.jsx";
 import AdminOrderDetails from "./Pages/AdminOrderDetails.jsx";
+import AdminReviews from "./Pages/AdminReviews";
 import AdminManageProducts from "./Components/AdminManageProducts.jsx";
 import Community from "./Pages/Community.jsx";
+import UserOrders from "./Pages/UserOrders.jsx";
+import UserOrderDetails from "./Pages/UserOrderDetails.jsx";
 import Toast from "./Components/Toast.jsx";
 
 import "./style.css";
@@ -50,9 +53,12 @@ const showToast = (message, type = "info") => {
         <Route path="/product/:id" element={ <ProtectedRoute allowedRole="User"><ProductDetails showToast={showToast}/></ProtectedRoute>} />
         <Route path="/cart" element={<ProtectedRoute allowedRole="User"><Cart showToast={showToast} /></ProtectedRoute>} />
         <Route path="/checkout" element={<ProtectedRoute allowedRole="User"><Checkout showToast={showToast} /></ProtectedRoute>}/>
+        <Route path="/orders" element={<ProtectedRoute allowedRole="User"><UserOrders /></ProtectedRoute>} />
+        <Route path="/orders/:id" element={<ProtectedRoute allowedRole="User"><UserOrderDetails /></ProtectedRoute>} />
         <Route path="/admin/orders" element={<ProtectedRoute allowedRole="Admin"><AdminOrders /></ProtectedRoute>}/>
         <Route path="/admin/orders/:id"element={<ProtectedRoute allowedRole="Admin"><AdminOrderDetails /></ProtectedRoute>}/>
         <Route path="/admin/products" element={<ProtectedRoute allowedRole="Admin"><AdminManageProducts showToast={showToast} /></ProtectedRoute>}/>
+        <Route path="/admin/reviews" element={<ProtectedRoute role="Admin"><AdminReviews /></ProtectedRoute>}/>
         <Route path="/community" element={<ProtectedRoute allowedRole="User"><Community /></ProtectedRoute>} />
         
       </Routes>

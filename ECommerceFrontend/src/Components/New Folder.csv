@@ -1,0 +1,3 @@
+SKU,Name,Description,Price,Stock,Category,ImageFiles
+TEST10,Testfolder1,Comfortable wooden chair for home,2500,10,Furniture,"TEST001_1.png|TEST001_2.png"
+TEST11,Testfolder2,Adjustable LED desk lamp,1200,15,Home,"TEST002_1.png|TEST002_2.png"

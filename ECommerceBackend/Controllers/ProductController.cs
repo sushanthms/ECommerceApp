@@ -36,7 +36,7 @@ namespace ECommerceBackend.Controllers
         // POST /api/Product/upload
         [HttpPost("upload")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UploadCsv(IFormFile file)
+        public async Task<IActionResult> UploadCsv([FromForm] IFormFile file, [FromForm] List<IFormFile>? images)
         {
             if (file == null || file.Length == 0)
             {
@@ -61,7 +61,7 @@ namespace ECommerceBackend.Controllers
 
                 var csvProducts = csv.GetRecords<ProductCsvDto>().ToList();
                 // gives the data to UpsertProductsAsync fucntion
-                var (added, updated) = await UpsertProductsAsync(csvProducts);
+                var (added, updated) = await UpsertProductsAsync(csvProducts, images);
 
                 return Ok(new
                 {
@@ -115,6 +115,7 @@ namespace ECommerceBackend.Controllers
             );
 
             var products = await query
+                .Include(p => p.Images)
                 .OrderBy(p => p.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -134,6 +135,7 @@ namespace ECommerceBackend.Controllers
         public async Task<IActionResult> GetProduct(int id)
         {
             var product = await _context.Products
+                .Include(p => p.Images)
                 .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
 
             if (product == null)
@@ -167,6 +169,7 @@ namespace ECommerceBackend.Controllers
             );
 
             var products = await query
+                .Include(p => p.Images)
                 .OrderBy(p => p.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -225,6 +228,7 @@ namespace ECommerceBackend.Controllers
             );
 
             var products = await query
+                .Include(p => p.Images)
                 .OrderBy(p => p.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -262,10 +266,10 @@ namespace ECommerceBackend.Controllers
             search = search.Trim().ToLower();
 
             var query = _context.Products
-    .Where(p =>
-        p.Name.ToLower().Contains(search) ||
-        p.Category.ToLower().Contains(search) ||
-        p.SKU.ToLower().Contains(search));
+                .Where(p =>
+                    p.Name.ToLower().Contains(search) ||
+                    p.Category.ToLower().Contains(search) ||
+                    p.SKU.ToLower().Contains(search));
 
             var totalProducts = await query.CountAsync();
 
@@ -274,6 +278,7 @@ namespace ECommerceBackend.Controllers
             );
 
             var products = await query
+                .Include(p => p.Images)
                 .OrderBy(p => p.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -303,7 +308,7 @@ namespace ECommerceBackend.Controllers
                 });
             }
             var skuExists = await _context.Products
-        .AnyAsync(p => p.SKU.Trim().ToLower() == sku.ToLower());
+                .AnyAsync(p => p.SKU.Trim().ToLower() == sku.ToLower());
 
             if (skuExists)
             {
@@ -321,7 +326,6 @@ namespace ECommerceBackend.Controllers
                 Price = dto.Price,
                 Stock = dto.Stock,
                 Category = dto.Category ?? string.Empty,
-                ImageUrl = dto.ImageUrl ?? string.Empty
             };
 
             _context.Products.Add(product);
@@ -369,55 +373,159 @@ namespace ECommerceBackend.Controllers
             product.Price = dto.Price;
             product.Stock = dto.Stock;
             product.Category = dto.Category ?? string.Empty;
-            product.ImageUrl = dto.ImageUrl ?? string.Empty;
 
             await _context.SaveChangesAsync();
 
             return Ok(product);
         }
-        // it is a function not an api endpoint
-        public async Task<(int added, int updated)> UpsertProductsAsync(List<ProductCsvDto> csvProducts)
+        // it is a function not an api endpoint.
+        // processes the products from the CSV and connects the CSV image names to the actual uploaded image files.
+        private async Task<(int added, int updated)> UpsertProductsAsync(List<ProductCsvDto> csvProducts, List<IFormFile>? images)
         {
-            var existingProducts = await _context.Products
-                .GroupBy(p => p.SKU.ToLower())
+            var existingProducts = await _context.Products// creating a dictionary
+                .Include(p => p.Images)
+                .GroupBy(p => p.SKU.ToLower())// grouping by sku and creating a dictionary
                 .ToDictionaryAsync(g => g.Key, g => g.First());
 
-            int added = 0, updated = 0;
+            var uploadedFiles = images?// creating another dictionary. if images are null, then the next code is skipped
+                .Where(f => f.Length > 0)// image size
+                .ToDictionary(// The key is the filename, and the value is the actual uploaded file object.
+                    f => Path.GetFileName(f.FileName).Trim().ToLower(),// here filename means image name like abc.jpg not GUID name
+                    f => f
+                ) ?? new Dictionary<string, IFormFile>();//Dictionary will either contain uploaded files or will be empty.
+
+            Console.WriteLine($"Uploaded image count: {uploadedFiles.Count}");
+
+            foreach (var fileName in uploadedFiles.Keys)// uploadedFiles.Keys contains image name(abc.png)
+            {
+                Console.WriteLine($"Uploaded image: {fileName}");
+            }
+
+            int added = 0;
+            int updated = 0;
 
             foreach (var x in csvProducts)
             {
                 var sku = x.SKU ?? string.Empty;
                 var key = sku.ToLower();
-                // key is the the current product name stored in the dictionary. 
-                // if block looks into the existingProducts dictionary and usiing that key it searches if same products is present in the csv file
+
+                Product product;// product is a variable of type Product can hold one complete Product object.
+
+                // key is the SKU stored in the dictionary. 
+                // if block looks into the existingProducts dictionary and using that key it searches if same products is present in the csv file
+                // if the sku in the csv matches the sku in existingProducts, then we store its reference in the variable called existing then we pass it to the variable called products
                 if (existingProducts.TryGetValue(key, out var existing))
                 {
-                    existing.SKU = sku;
-                    existing.Name = x.Name ?? string.Empty;
-                    existing.Price = x.Price;
-                    existing.Stock = x.Stock;
-                    existing.Description = x.Description ?? string.Empty;
-                    existing.Category = x.Category ?? string.Empty;
-                    existing.ImageUrl = x.ImageUrl ?? string.Empty;
+                    product = existing;
+
+                    product.SKU = sku;
+                    product.Name = x.Name ?? string.Empty;
+                    product.Price = x.Price;
+                    product.Stock = x.Stock;
+                    product.Description = x.Description ?? string.Empty;
+                    product.Category = x.Category ?? string.Empty;
 
                     updated++;
+
+                    // if there are images string.IsNullOrWhiteSpace(x.ImageFiles) gives false, !false makes it true and if block is executed
+                    // if there are no images string.IsNullOrWhiteSpace(x.ImageFiles) gives true, !true makes it false and if block is not executed
+
+                    if (!string.IsNullOrWhiteSpace(x.ImageFiles))
+                    {
+                        _context.ProductImages.RemoveRange(existing.Images);// Removing old ProductImage records
+                    }
                 }
+
                 else
                 {
-                    var newProduct = new Product
+                    product = new Product
                     {
                         SKU = sku,
                         Name = x.Name ?? string.Empty,
                         Description = x.Description ?? string.Empty,
                         Price = x.Price,
                         Stock = x.Stock,
-                        Category = x.Category ?? string.Empty,
-                        ImageUrl = x.ImageUrl ?? string.Empty
+                        Category = x.Category ?? string.Empty
                     };
 
-                    _context.Products.Add(newProduct);
-                    existingProducts[key] = newProduct;
+                    _context.Products.Add(product);
+
+                    existingProducts[key] = product;// key is the SKU of the new product. we already passed the products in the database to the existingProducts dictionary variable 
+
                     added++;
+                }
+
+                Console.WriteLine($"CSV SKU: {x.SKU}");
+                Console.WriteLine($"CSV ImageFiles: {x.ImageFiles}");
+
+                if (!string.IsNullOrWhiteSpace(x.ImageFiles))
+                {
+                    var imageFileNames = x.ImageFiles
+                        .Split('|', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(name => name.Trim());
+
+                    foreach (var imageFileName in imageFileNames)
+                    {
+                        var fileKey = imageFileName.ToLower();
+
+                        if (!string.IsNullOrWhiteSpace(x.ImageFiles) && uploadedFiles.Count == 0)
+                        {
+                            throw new Exception(
+                                $"CSV contains image files for SKU '{x.SKU}', but no image files were uploaded."
+                            );
+                        }
+
+                        if (!uploadedFiles.TryGetValue(fileKey, out var file))
+                        {
+                            throw new Exception(
+                                $"Image file '{imageFileName}' mentioned in the CSV was not uploaded."
+                            );
+                        }
+
+                        var extension = Path.GetExtension(file.FileName)
+                            .ToLowerInvariant();
+
+                        var allowedExtensions = new[]
+                        {
+                    ".jpg",
+                    ".jpeg",
+                    ".png",
+                    ".webp"
+                };
+
+                        if (!allowedExtensions.Contains(extension))
+                        {
+                            continue;
+                        }
+
+                        var uploadFolder = Path.Combine(
+                            Directory.GetCurrentDirectory(),
+                            "wwwroot",
+                            "images",
+                            "products"
+                        );
+
+                        Directory.CreateDirectory(uploadFolder);
+
+                        var newFileName = $"{Guid.NewGuid()}{extension}";
+
+                        var filePath = Path.Combine(
+                            uploadFolder,
+                            newFileName
+                        );
+
+                        using var stream = new FileStream(
+                            filePath,
+                            FileMode.Create
+                        );
+
+                        await file.CopyToAsync(stream);
+
+                        product.Images.Add(new ProductImage
+                        {
+                            ImageUrl = $"/images/products/{newFileName}"
+                        });
+                    }
                 }
             }
 
@@ -492,5 +600,101 @@ namespace ECommerceBackend.Controllers
 
             return Ok(categories);
         }
+
+        // runs when individual Add Product / Update Product form
+        [HttpPost("{id}/images")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UploadProductImages(int id, List<IFormFile> files)
+        {
+            var product = await _context.Products
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (product == null)
+            {
+                return NotFound(new
+                {
+                    message = "Product not found."
+                });
+            }
+
+            if (files == null || files.Count == 0)
+            {
+                return BadRequest(new
+                {
+                    message = "Please select at least one image."
+                });
+            }
+
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+
+            var uploadFolder = Path.Combine(// here uploaded images are stored
+                Directory.GetCurrentDirectory(),
+                "wwwroot",
+                "images",
+                "products"
+            );
+
+            Directory.CreateDirectory(uploadFolder);// the directory is created if not present
+
+            var uploadedImages = new List<ProductImage>();// uploaded images become ProductImage objects and they are stores in uploadedImages List(Array)
+
+            foreach (var file in files)
+            {
+                if (file.Length == 0)
+                {
+                    continue;
+                }
+
+                var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+                if (!allowedExtensions.Contains(extension))
+                {
+                    return BadRequest(new
+                    {
+                        message = $"Invalid image type: {file.FileName}"
+                    });
+                }
+
+                var fileName = $"{Guid.NewGuid()}{extension}";
+
+                var filePath = Path.Combine(uploadFolder, fileName);
+
+                using var stream = new FileStream(filePath, FileMode.Create);// image bytes are written to the disk.
+
+                await file.CopyToAsync(stream);
+
+                var image = new ProductImage
+                {
+                    ProductId = product.Id,
+                    ImageUrl = $"/images/products/{fileName}"
+                };
+
+                uploadedImages.Add(image);// storing the image in the List, then for loop to the next image and stroing it in the List
+            }
+
+            if (uploadedImages.Count == 0)
+            {
+                return BadRequest(new
+                {
+                    message = "No valid images were uploaded."
+                });
+            }
+
+            _context.ProductImages.AddRange(uploadedImages);// saving all images to the SQL Server
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Product images uploaded successfully.",
+                images = uploadedImages.Select(i => new
+                {
+                    i.Id,
+                    i.ProductId,
+                    i.ImageUrl
+                })
+            });
+        }
     }
 }
+

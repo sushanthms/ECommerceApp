@@ -3,6 +3,6 @@
     public interface IApplicationLogger
     {
         Task LogAsync(ApplicationLog log);
-        Task LogMessageAsync(string message);
+        Task LogMessageAsync(string message, string level = "Information");
     }
 }

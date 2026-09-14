@@ -19,7 +19,7 @@
             Directory.CreateDirectory(logDirectory);
 
             var logMessage =
-                $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [Information] " +
+                $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [{log.Level}] " +
                 $"Message: {log.Message} | " +
                 $"HTTP Request | " +
                 $"Method: {log.HttpMethod} | " +
@@ -45,10 +45,14 @@
             return Task.CompletedTask;
         }
 
-        public Task LogMessageAsync(string message)
+        public Task LogMessageAsync(string message, string level = "Information")
         {
-            _httpContextAccessor.HttpContext!.Items["LogMessage"] = message;
-
+            var context = _httpContextAccessor.HttpContext;
+            if (context != null)
+            {
+                context.Items["LogMessage"] = message;
+                context.Items["LogLevel"] = level;
+            }
             return Task.CompletedTask;
         }
     }

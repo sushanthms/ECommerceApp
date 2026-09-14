@@ -10,6 +10,59 @@
     box-sizing: border-box;
 }
 
+/* Upload */
+
+.upload-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.file-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 150px;
+    padding: 10px 18px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+    box-sizing: border-box;
+}
+
+.file-upload-btn:hover {
+    background: var(--button-color);
+    color: #fff;
+    border-color: var(--button-color);
+}
+
+.file-upload-btn input {
+    display: none;
+}
+
+.upload-controls > button {
+    min-width: 150px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: var(--button-color);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.upload-controls > button:hover {
+    background: var(--button-hover);
+}
+
 .upload-section,
 .product-form-section {
     width: 100%;
@@ -27,13 +80,19 @@
     color: var(--text-color);
 }
 
-.upload-controls {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+.selected-file {
+    margin-top: 12px;
+    color: var(--button-color) !important;
 }
 
-.upload-controls button,
+/* Headings */
+
+.section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .add-product-btn,
 .view-products-btn {
     padding: 10px 20px;
@@ -46,21 +105,9 @@
     cursor: pointer;
 }
 
-.upload-controls button:hover,
 .add-product-btn:hover,
 .view-products-btn:hover {
     background: var(--button-hover);
-}
-
-.selected-file {
-    margin-top: 12px;
-    color: var(--button-color) !important;
-}
-
-.section-heading {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
 }
 
 /* Search */
@@ -365,19 +412,19 @@
     }
 
     .pagination-controls {
-    gap: 4px;
-    margin-top: 25px;
-    flex-wrap: wrap;
-}
+        gap: 4px;
+        margin-top: 25px;
+        flex-wrap: wrap;
+    }
 
-.pagination-controls button {
-    min-width: 34px;
-    height: 36px;
-    padding: 0 7px;
-    font-size: 13px;
-}
+    .pagination-controls button {
+        min-width: 34px;
+        height: 36px;
+        padding: 0 7px;
+        font-size: 13px;
+    }
 
-.pagination-controls span {
-    padding: 0 2px;
-}
+    .pagination-controls span {
+        padding: 0 2px;
+    }
 }

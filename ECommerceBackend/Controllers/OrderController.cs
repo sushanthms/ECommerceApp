@@ -136,5 +136,106 @@ namespace ECommerceBackend.Controllers
 
             return Ok(orders);
         }
+
+        [HttpGet("UserOrders")]
+        [Authorize(Roles = "User")]
+        public async Task<IActionResult> GetUserOrders()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null)
+            {
+                return Unauthorized();
+            }
+
+            int userId = int.Parse(userIdClaim.Value);
+
+            var orders = await _context.Orders
+                .Where(o => o.UserId == userId)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                .OrderByDescending(o => o.OrderDate)
+                .Select(o => new
+                {
+                    o.Id,
+
+                    o.DeliveryName,
+                    o.Phone,
+                    o.Address,
+                    o.City,
+                    o.State,
+                    o.Pincode,
+
+                    o.TotalAmount,
+                    o.Status,
+                    o.OrderDate,
+
+                    OrderItems = o.OrderItems.Select(oi => new
+                    {
+                        oi.Id,
+                        oi.ProductId,
+                        ProductName = oi.Product.Name,
+                        ProductImage = oi.Product.Images.Select(i => i.ImageUrl).FirstOrDefault(),
+                        oi.Quantity,
+                        oi.Price
+                    })
+                })
+                .ToListAsync();
+
+            return Ok(orders);
+        }
+
+        [HttpGet("User/{id}")]
+        [Authorize(Roles = "User")]
+        public async Task<IActionResult> GetUserOrderDetails(int id)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null)
+            {
+                return Unauthorized();
+            }
+
+            int userId = int.Parse(userIdClaim.Value);
+
+            var order = await _context.Orders
+                .Where(o => o.Id == id && o.UserId == userId)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                .Select(o => new
+                {
+                    o.Id,
+                    o.DeliveryName,
+                    o.Phone,
+                    o.Address,
+                    o.City,
+                    o.State,
+                    o.Pincode,
+                    o.TotalAmount,
+                    o.Status,
+                    o.OrderDate,
+
+                    OrderItems = o.OrderItems.Select(oi => new
+                    {
+                        oi.Id,
+                        oi.ProductId,
+                        ProductName = oi.Product.Name,
+                        ProductImage = oi.Product.Images.Select(i => i.ImageUrl).FirstOrDefault(),
+                        oi.Quantity,
+                        oi.Price
+                    })
+                })
+                .FirstOrDefaultAsync();
+
+            if (order == null)
+            {
+                return NotFound(new
+                {
+                    message = "Order not found."
+                });
+            }
+
+            return Ok(order);
+        }
     }
 }

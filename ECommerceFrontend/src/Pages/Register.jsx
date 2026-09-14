@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { registerUser } from "../Services/authService.jsx";
+import { registerUser} from "../Services/authService.jsx";
 
 import "./Login.css";
 
@@ -103,16 +103,12 @@ function Register() {
                             placeholder="Enter your name"
                         />
 
-                        {nameError && (
-                            <p className="error-message">
-                                {nameError}
-                            </p>
-                        )}
+                        {nameError && (<p className="error-message">{nameError}</p>)}
                     </div>
 
                     <div className="form-group">
                         <label>Email</label>
-                        <input type="text" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email"/>
+                        <input type="text" value={email} onChange={(e) => {setEmail(e.target.value);}} placeholder="Enter your email"/>
                     </div>
 
                     <div className="form-group">
@@ -125,25 +121,14 @@ function Register() {
                         <input type="password" value={confirmPassword} onChange={(e) =>setConfirmPassword(e.target.value)}placeholder="Confirm password"/>
                     </div>
 
-                    {error && (
-                        <p className="error-message">
-                            {error}
-                        </p>
-                    )}
-
-                    {success && (
-                        <p className="success-message">
-                            {success}
-                        </p>
-                    )}
+                    {error && (<p className="error-message">{error}</p>)}
+                    {success && (<p className="success-message">{success}</p>)}
 
                     <button type="submit">Register</button>
 
                 </form>
 
-                <p>Already have an account?{" "}
-                    <button type="button" onClick={() => navigate("/login")}>Login</button>
-                </p>
+                <p>Already have an account?{" "}<button type="button" onClick={() => navigate("/login")}>Login</button></p>
 
             </div>
         </div>

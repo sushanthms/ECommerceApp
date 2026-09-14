@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getProductById } from "../Services/ProductService.jsx";
 import { addToCart, getCart, updateCartItemQuantity } from "../Services/CartService.jsx";
+import { addReview, getProductReviews } from "../Services/ReviewService.jsx";
 import "./ProductDetails.css";
 import Header from "../Header.jsx";
 import Sidebar from "../Sidebar.jsx";
@@ -15,15 +16,21 @@ function ProductDetails({showToast}) {
     const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
 
     const [product, setProduct] = useState(null);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [addedToCart, setAddedToCart] = useState(false);
     const [cartItem, setCartItem] = useState(null);
     const [quantity, setQuantity] = useState(1);
+
+    const [reviews, setReviews] = useState([]);
+    const [rating, setRating] = useState(5);
+    const [comment, setComment] = useState("");
 
     useEffect(() => {
     const loadProduct = async () => {
         try {
             const data = await getProductById(id);
             setProduct(data);
+            setCurrentImageIndex(0);
         } catch (error) {
             console.error("Error loading product:", error);
         }
@@ -59,6 +66,19 @@ function ProductDetails({showToast}) {
     checkCart();
 }, [id]);
 
+useEffect(() => {
+    const loadReviews = async () => {
+        try {
+            const data = await getProductReviews(id);
+            setReviews(data);
+        } catch (error) {
+            console.error("Error loading reviews:", error);
+        }
+    };
+
+    loadReviews();
+}, [id]);
+
     const handleAddToCart = async () => {
     try {
         const data = await addToCart(product.id, quantity);
@@ -71,9 +91,34 @@ function ProductDetails({showToast}) {
     }
 };
 
+const handleSubmitReview = async () => {
+    if (!comment.trim()) {
+        showToast("Please enter a review.", "warning");
+        return;
+    }
+
+    try {
+        const newReview = await addReview(product.id, rating, comment);
+
+        const user = JSON.parse(localStorage.getItem("user"));
+
+        setReviews([newReview, ...reviews]);// makes a new array, puts the newreview first(prepends) then puts all the old reviews after it
+
+        setRating(5);// makes star selector back to 5
+        setComment("");// clears the textarea
+
+        showToast("Review added successfully", "success");
+
+    } catch (error) {
+        showToast(error.response?.data || "Failed to add review.","error");
+    }
+};
+
     if (!product) {
         return <p>Product not found.</p>;
     }
+
+    const averageRating = reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length: 0;
 
     const handleQuantityChange = async (newQuantity) => {
 
@@ -96,16 +141,8 @@ function ProductDetails({showToast}) {
         );
 
         setQuantity(newQuantity);
-
-        setCartItem({
-            ...cartItem,
-            quantity: newQuantity
-        });
-
-        setProduct({
-            ...product,
-            stock: data.stock
-        });
+        setCartItem({...cartItem, quantity: newQuantity});
+        setProduct({...product, stock: data.stock});
 
     } catch (error) {
 
@@ -116,6 +153,16 @@ function ProductDetails({showToast}) {
             "Failed to update quantity."
         );
     }
+};
+
+const images = product.images || [];
+
+const handlePreviousImage = () => {
+    setCurrentImageIndex((currentImageIndex - 1 + images.length) % images.length);
+};
+
+const handleNextImage = () => {
+    setCurrentImageIndex((currentImageIndex + 1) % images.length);
 };
 
     return (
@@ -130,19 +177,66 @@ function ProductDetails({showToast}) {
 
                 <div className="product-details">
 
-                    <div className="product-details-image">
-                        {product.imageUrl ? (
-                            <img src={product.imageUrl} alt={product.name}/>
-                        ) : (
-                        <span>📦</span>
-                        )}
-                    </div>
+                    <div className="product-details-gallery">
+
+                            <div className="product-details-image">
+
+                                {images.length > 0 ? (
+                                    <img
+                                        src={`${import.meta.env.VITE_API_URL.replace("/api", "")}${images[currentImageIndex].imageUrl}`}
+                                        alt={product.name}
+                                    />
+                                ) : (
+                                    <span>📦</span>
+                                )}
+
+                            </div>
+
+                            {images.length > 1 && (
+                                <div className="image-navigation">
+
+                                    <button onClick={handlePreviousImage}>
+                                        ← Previous
+                                    </button>
+
+                                    <span>
+                                        {currentImageIndex + 1} / {images.length}
+                                    </span>
+
+                                    <button onClick={handleNextImage}>
+                                        Next →
+                                    </button>
+
+                                </div>
+                            )}
+
+                            {images.length > 1 && (
+                                <div className="image-thumbnails">
+
+                                    {images.map((image, index) => (
+                                        <img
+                                            key={image.id}
+                                            src={`${import.meta.env.VITE_API_URL.replace("/api", "")}${image.imageUrl}`}
+                                            alt={`${product.name} ${index + 1}`}
+                                            className={index === currentImageIndex ? "active-thumbnail" : ""}
+                                            onClick={() => setCurrentImageIndex(index)}
+                                        />
+                                    ))}
+
+                                </div>
+                            )}
+
+                        </div>
 
                     <div className="product-details-info">
 
                         <h1>{product.name}</h1>
 
-                        <div className="rating">★★★★★<span>4.5 | 128 Ratings</span></div>
+                        <div className="rating">
+                            {"★".repeat(Math.round(averageRating))}
+                            {"☆".repeat(5 - Math.round(averageRating))}
+                            <span>{reviews.length > 0 ? `${averageRating.toFixed(1)} | ${reviews.length} Ratings` : "No Ratings"}</span>
+                        </div>
 
                         <p className="product-description">{product.description}</p>
 
@@ -233,15 +327,42 @@ function ProductDetails({showToast}) {
 
                     <h2>Customer Reviews</h2>
 
-                    <div className="review">
+                        <div className="review-form">
+                            <h3>Write a Review</h3>
+                                <div className="star-input">
+                                    {[1, 2, 3, 4, 5].map((star) => (// star is a specific fixed number for that button. 1 means the number for the first button
+                                    // the arrow function () => setRating(star) "remembers" whatever star was at the time it was created, even after the loop has finished. Button 1's onClick is () => setRating(1)
+                                    // Each button effectively "hard-codes" its own number into its click handler, even though they were all generated by the same line of code.
+                                    // Now if we click 3rd star, As part of that re-run, .map() executes again — 5 brand new iterations happen (5 brand new closures get created, replacing the old ones), and all 5 ternaries get evaluated again, fresh, but now with rating = 3 this time:
+                                        <button key={star} type="button" onClick={() => setRating(star)}>{star <= rating ? "★" : "☆"}</button>
+                                    ))}
+                                </div>
 
-                        <div>★★★★★</div>
-                        <strong>Great product</strong>
-                        <p>Good quality product and works as expected.</p>
+                            <textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Write your review..."/>
+                            <button onClick={handleSubmitReview}>Submit Review</button>
 
-                    </div>
-                </div>
-            </div>
+                            </div>
+
+                            {reviews.length === 0 ? (
+                                <p>No reviews yet.</p>
+                            ) : (
+                                reviews.map((review) => (
+                                    <div className="review" key={review.id}>
+
+                                        <div>
+                                            {"★".repeat(review.rating)}
+                                            {"☆".repeat(5 - review.rating)}
+                                        </div>
+
+                                        <strong>{review.userName}</strong>
+                                        <p>{review.comment}</p>
+
+                                    </div>
+                                ))
+                            )}
+
+                        </div>
+                        </div>
             </div>
         </>
     );

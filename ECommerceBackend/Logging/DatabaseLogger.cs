@@ -20,9 +20,10 @@ namespace ECommerceBackend.Logging
             await _context.SaveChangesAsync();
         }
 
-        public Task LogMessageAsync(string message)
+        public Task LogMessageAsync(string message, string level = "Information")
         {
             _httpContextAccessor.HttpContext!.Items["LogMessage"] = message;
+            _httpContextAccessor.HttpContext!.Items["LogLevel"] = level;
 
             return Task.CompletedTask;
         }

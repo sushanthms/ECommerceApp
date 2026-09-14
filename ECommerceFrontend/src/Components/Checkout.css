@@ -3,35 +3,36 @@
     width: 100%;
     min-height: calc(100vh - 72px);
 }
+
 .checkout-page {
-    flex:1;
+    flex: 1;
     width: 100%;
     padding: 40px;
-    background-color: var(--bg-color);
-    color: var(--text-color);
+    background-color: #f8f3e8;
+    color: #29251f;
 }
 
 .checkout-page h1 {
     font-size: 32px;
     margin-bottom: 30px;
-    color: var(--text-color);
+    color: #29251f;
 }
 
 .checkout-content {
-   width: 100%;
+    width: 100%;
 }
 
 .checkout-items {
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
+    background-color: #fffdf8;
+    border: 1px solid #e5dfd2;
+    border-radius: 10px;
     padding: 25px;
 }
 
 .checkout-items h2 {
     margin-top: 0;
     margin-bottom: 20px;
-    color: var(--text-color);
+    color: #29251f;
 }
 
 .checkout-item {
@@ -39,37 +40,37 @@
     justify-content: space-between;
     align-items: center;
     padding: 18px 0;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid #e5dfd2;
 }
 
 .checkout-item h3 {
     margin: 0 0 8px;
-    color: var(--text-color);
+    color: #29251f;
 }
 
 .checkout-item p {
     margin: 0;
-    color: var(--text-color);
+    color: #666;
 }
 
 .checkout-bottom {
     display: flex;
-    justify-content: space-between; 
+    justify-content: space-between;
     margin-top: 30px;
 }
 
 .place-order-btn {
     border: none;
     padding: 15px 30px;
-    border-radius: 8px;
-    background-color: #447cf5;
+    border-radius: 6px;
+    background-color: #b4533c;
     color: white;
     font-size: 16px;
     cursor: pointer;
 }
 
 .place-order-btn:hover {
-    background-color: #1d4ed8;
+    opacity: 0.9;
 }
 
 .checkout-total {
@@ -78,20 +79,20 @@
 }
 
 .checkout-total h2 {
-    color: var(--text-color);
+    color: #29251f;
 }
 
 .checkout-form {
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
+    background-color: #fffdf8;
+    border: 1px solid #e5dfd2;
+    border-radius: 10px;
     padding: 25px;
 }
 
 .checkout-form h2 {
     margin-top: 0;
     margin-bottom: 25px;
-    color: var(--text-color);
+    color: #29251f;
 }
 
 .form-group {
@@ -103,29 +104,29 @@
 .form-group label {
     margin-bottom: 8px;
     font-weight: 600;
-    color: var(--text-color);
+    color: #29251f;
 }
 
 .form-group input,
 .form-group textarea {
     padding: 12px;
-    border: 1px solid var(--border-color);
+    border: 1px solid #e5dfd2;
     border-radius: 8px;
-    background-color: var(--bg-color);
-    color: var(--text-color);
+    background-color: #fffdf8;
+    color: #29251f;
     font-size: 15px;
 }
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-    color: var(--text-color);
-    opacity: 0.5;
+    color: #777;
+    opacity: 0.7;
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: #447cf5;
+    border-color: #b4533c;
 }
 
 .form-row {
@@ -138,7 +139,7 @@
 }
 
 .error-message {
-    color: #ef4444;
+    color: #b33a3a;
     font-size: 14px;
     margin: 5px 0 0;
 }

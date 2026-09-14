@@ -17,8 +17,7 @@ namespace ECommerceBackend.Models
         public int Stock { get; set; }
 
         public string Category { get; set; } = string.Empty;
-
-        public string ImageUrl { get; set; } = string.Empty;
         public bool IsDeleted { get; set; } = false;
+        public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
     }
 }
