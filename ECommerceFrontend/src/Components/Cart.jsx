@@ -32,18 +32,25 @@ function Cart({showToast}) {
     }, []);
 
     const handleQuantityChange = async (cartItemId, newQuantity) => {
-        if (newQuantity < 1) {
-            return;
-        }
+    if (newQuantity < 1) {
+        return;
+    }
 
-        try {
-            await updateCartItemQuantity(cartItemId, newQuantity);
-            await loadCart();
-        } catch (error) {
-            console.error("Error updating quantity:", error);
-            alert(error.response?.data || "Failed to update quantity.");
-        }
-    };
+    try {
+        const data = await updateCartItemQuantity(cartItemId, newQuantity);
+
+        setCartItems(prev =>
+            prev.map(item =>
+                item.id === cartItemId
+                    ? { ...item, quantity: newQuantity, stock: data.stock }
+                    : item
+            )
+        );
+    } catch (error) {
+        console.error("Error updating quantity:", error);
+        alert(error.response?.data?.message || "Failed to update quantity.");
+    }
+};
 
     const handleRemove = async (cartItemId) => {
         try {

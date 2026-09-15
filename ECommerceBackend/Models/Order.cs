@@ -25,6 +25,10 @@
 
         public string Status { get; set; } = "Pending";
 
+        public string PaymentMethod { get; set; } = "Cash on Delivery";
+
+        public string PaymentStatus { get; set; } = "Pending";
+
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
 
         public List<OrderItem> OrderItems { get; set; } = new();

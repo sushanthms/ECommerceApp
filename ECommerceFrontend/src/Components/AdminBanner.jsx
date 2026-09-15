@@ -1,12 +1,5 @@
 import { useEffect, useState } from "react";
-
-import {
-    getBanners,
-    addBanner,
-    updateBanner,
-    deleteBanner
-} from "../Services/BannerService.jsx";
-
+import {getBanners, addBanner, updateBanner, deleteBanner} from "../Services/BannerService.jsx";
 import "./AdminBanner.css";
 
 function AdminBanner() {
@@ -20,6 +13,7 @@ function AdminBanner() {
     const [bannerTitle, setBannerTitle] = useState("");
     const [bannerDescription, setBannerDescription] = useState("");
     const [bannerButtonText, setBannerButtonText] = useState("");
+    const [bannerImage, setBannerImage] = useState(null);
     const [bannerImageUrl, setBannerImageUrl] = useState("");
     const [bannerLink, setBannerLink] = useState("");
 
@@ -44,6 +38,7 @@ function AdminBanner() {
         setBannerTitle("");
         setBannerDescription("");
         setBannerButtonText("");
+        setBannerImage(null);
         setBannerImageUrl("");
         setBannerLink("");
         setBannerError("");
@@ -51,45 +46,54 @@ function AdminBanner() {
     };
 
     const handleSubmitBanner = async (e) => {
-        e.preventDefault();
+    e.preventDefault();
 
-        setBannerError("");
-        setBannerSuccess("");
+    setBannerError("");
+    setBannerSuccess("");
 
-        if (!bannerTitle || !bannerDescription || !bannerButtonText || !bannerImageUrl || !bannerLink) 
-            {
-                setBannerError("All banner fields are required.");
-                return;
-            }
+    if (!bannerTitle || !bannerDescription || !bannerButtonText || !bannerLink) {
+        setBannerError("All banner fields are required.");
+        return;
+    }
 
-        const bannerData = {
-            title: bannerTitle,
-            description: bannerDescription,
-            buttonText: bannerButtonText,
-            imageUrl: bannerImageUrl,
-            link: bannerLink
-        };
+    if (!editingBannerId && !bannerImage) {
+        setBannerError("Banner image is required.");
+        return;
+    }
 
-        try {
-            if (editingBannerId) {
-                await updateBanner(editingBannerId, bannerData);
-                setBannerSuccess("Banner updated successfully.");
-            } else {
-                await addBanner(bannerData);
-                setBannerSuccess("Banner added successfully.");
-            }
+    const formData = new FormData();
 
-            await loadBanners();
+    formData.append("title", bannerTitle);
+    formData.append("description", bannerDescription);
+    formData.append("buttonText", bannerButtonText);
+    formData.append("link", bannerLink);
 
-            resetBannerForm();
-            setShowBannerForm(false);
+    if (bannerImage) {
+        formData.append("image", bannerImage);
+    }
 
-        } catch (error) {
-            console.error("Save banner error:", error);
-
-            setBannerError(error.response?.data?.message || "Failed to save banner.");
+    try {
+        if (editingBannerId) {
+            await updateBanner(editingBannerId, formData);
+            setBannerSuccess("Banner updated successfully.");
+        } else {
+            await addBanner(formData);
+            setBannerSuccess("Banner added successfully.");
         }
-    };
+
+        await loadBanners();
+
+        resetBannerForm();
+        setShowBannerForm(false);
+
+    } catch (error) {
+        console.error("Save banner error:", error);
+
+        setBannerError(
+            error.response?.data?.message || "Failed to save banner."
+        );
+    }
+};
 
     const handleDeleteBanner = async (id) => {
         const confirmDelete = window.confirm("Are you sure you want to delete this banner?");
@@ -113,6 +117,7 @@ function AdminBanner() {
         setBannerTitle(banner.title);
         setBannerDescription(banner.description);
         setBannerButtonText(banner.buttonText);
+        setBannerImage(null);
         setBannerImageUrl(banner.imageUrl);
         setBannerLink(banner.link);
 
@@ -153,8 +158,25 @@ function AdminBanner() {
                         </div>
 
                         <div className="form-item">
-                            <label>Image URL</label>
-                            <input type="text" value={bannerImageUrl} onChange={(e) =>setBannerImageUrl(e.target.value)} placeholder="https://..."/>
+                            <label>Banner Image</label>
+
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => setBannerImage(e.target.files[0])}
+                            />
+
+                            {bannerImage && (
+                                <p>Selected image: {bannerImage.name}</p>
+                            )}
+
+                            {!bannerImage && bannerImageUrl && (
+                                <img
+                                    src={`${import.meta.env.VITE_API_URL.replace("/api", "")}${bannerImageUrl}`}
+                                    alt="Current banner"
+                                    className="banner-image-preview"
+                                />
+                            )}
                         </div>
 
                         <div className="form-item">
@@ -184,10 +206,7 @@ function AdminBanner() {
                 banners.map((banner) => (
                 <div key={banner.id} className="admin-banner-card">
 
-                <div
-                    className="admin-banner-preview"
-                    style={{ backgroundImage: `url(${banner.imageUrl})` }}
-                >
+                <div className="admin-banner-preview" style={{ backgroundImage: `url(${import.meta.env.VITE_API_URL.replace("/api", "")}${banner.imageUrl})` }}>
                     <div className="banner-actions">
                         <button onClick={() => handleEditBanner(banner)}>Edit</button>
                         <button onClick={() => handleDeleteBanner(banner.id)}>Delete</button>

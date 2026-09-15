@@ -46,8 +46,54 @@ namespace ECommerceBackend.Controllers
         // Add banner
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> AddBanner(Banner banner)
+        public async Task<IActionResult> AddBanner(
+            [FromForm] string title,
+            [FromForm] string description,
+            [FromForm] string buttonText,
+            [FromForm] string link,
+            [FromForm] IFormFile image)
         {
+            if (image == null || image.Length == 0)
+            {
+                return BadRequest(new { message = "Banner image is required." });
+            }
+
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var extension = Path.GetExtension(image.FileName).ToLower();
+
+            if (!allowedExtensions.Contains(extension))
+            {
+                return BadRequest(new { message = "Only JPG, JPEG, PNG and WEBP images are allowed." });
+            }
+
+            var bannersFolder = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "wwwroot",
+                "banners"
+            );
+
+            if (!Directory.Exists(bannersFolder))
+            {
+                Directory.CreateDirectory(bannersFolder);
+            }
+
+            var fileName = Guid.NewGuid().ToString() + extension;
+            var filePath = Path.Combine(bannersFolder, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await image.CopyToAsync(stream);
+            }
+
+            var banner = new Banner
+            {
+                Title = title,
+                Description = description,
+                ButtonText = buttonText,
+                Link = link,
+                ImageUrl = "/banners/" + fileName
+            };
+
             _context.Banners.Add(banner);
 
             await _context.SaveChangesAsync();
@@ -62,7 +108,13 @@ namespace ECommerceBackend.Controllers
         // Update banner
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateBanner(int id, Banner updatedBanner)
+        public async Task<IActionResult> UpdateBanner(
+            int id,
+            [FromForm] string title,
+            [FromForm] string description,
+            [FromForm] string buttonText,
+            [FromForm] string link,
+            [FromForm] IFormFile? image)
         {
             var banner = await _context.Banners.FindAsync(id);
 
@@ -71,11 +123,42 @@ namespace ECommerceBackend.Controllers
                 return NotFound(new { message = "Banner not found." });
             }
 
-            banner.Title = updatedBanner.Title;
-            banner.Description = updatedBanner.Description;
-            banner.ButtonText = updatedBanner.ButtonText;
-            banner.ImageUrl = updatedBanner.ImageUrl;
-            banner.Link = updatedBanner.Link;
+            banner.Title = title;
+            banner.Description = description;
+            banner.ButtonText = buttonText;
+            banner.Link = link;
+
+            if (image != null && image.Length > 0)
+            {
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+                var extension = Path.GetExtension(image.FileName).ToLower();
+
+                if (!allowedExtensions.Contains(extension))
+                {
+                    return BadRequest(new { message = "Only JPG, JPEG, PNG and WEBP images are allowed." });
+                }
+
+                var bannersFolder = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    "banners"
+                );
+
+                if (!Directory.Exists(bannersFolder))
+                {
+                    Directory.CreateDirectory(bannersFolder);
+                }
+
+                var fileName = Guid.NewGuid().ToString() + extension;
+                var filePath = Path.Combine(bannersFolder, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await image.CopyToAsync(stream);
+                }
+
+                banner.ImageUrl = "/banners/" + fileName;
+            }
 
             await _context.SaveChangesAsync();
 

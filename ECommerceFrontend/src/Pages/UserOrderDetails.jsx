@@ -128,7 +128,19 @@ function UserOrderDetails() {
                             <span>Ordered Date</span>
                             <span>{new Date(order.orderDate).toLocaleDateString()}</span>
                         </div>
+                        <div className="summary-row total-row">
+                            <span>Order Status</span>
+                            <span>{order.status.toLowerCase()}</span>
+                        </div>
+                        <div className="summary-row total-row">
+                            <span>Payment Method</span>
+                            <span>{order.paymentMethod}</span>
+                        </div>
 
+                        <div className="summary-row total-row">
+                            <span>Payment Status</span>
+                            <span>{order.paymentStatus}</span>
+                        </div>
                         <div className="summary-row total-row">
                             <span>Total Amount</span>
                             <strong>₹{Math.round(order.totalAmount)}</strong>

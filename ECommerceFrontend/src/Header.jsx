@@ -29,7 +29,7 @@ function Header({ menuOpen, setMenuOpen, darkMode, setDarkMode, role, onCartClic
 
     return (
         <header>
-            <h1>Web Page</h1>
+            <h1>Smart Bazar</h1>
 
             
 

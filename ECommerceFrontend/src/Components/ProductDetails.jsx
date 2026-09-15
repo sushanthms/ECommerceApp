@@ -141,9 +141,8 @@ const handleSubmitReview = async () => {
         );
 
         setQuantity(newQuantity);
-        setCartItem({...cartItem, quantity: newQuantity});
-        setProduct({...product, stock: data.stock});
-
+        setCartItem(prev => ({ ...prev, quantity: newQuantity }));
+        setProduct(prev => ({ ...prev, stock: data.stock }));
     } catch (error) {
 
         console.error("Error updating quantity:", error);
@@ -244,7 +243,7 @@ const handleNextImage = () => {
 
                         <p className="tax">Inclusive of all taxes</p>
 
-                        <p className="stock">✓ {product.stock > 0 ? `✓ ${product.stock} more items available` : "Out of Stock"}</p>
+                        <p className="stock">✓ {product.stock > 0 ? `${product.stock} more items available` : "Out of Stock"}</p>
 
                         <div className="quantity"><span>Quantity:</span>
 

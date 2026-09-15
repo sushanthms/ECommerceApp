@@ -4,7 +4,6 @@ using ECommerceBackend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Security.Claims;
 
 namespace ECommerceBackend.Controllers
@@ -96,7 +95,7 @@ namespace ECommerceBackend.Controllers
 
             var cartItems = await _context.CartItems
                 .Where(c => c.UserId == userId)// && is sued when we want a entity that meets a condtion, here we used Include means we want many entities.
-                .Include(c => c.Product)// we wan   t all product entities in the cart of this user
+                .Include(c => c.Product)// we want all product entities in the cart of this user
                 .ThenInclude(p => p.Images)
                 .Select(c => new
                 {

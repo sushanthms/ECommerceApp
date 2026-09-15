@@ -1,30 +1,33 @@
 .page-layout {
     display: flex;
+    width: 100%;
 }
 
 .orders-page {
     flex: 1;
-    padding: 25px;
-    max-width: 1000px;
-    margin: auto;
+    padding: 32px 40px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
 }
 
 .orders-page h2 {
     margin-bottom: 20px;
+    font-size: 32px;
 }
 
 .orders-list {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    width: 100%;
 }
 
 .order-card {
-    background: #fffdf8;
-    border: 1px solid #e5dfd2;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 10px;
     padding: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-md);
 }
 
 .order-header {
@@ -32,18 +35,18 @@
     justify-content: space-between;
     align-items: flex-start;
     padding-bottom: 12px;
-    border-bottom: 1px solid #e5dfd2;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .order-header h3 {
     margin: 0 0 5px;
-    color: #29251f;
+    color: var(--text-color);
     font-size: 18px;
 }
 
 .order-header p {
     margin: 0;
-    color: #777;
+    color: var(--text-muted);
     font-size: 14px;
 }
 
@@ -55,18 +58,18 @@
 }
 
 .order-status.pending {
-    background: #fff1d6;
-    color: #9a6700;
+    background-color: rgba(180, 83, 60, 0.12);
+    color: var(--button-color);
 }
 
 .order-status.delivered {
-    background: #e5f3e8;
-    color: #28733c;
+    background-color: rgba(22, 163, 74, 0.12);
+    color: var(--success-color);
 }
 
 .order-status.cancelled {
-    background: #f8dddd;
-    color: #a33a3a;
+    background-color: rgba(220, 38, 38, 0.12);
+    color: var(--error-color);
 }
 
 .order-product {
@@ -74,7 +77,7 @@
     align-items: center;
     gap: 16px;
     padding: 11px 0;
-    border-bottom: 1px solid #eee8dc;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .order-product:last-child {
@@ -87,14 +90,14 @@
     height: 80px;
     object-fit: cover;
     border-radius: 8px;
-    border: 1px solid #e5dfd2;
+    border: 1px solid var(--border-color);
 }
 
 .order-product-fallback {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f5f0e6;
+    background: var(--bg-color);
     font-size: 32px;
 }
 
@@ -104,40 +107,43 @@
 
 .order-product-info h3 {
     margin: 0 0 7px;
-    color: #29251f;
+    color: var(--text-color);
     font-size: 16px;
 }
 
 .order-product-info p {
     margin: 3px 0;
-    color: #666;
+    color: var(--text-muted);
     font-size: 14px;
 }
 
 .more-items {
     margin: 8px 0 3px;
-    color: #b4533c;
+    color: var(--button-color);
     font-size: 14px;
     font-weight: 600;
 }
 
 .order-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 11px;
-    border-top: 1px solid #e5dfd2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 35px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
 }
 
 .order-info p {
     margin: 0;
-    color: #666;
-    font-size: 18px;
+    color: var(--text-color);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.5;
 }
 
 .order-info strong {
     font-size: 18px;
-    color: #29251f;
+    color: var(--text-color);
+    font-weight: 700;
 }
 
 .order-footer {
@@ -149,21 +155,47 @@
 .view-order-button {
     display: inline-block;
     padding: 8px 14px;
-    background: #b4533c;
+    background: var(--button-color);
     color: white;
     text-decoration: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 15px;
 }
 
 .view-order-button:hover {
-    opacity: 0.9;
+    background: var(--button-hover);
 }
 
 .no-orders {
     text-align: center;
     padding: 45px 20px;
-    background: #fffdf8;
-    border: 1px solid #e5dfd2;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 10px;
+    color: var(--text-color);
+}
+
+@media (max-width: 768px) {
+    .orders-page {
+        padding: 20px;
+        padding-top: 76px;
+    }
+
+    .order-info {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .orders-page {
+        padding: 76px 15px 25px;
+    }
+
+    .orders-page h2 {
+        font-size: 26px;
+    }
+
+    .order-info {
+        grid-template-columns: 1fr;
+    }
 }

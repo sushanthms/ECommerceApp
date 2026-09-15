@@ -17,21 +17,21 @@ function Sidebar({ menuOpen, setMenuOpen, onCartClick, role }) {
 
                 {role === "Admin" ? (
                     <>
-                        <li><a href="/admin" className={location.pathname === "/admin" ? "active" : ""}>Home</a></li>
-                        <li><a href="/admin/orders" className={location.pathname === "/admin/orders" ? "active" : ""}>Manage Orders</a></li>
-                        <li><a href="/admin/users" className={location.pathname === "/admin/users" ? "active" : ""}>Manage Users</a></li>
-                        <li><a href="#">Manage Products</a></li>
+                        <li><Link to="/admin" className={location.pathname === "/admin" ? "active" : ""}>Home</Link></li>
+                        <li><Link to="/admin/orders" className={location.pathname === "/admin/orders" ? "active" : ""}>Manage Orders</Link></li>
+                        <li><Link to="#">Manage Users</Link></li>
+                        <li><Link to="/admin/products">Manage Products</Link></li>
                         <li><Link to="/admin/reviews" className={location.pathname === "/admin/reviews" ? "active" : ""}>Manage Reviews</Link></li>
-                        <li><a href="#">Settings</a></li>
+                        <li><Link to="#">Settings</Link></li>
                     </>
                 ) : (
                     <>
-                        <li><a href="/home" className={location.pathname === "/home" ? "active" : ""}>Home</a></li>
+                        <li><Link to="/home" className={location.pathname === "/home" ? "active" : ""}>Home</Link></li>
                         <li><Link to="/orders" className={location.pathname === "/orders" ? "active" : ""}>My Orders</Link></li>
-                        <li><a href="#" onClick={onCartClick} className={location.pathname === "/cart" ? "active" : ""}>My Cart</a></li>
-                        <li><a href="#">Offers</a></li>
-                        <li><a href="#">My Profile</a></li>
-                        <li><a href="#">Settings</a></li>
+                        <li><Link to="/cart" className={location.pathname === "/cart" ? "active" : ""}>My Cart</Link></li>
+                        <li><Link to="#">Offers</Link></li>
+                        <li><Link to="#">My Profile</Link></li>
+                        <li><Link to="#">Settings</Link></li>
                     </>
                 )}
 

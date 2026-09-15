@@ -18,7 +18,7 @@ function AdminHome({ showToast }) {
     const user = userData ? JSON.parse(userData) : null;
 
     useEffect(() => {
-        document.documentElement.setAttribute("data-theme",darkMode ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
     }, [darkMode]);
 
     return (
@@ -32,13 +32,13 @@ function AdminHome({ showToast }) {
                 <main className="main-content">
 
                     <div className="welcome-section">
-                        <h2>Welcome, {user?.name}!</h2>
+                        <h2>Welcome, Admin!</h2>
                     </div>
 
-                            <div className="admin-actions">
-                                <button className="view-products-btn" onClick={() => navigate("/admin/products")}>Manage Products</button>
-                                <button className="view-orders-btn" onClick={() => navigate("/admin/orders")}>View Orders</button>
-                            </div>
+                    <div className="admin-actions">
+                        <button className="view-products-btn" onClick={() => navigate("/admin/products")}>Manage Products</button>
+                        <button className="view-orders-btn" onClick={() => navigate("/admin/orders")}>View Orders</button>
+                    </div>
                             
                     <AdminBanner />
                 </main>

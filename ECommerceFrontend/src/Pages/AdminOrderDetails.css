@@ -1,143 +1,103 @@
-/* Order Details Page */
-
 .admin-order-details-page {
     width: 100%;
     padding: 30px;
     box-sizing: border-box;
 }
 
-
-/* Back Button */
-
 .back-btn {
     margin-bottom: 20px;
-
     padding: 8px 14px;
-
     border: 1px solid var(--border-color);
     border-radius: 6px;
-
     background-color: var(--sidebar-bg);
     color: var(--text-color);
-
     cursor: pointer;
 }
 
 .back-btn:hover {
-    background-color: rgba(68, 124, 245, 0.1);
+    background-color: rgba(180, 83, 60, 0.1);
 }
-
-
-/* Page Heading */
 
 .admin-order-details-page h1 {
     margin-bottom: 25px;
-
     color: var(--text-color);
 }
-
-
-/* Details Card */
 
 .order-detail-section {
     width: 100%;
-
     margin-bottom: 20px;
     padding: 20px;
-
     box-sizing: border-box;
-
     background-color: var(--sidebar-bg);
     color: var(--text-color);
-
     border: 1px solid var(--border-color);
     border-radius: 10px;
 }
-
-
-/* Section Heading */
 
 .order-detail-section h3 {
     margin-top: 0;
     margin-bottom: 15px;
-
     color: var(--text-color);
-
     font-size: 18px;
 }
 
-
-/* Details Text */
-
 .order-detail-section p {
     margin: 8px 0;
-
     color: var(--text-color);
-
     line-height: 1.5;
 }
 
+.payment-status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
 
-/* Products Table */
+.payment-status.paid {
+    background-color: rgba(22, 163, 74, 0.12);
+    color: var(--success-color);
+}
+
+.payment-status.pending {
+    background-color: rgba(180, 83, 60, 0.12);
+    color: var(--button-color);
+}
 
 .order-items-table {
     width: 100%;
-
     border-collapse: collapse;
-
     margin-top: 10px;
 }
-
-
-/* Table Cells */
 
 .order-items-table th,
 .order-items-table td {
     padding: 12px 15px;
-
     border: 1px solid var(--border-color);
-
     text-align: left;
-
     color: var(--text-color);
 }
-
-
-/* Table Header */
 
 .order-items-table th {
     background-color: rgba(128, 128, 128, 0.08);
-
     font-weight: 600;
 }
 
-
-/* Total */
-
 .order-total {
     width: 100%;
-
     margin-top: 20px;
     padding: 20px;
-
     box-sizing: border-box;
-
     background-color: var(--sidebar-bg);
     color: var(--text-color);
-
     border: 1px solid var(--border-color);
     border-radius: 10px;
-
     text-align: right;
-
     font-size: 20px;
 }
 
-
-/* Mobile */
-
 @media (max-width: 768px) {
-
     .admin-order-details-page {
         padding: 20px;
         padding-top: 76px;

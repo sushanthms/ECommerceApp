@@ -2,27 +2,33 @@
     box-sizing: border-box;
 }
 
-.main-content {
-    width: 100%;
-    min-width: 0;
-    padding: 32px 40px;
-}
-
 .page-layout {
+    display: flex;
     width: 100%;
     max-width: 100%;
+    min-height: calc(100vh - 72px);
     overflow-x: hidden;
+}
+
+.main-content {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    padding: 32px 40px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
 }
 
 .welcome-section {
     margin-bottom: 28px;
 }
 
+/* CHANGED: font-size 26px (unchanged here, kept for parity with cart/orders) */
 .welcome-section h2 {
     font-size: 26px;
     font-weight: 600;
     color: var(--text-color);
-    margin: 0;
+    margin: 0 0 28px;
 }
 
 /* Search */
@@ -93,8 +99,6 @@
     background-color: rgba(68, 124, 245, 0.1);
     color: var(--text-color);
 }
-
-/* Search Results */
 
 .search-results-section {
     margin-bottom: 32px;
@@ -317,8 +321,6 @@
     margin: 0;
 }
 
-/* Home Section */
-
 .home-section {
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -355,8 +357,6 @@
     background-color: var(--button-hover);
 }
 
-/* Fallback Icon */
-
 .product-fallback {
     display: flex;
     align-items: center;
@@ -364,8 +364,6 @@
     width: 100%;
     height: 100%;
 }
-
-/* Responsive */
 
 @media (max-width: 1024px) {
     .categories-grid {
@@ -432,6 +430,10 @@
 @media (max-width: 480px) {
     .categories-grid {
         grid-template-columns: 1fr;
+    }
+
+    .welcome-section h2 {
+        font-size: 22px;
     }
 }
 

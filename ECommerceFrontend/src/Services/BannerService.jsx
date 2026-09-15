@@ -26,24 +26,30 @@ export const getBanner = async (id) => {
     return response.data;
 };
 
-export const addBanner = async (banner) => {
+export const addBanner = async (bannerData) => {
     const response = await axios.post(
         API_URL,
-        banner,
+        bannerData,
         {
-            headers: authHeader()
+            headers: {
+                ...authHeader(),
+                "Content-Type": "multipart/form-data"
+            }
         }
     );
 
     return response.data;
 };
 
-export const updateBanner = async (id, banner) => {
+export const updateBanner = async (id, bannerData) => {
     const response = await axios.put(
         `${API_URL}/${id}`,
-        banner,
+        bannerData,
         {
-            headers: authHeader()
+            headers: {
+                ...authHeader(),
+                "Content-Type": "multipart/form-data"
+            }
         }
     );
 

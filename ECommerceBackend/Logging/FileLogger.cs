@@ -13,8 +13,9 @@
         public Task LogAsync(ApplicationLog log)
         {
             var logDirectory = "Logs";
-            var logFile = Path.Combine(logDirectory, "ecommerce.log");
-
+            var logFileName = $"ecommerce-{DateTime.Now:yyyy-MM-dd}.log";
+            var logFile = Path.Combine(logDirectory, logFileName);
+            // File.AppendAllText(logFile, logMessage + Environment.NewLine); creates the file
 
             Directory.CreateDirectory(logDirectory);
 
@@ -36,10 +37,7 @@
 
             lock (_lock)
             {
-                File.AppendAllText(
-                    logFile,
-                    logMessage + Environment.NewLine
-                );
+                File.AppendAllText(logFile, logMessage + Environment.NewLine);// creates the file
             }
 
             return Task.CompletedTask;

@@ -8,14 +8,14 @@
     flex: 1;
     width: 100%;
     padding: 40px;
-    background-color: #f8f3e8;
-    color: #29251f;
+    background-color: var(--bg-color);
+    color: var(--text-color);
 }
 
 .checkout-page h1 {
     font-size: 32px;
     margin-bottom: 30px;
-    color: #29251f;
+    color: var(--text-color);
 }
 
 .checkout-content {
@@ -23,8 +23,8 @@
 }
 
 .checkout-items {
-    background-color: #fffdf8;
-    border: 1px solid #e5dfd2;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 10px;
     padding: 25px;
 }
@@ -32,7 +32,7 @@
 .checkout-items h2 {
     margin-top: 0;
     margin-bottom: 20px;
-    color: #29251f;
+    color: var(--text-color);
 }
 
 .checkout-item {
@@ -40,17 +40,17 @@
     justify-content: space-between;
     align-items: center;
     padding: 18px 0;
-    border-bottom: 1px solid #e5dfd2;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .checkout-item h3 {
     margin: 0 0 8px;
-    color: #29251f;
+    color: var(--text-color);
 }
 
 .checkout-item p {
     margin: 0;
-    color: #666;
+    color: var(--text-muted);
 }
 
 .checkout-bottom {
@@ -63,14 +63,14 @@
     border: none;
     padding: 15px 30px;
     border-radius: 6px;
-    background-color: #b4533c;
+    background-color: var(--button-color);
     color: white;
     font-size: 16px;
     cursor: pointer;
 }
 
 .place-order-btn:hover {
-    opacity: 0.9;
+    background-color: var(--button-hover);
 }
 
 .checkout-total {
@@ -79,12 +79,12 @@
 }
 
 .checkout-total h2 {
-    color: #29251f;
+    color: var(--text-color);
 }
 
 .checkout-form {
-    background-color: #fffdf8;
-    border: 1px solid #e5dfd2;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 10px;
     padding: 25px;
 }
@@ -92,7 +92,7 @@
 .checkout-form h2 {
     margin-top: 0;
     margin-bottom: 25px;
-    color: #29251f;
+    color: var(--text-color);
 }
 
 .form-group {
@@ -104,29 +104,29 @@
 .form-group label {
     margin-bottom: 8px;
     font-weight: 600;
-    color: #29251f;
+    color: var(--text-color);
 }
 
 .form-group input,
 .form-group textarea {
     padding: 12px;
-    border: 1px solid #e5dfd2;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    background-color: #fffdf8;
-    color: #29251f;
+    background-color: var(--card-bg);
+    color: var(--text-color);
     font-size: 15px;
 }
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-    color: #777;
+    color: var(--text-muted);
     opacity: 0.7;
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: #b4533c;
+    border-color: var(--button-color);
 }
 
 .form-row {
@@ -139,7 +139,7 @@
 }
 
 .error-message {
-    color: #b33a3a;
+    color: var(--error-color);
     font-size: 14px;
     margin: 5px 0 0;
 }

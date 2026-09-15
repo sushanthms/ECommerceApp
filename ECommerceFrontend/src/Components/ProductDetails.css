@@ -39,7 +39,7 @@
     align-items: center;
 }
 
-.image-thumbnails {
+.image-thumbnails { 
     display: flex;
     justify-content: center;
     gap: 10px;
@@ -48,6 +48,7 @@
 }
 
 .product-details-image {
+    width: 100%;
     height: 450px;
     display: flex;
     justify-content: center;
@@ -55,6 +56,7 @@
     background-color: var(--bg-color);
     border: 1px solid var(--border-color);
     border-radius: 8px;
+    box-sizing: border-box;
 }
 
 .product-details-image img {
@@ -62,6 +64,12 @@
     height: 100%;
     object-fit: contain;
     padding: 20px;
+}
+
+.product-details-image span {
+    font-size: 80px;
+    color: var(--text-muted);
+    opacity: 0.6;
 }
 
 .image-navigation {

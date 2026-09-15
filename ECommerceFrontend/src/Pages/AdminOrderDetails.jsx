@@ -75,51 +75,29 @@ function AdminOrderDetails() {
                     <h1>Order #{order.id}</h1>
 
                     <div className="order-detail-section">
-
-                        <h3>Customer Details</h3>
-
-                        <p><strong>Name:</strong>{" "}{order.customerName}</p>
-
-                        <p><strong>Email:</strong>{" "}{order.customerEmail}</p>
-
-                        <p><strong>Phone:</strong>{" "}{order.phone}</p>
-
-                    </div>
-
-                    <div className="order-detail-section">
-
-                        <h3>Delivery Address</h3>
-
-                        <p><strong>Name:</strong>{" "}{order.deliveryName}</p>
-
-                        <p><strong>Address:</strong>{" "}{order.address}</p>
-
-                        <p><strong>City:</strong>{" "}{order.city}</p>
-
-                        <p><strong>State:</strong>{" "}{order.state}</p>
-
-                        <p><strong>Pincode:</strong>{" "}{order.pincode}</p>
-
-                    </div>
-
-                    <div className="order-detail-section">
-
                         <h3>Order Details</h3>
-
                         <p><strong>Date:</strong>{" "}{new Date(order.orderDate).toLocaleString()}</p>
-
                         <p><strong>Status:</strong>{" "}{order.status}</p>
-
+                        <p><strong>Payment Method:</strong>{" "}{order.paymentMethod}</p>
+                        <p><strong>Payment Status:</strong>{" "}{order.paymentStatus}</p>
                     </div>
-
                     <div className="order-detail-section">
-
+                        <h3>Delivery Address</h3>
+                        <p><strong>Name:</strong>{" "}{order.deliveryName}</p>
+                        <p><strong>Address:</strong>{" "}{order.address}</p>
+                        <p><strong>City:</strong>{" "}{order.city}</p>
+                        <p><strong>State:</strong>{" "}{order.state}</p>
+                        <p><strong>Pincode:</strong>{" "}{order.pincode}</p>
+                    </div>
+                    <div className="order-detail-section">
+                        <h3>Order Details</h3>
+                        <p><strong>Date:</strong>{" "}{new Date(order.orderDate).toLocaleString()}</p>
+                        <p><strong>Status:</strong>{" "}{order.status}</p>
+                    </div>
+                    <div className="order-detail-section">
                         <h3>Ordered Products</h3>
-
                         <table className="order-items-table">
-
                             <thead>
-
                                 <tr>
                                     <th>Product</th>
                                     <th>Price</th>
@@ -134,15 +112,10 @@ function AdminOrderDetails() {
                                 {order.orderItems.map((item) => (
 
                                     <tr key={item.id}>
-
                                         <td>{item.productName}</td>
-
                                         <td>₹{item.price}</td>
-
                                         <td>{item.quantity}</td>
-
                                         <td>₹{(item.price * item.quantity).toFixed(2)}</td>
-
                                     </tr>
 
                                 ))}
@@ -154,9 +127,7 @@ function AdminOrderDetails() {
                     </div>
 
                     <div className="order-total">
-
                         <strong>Total Amount: ₹{order.totalAmount}</strong>
-
                     </div>
 
                 </main>

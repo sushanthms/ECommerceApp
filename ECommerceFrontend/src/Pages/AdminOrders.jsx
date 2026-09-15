@@ -76,6 +76,8 @@ function AdminOrders() {
                                         <th>Customer</th>
                                         <th>Date</th>
                                         <th>Total</th>
+                                        <th>Payment</th>
+                                        <th>Payment Status</th>
                                         <th>Status</th>
                                         <th>Action</th>
                                     </tr>
@@ -90,8 +92,10 @@ function AdminOrders() {
                                             <td>{order.deliveryName}</td>
                                             <td>{new Date(order.orderDate).toLocaleDateString()}</td>
                                             <td>₹{order.totalAmount}</td>
+                                            <td>{order.paymentMethod}</td>
+                                            <td>{order.paymentStatus}</td>
                                             <td>{order.status}</td>
-                                            <td><button onClick={() =>navigate(`/admin/orders/${order.id}`,{state: {order}})}>View</button></td>
+                                            <td><button onClick={() => navigate(`/admin/orders/${order.id}`, {state: {order}})}>View</button></td>
                                         </tr>// state order means sending order object along with the navigation
 
                                     ))}

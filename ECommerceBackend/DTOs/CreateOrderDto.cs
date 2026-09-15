@@ -13,5 +13,6 @@
         public string State { get; set; } = string.Empty;
 
         public string Pincode { get; set; } = string.Empty;
+        public string PaymentMethod { get; set; } = "Cash on Delivery";
     }
 }

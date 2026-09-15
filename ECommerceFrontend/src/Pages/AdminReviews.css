@@ -1,5 +1,14 @@
-.admin-reviews {
-    padding: 25px;
+.page-layout {
+    display: flex;
+    width: 100%;
+    min-height: calc(100vh - 72px);
+}
+
+.main-content {
+    flex: 1;
+    padding: 32px 40px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
 }
 
 .admin-reviews h1 {
@@ -53,10 +62,6 @@
     color: #f5a623;
     font-size: 20px;
     margin-bottom: 10px;
-}
-
-.admin-reviews .review strong {
-    color: var(--text-color);
 }
 
 .admin-reviews .review p {

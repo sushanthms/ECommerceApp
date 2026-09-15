@@ -23,8 +23,6 @@ function AdminManageProducts({ showToast }) {
     const [pageSize] = useState(20);
     const [totalPages, setTotalPages] = useState(1);
 
-    const [showAllProducts, setShowAllProducts] = useState(false);
-
     const [showForm, setShowForm] = useState(false);
 
     const [editingId, setEditingId] = useState(null);
@@ -285,7 +283,7 @@ const handlePageChange = (pageNumber) => {
                 await updateProduct(editingId, productData, token);
 
                 if (imageFiles.length > 0) {
-                await uploadProductImages(editingId, imageFiles,token);
+                await uploadProductImages(editingId, imageFiles, token);
             }
                 showToast("Product updated successfully!", "success");
 
@@ -348,18 +346,13 @@ const handlePageChange = (pageNumber) => {
 
             console.error("Restore product error:", error);
 
-            showToast(
-                error.response?.data?.message || "Failed to restore product.",
-                "error"
-            );
+            showToast(error.response?.data?.message || "Failed to restore product.", "error");
         }
     };
 
     const handlePermanentDelete = async (id) => {
 
-        const confirmed = window.confirm(
-            "Are you sure you want to permanently delete this product? This cannot be undone."
-        );
+        const confirmed = window.confirm("Are you sure you want to permanently delete this product? This cannot be undone.");
 
         if (!confirmed) {
             return;
@@ -368,20 +361,13 @@ const handlePageChange = (pageNumber) => {
         try {
 
             await permanentDeleteProduct(id);
-
             showToast("Product permanently deleted.", "success");
-
             await loadProducts(page, search);
 
         } catch (error) {
 
             console.error("Permanent delete error:", error);
-
-            showToast(
-                error.response?.data?.message ||
-                "Failed to permanently delete product.",
-                "error"
-            );
+            showToast(error.response?.data?.message || "Failed to permanently delete product.", "error");
         }
     };
 
@@ -428,12 +414,7 @@ const handlePageChange = (pageNumber) => {
                             <h2>Manage Products</h2>
 
                             {!showForm && (
-                                <button
-                                    className="add-product-btn"
-                                    onClick={handleAddClick}
-                                >
-                                    + Add Product
-                                </button>
+                                <button className="add-product-btn" onClick={handleAddClick}>+ Add Product</button>
                             )}
 
                         </div>
@@ -442,10 +423,7 @@ const handlePageChange = (pageNumber) => {
 
                             <div className="modal-overlay">
 
-                                <form
-                                    onSubmit={handleSubmitProduct}
-                                    className="product-form"
-                                >
+                                <form onSubmit={handleSubmitProduct} className="product-form">
 
                                     <h3>{editingId ? "Edit Product" : "New Product"}</h3>   
 
@@ -511,21 +489,7 @@ const handlePageChange = (pageNumber) => {
                     <div className="featured-section">
 
                         <div className="section-heading">
-
-                            <h2>
-                                {search.trim()
-                                    ? "Search Results"
-                                    : showAllProducts
-                                        ? "All Products"
-                                        : "Products"}
-                            </h2>
-
-                            <button className="view-products-btn" onClick={() => setShowAllProducts(!showAllProducts)}>
-                                {showAllProducts
-                                    ? "Show Less"
-                                    : "View All Products"}
-                            </button>
-
+                            <h2>{search.trim() ? "Search Results" : "Products"}</h2>
                         </div>
 
                         <div className="search-section">
@@ -540,11 +504,7 @@ const handlePageChange = (pageNumber) => {
 
                             <div className="product-grid">
 
-                                {(showAllProducts
-                                    ? products
-                                    : products.slice(0, 6)
-                                ).map((product) => (
-
+                                {products.map((product) => (
                                     <div key={product.id} className="product-card">
 
                                         <div className="product-image">

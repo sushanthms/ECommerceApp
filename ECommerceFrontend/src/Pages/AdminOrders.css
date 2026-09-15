@@ -1,7 +1,22 @@
+.page-layout {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
 .admin-orders-page {
     width: 100%;
     padding: 30px;
     box-sizing: border-box;
+    animation: fadeIn 0.3s ease-in;
 }
 
 .back-btn {
@@ -15,7 +30,7 @@
 }
 
 .back-btn:hover {
-    background-color: rgba(68, 124, 245, 0.1);
+    background-color: rgba(180, 83, 60, 0.1);
 }
 
 .admin-orders-page h1 {
@@ -26,7 +41,6 @@
 .orders-table-container {
     width: 100%;
     overflow-x: auto;
-
     background-color: var(--sidebar-bg);
     border: 1px solid var(--border-color);
     border-radius: 10px;
@@ -54,13 +68,29 @@
     padding: 7px 14px;
     border: none;
     border-radius: 6px;
-
-    background-color: #447cf5;
+    background-color: var(--button-color);
     color: white;
-
     cursor: pointer;
 }
 
 .orders-table td button:hover {
-    background-color: #1d4ed8;
+    background-color: var(--button-hover);
+}
+
+.payment-status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.payment-status.paid {
+    background-color: rgba(22, 163, 74, 0.12);
+    color: var(--success-color);
+}
+
+.payment-status.pending {
+    background-color: rgba(180, 83, 60, 0.12);
+    color: var(--button-color);
 }

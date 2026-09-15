@@ -23,10 +23,7 @@ function UserHome({ showToast }) {
     const navigate = useNavigate();
 
     useEffect(() => {
-        document.documentElement.setAttribute(
-            "data-theme",
-            darkMode ? "dark" : "light"
-        );
+        document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
     }, [darkMode]);
 
     const handleSearch = (value) => {
@@ -92,7 +89,7 @@ function UserHome({ showToast }) {
                         <div className="home-search-box">
                             <input type="text" value={search} onChange={(e) =>handleSearch(e.target.value)} placeholder="Search for products..."/>
                             <button onClick={() => handleSearch(search)}>🔍 Search</button>
-                            {search && (<button className="clear-search-btn" onClick={() => {setSearch("");setSearchResults([]);}}>✕ Clear</button>)}
+                            {search && (<button className="clear-search-btn" onClick={() => {setSearch(""); setSearchResults([]);}}>✕ Clear</button>)}
                         </div>
 
                     </div>
@@ -125,7 +122,6 @@ function UserHome({ showToast }) {
 
                                             </div>
 
-
                                             <h3>{product.name}</h3>
                                             <strong>₹{product.price}</strong>
                                             <p>Category:{" "}{product.category}</p>
@@ -141,7 +137,7 @@ function UserHome({ showToast }) {
                         <div className="user-banner-track">
                             {[...banners, ...banners].map((banner, index) => (
                                 <div className="user-banner" key={`${banner.id}-${index}`} onClick={() => navigate(banner.link)}>
-                                    <img src={banner.imageUrl} alt={banner.title} />
+                                    <img src={`${import.meta.env.VITE_API_URL.replace("/api", "")}${banner.imageUrl}`} alt={banner.title} />
 
                                     <div className="user-banner-content">
                                         <h2>{banner.title}</h2>
