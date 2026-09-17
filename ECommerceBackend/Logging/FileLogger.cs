@@ -43,7 +43,7 @@
             return Task.CompletedTask;
         }
 
-        public Task LogMessageAsync(string message, string level = "Information")
+        public Task LogMessageAsync(string message, string level = "Information")// puts the message and level from the controller to the HttpContext
         {
             var context = _httpContextAccessor.HttpContext;
             if (context != null)

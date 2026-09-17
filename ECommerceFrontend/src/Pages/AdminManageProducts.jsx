@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "../Header.jsx";
-import Sidebar from "../Sidebar.jsx";
+import Header from "../Components/Header.jsx";
+import Sidebar from "../Components/Sidebar.jsx";
 import {uploadProducts, getAdminProducts, addProduct, uploadProductImages, updateProduct, searchAdminProducts, hideProduct, restoreProduct,permanentDeleteProduct} from "../Services/ProductService.jsx";
 
 import "./AdminManageProducts.css";

@@ -5,14 +5,14 @@
 
 .orders-page {
     flex: 1;
-    padding: 32px 40px;
+    padding: 15px 40px;
     background-color: var(--bg-color);
     color: var(--text-color);
 }
 
 .orders-page h2 {
     margin-bottom: 20px;
-    font-size: 32px;
+    font-size: 30px;
 }
 
 .orders-list {
@@ -173,6 +173,19 @@
     border: 1px solid var(--border-color);
     border-radius: 10px;
     color: var(--text-color);
+}
+.cancel-order-button {
+    padding: 9px 16px;
+    border: none;
+    border-radius: 6px;
+    background-color: var(--button-color);
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.cancel-order-button:hover {
+    opacity: 0.9;
 }
 
 @media (max-width: 768px) {

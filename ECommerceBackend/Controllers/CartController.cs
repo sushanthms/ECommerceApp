@@ -1,9 +1,7 @@
-﻿using ECommerceBackend.Data;
-using ECommerceBackend.DTOs;
-using ECommerceBackend.Models;
+﻿using ECommerceBackend.DTOs;
+using ECommerceBackend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace ECommerceBackend.Controllers
@@ -13,11 +11,12 @@ namespace ECommerceBackend.Controllers
     [Authorize]
     public class CartController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        public CartController(AppDbContext context)
-        {// AppDbContext says: "whatever value gets passed in here must be an object of type AppDbContext."
-         // It gets a reference (a memory address) pointing to the fully-built AppDbContext.
-            _context = context;
+        private readonly CartService _cartService;
+
+        public CartController(CartService cartService)
+        {// CartService says: "whatever value gets passed in here must be an object of type CartService."
+         // It gets a reference (a memory address) pointing to the fully-built CartService.
+            _cartService = cartService;
         }
 
         [HttpPost]
@@ -30,58 +29,27 @@ namespace ECommerceBackend.Controllers
             }
             // Claim means a piece of information about the user stored inside the authentication token.
             int userId = int.Parse(userIdClaim.Value);
-            // we use the dto parameter to access the ProductId property of the AddToCartDto object it refers to.
-            var product = await _context.Products.FindAsync(dto.ProductId);
-            if (product == null)
+
+            var result = await _cartService.AddToCartAsync(userId, dto);
+
+            if (result.NotFound)
             {
-                return NotFound("Product not found.");
+                return NotFound(result.Message);
             }
 
-            if (dto.Quantity <= 0)
+            if (!result.Success)
             {
-                return BadRequest(new { message = "Quantity must be at least 1." });
+                return BadRequest(new { message = result.Message });
             }
-
-            var existingCartItem = await _context.CartItems
-                .FirstOrDefaultAsync(c =>
-                    c.UserId == userId &&
-                    c.ProductId == dto.ProductId);
-
-            int currentQuantityInCart = existingCartItem?.Quantity ?? 0;// ternaray operation. true means existingCartItem.Quantity or false means 0
-
-            if (currentQuantityInCart + dto.Quantity > product.Stock)
-            {
-                return BadRequest(new { message = $"Only {product.Stock - currentQuantityInCart} more available." });
-            }
-
-            if (existingCartItem != null)
-            {
-                existingCartItem.Quantity += dto.Quantity;
-            }
-            else
-            {
-                var cartItem = new CartItem
-                {
-                    UserId = userId,
-                    ProductId = dto.ProductId,
-                    Quantity = dto.Quantity
-                };
-
-                _context.CartItems.Add(cartItem);
-            }
-
-            product.Stock -= dto.Quantity;
-
-            await _context.SaveChangesAsync();
 
             return Ok(new
             {
-                message = "Product added to cart.",
-                stock = product.Stock
+                message = result.Message,
+                stock = result.Stock
             });
         }
 
-            [HttpGet]
+        [HttpGet]
         public async Task<IActionResult> GetCart()
         {
             // A claim is a key value, value is string, id is also converted to string and stored in claims
@@ -93,23 +61,7 @@ namespace ECommerceBackend.Controllers
 
             int userId = int.Parse(userIdClaim.Value);
 
-            var cartItems = await _context.CartItems
-                .Where(c => c.UserId == userId)// && is sued when we want a entity that meets a condtion, here we used Include means we want many entities.
-                .Include(c => c.Product)// we want all product entities in the cart of this user
-                .ThenInclude(p => p.Images)
-                .Select(c => new
-                {
-                    c.Id,
-                    c.ProductId,
-                    c.Product.Name,
-                    c.Product.Price,
-                    ImageUrl = c.Product.Images
-                        .Select(i => i.ImageUrl)
-                        .FirstOrDefault(),
-                    c.Product.Stock,
-                    c.Quantity
-                })
-                .ToListAsync();
+            var cartItems = await _cartService.GetCartAsync(userId);
 
             return Ok(cartItems);
         }
@@ -127,42 +79,24 @@ namespace ECommerceBackend.Controllers
 
             int userId = int.Parse(userIdClaim.Value);
 
-            var cartItem = await _context.CartItems
-                .Include(c => c.Product)
-                .FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
+            var result = await _cartService.UpdateQuantityAsync(userId, id, dto);
 
-            if (cartItem == null)
+            if (result.NotFound)
             {
                 return NotFound();
             }
 
-            if (dto.Quantity <= 0)
+            if (!result.Success)
             {
-                cartItem.Product.Stock += cartItem.Quantity;
-
-                _context.CartItems.Remove(cartItem);
-            }
-            else
-            {
-                int quantityDifference = dto.Quantity - cartItem.Quantity;
-
-                if (quantityDifference > cartItem.Product.Stock)
+                return BadRequest(new
                 {
-                    return BadRequest(new
-                    {
-                        message = $"Only {cartItem.Product.Stock} more in stock."
-                    });
-                }
-
-                cartItem.Product.Stock -= quantityDifference;
-                cartItem.Quantity = dto.Quantity;
+                    message = result.Message
+                });
             }
-
-            await _context.SaveChangesAsync();
 
             return Ok(new
             {
-                stock = cartItem.Product.Stock
+                stock = result.Stock
             });
         }
 
@@ -179,24 +113,16 @@ namespace ECommerceBackend.Controllers
 
             int userId = int.Parse(userIdClaim.Value);
 
-            var cartItem = await _context.CartItems
-                .Include(c => c.Product)
-                .FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
+            var result = await _cartService.RemoveFromCartAsync(userId, id);
 
-            if (cartItem == null)
+            if (!result.Success)
             {
                 return NotFound();
             }
 
-            cartItem.Product.Stock += cartItem.Quantity;
-
-            _context.CartItems.Remove(cartItem);
-
-            await _context.SaveChangesAsync();
-
             return Ok(new
             {
-                stock = cartItem.Product.Stock
+                stock = result.Stock
             });
         }
     }

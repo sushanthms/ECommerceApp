@@ -1,8 +1,9 @@
-﻿using ECommerceBackend.Data;
-using ECommerceBackend.Models;
+﻿using CsvHelper;
+using ECommerceBackend.Controllers;
+using ECommerceBackend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace ECommerceBackend.Controllers
 {
@@ -10,30 +11,27 @@ namespace ECommerceBackend.Controllers
     [Route("api/[controller]")]
     public class BannerController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly BannerService _bannerService;
 
-        public BannerController(AppDbContext context)
+        public BannerController(BannerService bannerService)
         {
-            _context = context;
+            _bannerService = bannerService;
         }
 
         // Get all banners
         [HttpGet]
-        [Authorize]
         public async Task<IActionResult> GetBanners()
         {
-            var banners = await _context.Banners
-                .ToListAsync();
+            var banners = await _bannerService.GetBannersAsync();
 
             return Ok(banners);
         }
 
         // Get one banner
         [HttpGet("{id}")]
-        [Authorize]
         public async Task<IActionResult> GetBanner(int id)
         {
-            var banner = await _context.Banners.FindAsync(id);
+            var banner = await _bannerService.GetBannerAsync(id);
 
             if (banner == null)
             {
@@ -66,37 +64,13 @@ namespace ECommerceBackend.Controllers
                 return BadRequest(new { message = "Only JPG, JPEG, PNG and WEBP images are allowed." });
             }
 
-            var bannersFolder = Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "wwwroot",
-                "banners"
+            var banner = await _bannerService.AddBannerAsync(
+                title,
+                description,
+                buttonText,
+                link,
+                image
             );
-
-            if (!Directory.Exists(bannersFolder))
-            {
-                Directory.CreateDirectory(bannersFolder);
-            }
-
-            var fileName = Guid.NewGuid().ToString() + extension;
-            var filePath = Path.Combine(bannersFolder, fileName);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await image.CopyToAsync(stream);
-            }
-
-            var banner = new Banner
-            {
-                Title = title,
-                Description = description,
-                ButtonText = buttonText,
-                Link = link,
-                ImageUrl = "/banners/" + fileName
-            };
-
-            _context.Banners.Add(banner);
-
-            await _context.SaveChangesAsync();
 
             return Ok(new
             {
@@ -116,18 +90,6 @@ namespace ECommerceBackend.Controllers
             [FromForm] string link,
             [FromForm] IFormFile? image)
         {
-            var banner = await _context.Banners.FindAsync(id);
-
-            if (banner == null)
-            {
-                return NotFound(new { message = "Banner not found." });
-            }
-
-            banner.Title = title;
-            banner.Description = description;
-            banner.ButtonText = buttonText;
-            banner.Link = link;
-
             if (image != null && image.Length > 0)
             {
                 var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
@@ -137,30 +99,21 @@ namespace ECommerceBackend.Controllers
                 {
                     return BadRequest(new { message = "Only JPG, JPEG, PNG and WEBP images are allowed." });
                 }
-
-                var bannersFolder = Path.Combine(
-                    Directory.GetCurrentDirectory(),
-                    "wwwroot",
-                    "banners"
-                );
-
-                if (!Directory.Exists(bannersFolder))
-                {
-                    Directory.CreateDirectory(bannersFolder);
-                }
-
-                var fileName = Guid.NewGuid().ToString() + extension;
-                var filePath = Path.Combine(bannersFolder, fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await image.CopyToAsync(stream);
-                }
-
-                banner.ImageUrl = "/banners/" + fileName;
             }
 
-            await _context.SaveChangesAsync();
+            var banner = await _bannerService.UpdateBannerAsync(
+                id,
+                title,
+                description,
+                buttonText,
+                link,
+                image
+            );
+
+            if (banner == null)
+            {
+                return NotFound(new { message = "Banner not found." });
+            }
 
             return Ok(new
             {
@@ -174,16 +127,12 @@ namespace ECommerceBackend.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteBanner(int id)
         {
-            var banner = await _context.Banners.FindAsync(id);
+            var deleted = await _bannerService.DeleteBannerAsync(id);
 
-            if (banner == null)
+            if (!deleted)
             {
                 return NotFound(new { message = "Banner not found." });
             }
-
-            _context.Banners.Remove(banner);
-
-            await _context.SaveChangesAsync();
 
             return Ok(new
             {

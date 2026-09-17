@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import Header from "../Header.jsx";
-import Sidebar from "../Sidebar.jsx";
+import Header from "../Components/Header.jsx";
+import Sidebar from "../Components/Sidebar.jsx";
 
 import "./Community.css";
 

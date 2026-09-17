@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-import Header from "../Header.jsx";
-import Sidebar from "../Sidebar.jsx";
-import { searchProducts } from "../Services/ProductService.jsx";
+import Header from "../Components/Header.jsx";
+import Sidebar from "../Components/Sidebar.jsx";
 import { getBanners } from "../Services/BannerService.jsx";
+import { searchProducts } from "../Services/ProductService.jsx";
 
 import "./UserHome.css";
 
@@ -20,6 +20,9 @@ function UserHome({ showToast }) {
     const userData = localStorage.getItem("user");
     const user = userData ? JSON.parse(userData) : null;
 
+    const token = localStorage.getItem("token");
+    const role = token ? user?.role : null;
+
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -31,29 +34,25 @@ function UserHome({ showToast }) {
     };
 
     useEffect(() => {
-
-        const timer = setTimeout(async () => {
-
-            try {
-
-                if (search.trim() === "") {
-                    setSearchResults([]);
-                    return;
-                }
-                const data = await searchProducts(search);
-                setSearchResults(data.products);
-
-            } catch (error) {
-                console.error("Error searching products:", error);
+    const timer = setTimeout(async () => {
+        try {
+            if (search.trim() === "") {
                 setSearchResults([]);
+                return;
             }
-        }, 300);
 
-        return () => {
-            clearTimeout(timer);
-        };
+            const data = await searchProducts(search);
+            setSearchResults(data.products);
+        } catch (error) {
+            console.error("Error searching products:", error);
+            setSearchResults([]);
+        }
+    }, 300);
 
-    }, [search]);
+    return () => {
+        clearTimeout(timer);
+    };
+}, [search]);
 
     useEffect(() => {
     const loadBanners = async () => {
@@ -70,75 +69,60 @@ function UserHome({ showToast }) {
 
     return (
         <>
-            <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="User"onCartClick={() => navigate("/cart")}/>
-
+            <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role={role} onCartClick={() => navigate("/cart")} search={search} setSearch={setSearch} onSearch={() => handleSearch(search)} />
             <div className="page-layout">
 
-                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} onCartClick={() => navigate("/cart")} role="User"/>
+                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} onCartClick={() => navigate("/cart")} role={role}/>
 
                 <main className="main-content">
 
                     <div className="welcome-section">
-                        <h2>Welcome, {user?.name}! 👋</h2>
-                    </div>
-
-                    <div className="home-search-section">
-
-                        <h2>What are you looking for?</h2>
-
-                        <div className="home-search-box">
-                            <input type="text" value={search} onChange={(e) =>handleSearch(e.target.value)} placeholder="Search for products..."/>
-                            <button onClick={() => handleSearch(search)}>🔍 Search</button>
-                            {search && (<button className="clear-search-btn" onClick={() => {setSearch(""); setSearchResults([]);}}>✕ Clear</button>)}
-                        </div>
-
+                        <h2>{user ? `Welcome, ${user.name}! 👋` : "Welcome to Smart Bazar! 👋"}</h2>
                     </div>
 
                     {search.trim() !== "" && (
-
                         <div className="search-results-section">
-
                             <h2>Search Results</h2>
-
                             {searchResults.length === 0 ? (
                                 <p>No products found.</p>
                             ) : (
-                                <div className="search-results-grid">
-
-                                    {searchResults.map((product) => (
-
-                                        <div key={product.id} className="search-result-card" onClick={() =>navigate(`/product/${product.id}`)}>
-                                            <div className="search-result-image">
-                                                {product.imageUrl ? (
-
-                                                    <img src={product.imageUrl} alt={product.name} onError={(e) => {
-                                                            e.target.style.display ="none";
-                                                            e.target.nextSibling.style.display ="flex";
-                                                        }}
-                                                    />
-                                                ) : null}
-
-                                                <span className="product-fallback" style={{display: product.imageUrl ? "none" : "flex"}}>📦</span>
-
+                            <div className="search-results-grid">
+                                {searchResults.map((product) => (
+                                    <div key={product.id} className="search-result-card" onClick={() => navigate(`/product/${product.id}`)}>
+                                        <div className="search-result-image">
+                                            {product.images?.length > 0 ? (
+                                                <img src={`${import.meta.env.VITE_API_URL.replace("/api", "")}${product.images[0].imageUrl}`} alt={product.name} loading="lazy"/>
+                                            ) : (
+                                            <span className="product-fallback">📦</span>
+                                            )}
                                             </div>
-
                                             <h3>{product.name}</h3>
                                             <strong>₹{product.price}</strong>
-                                            <p>Category:{" "}{product.category}</p>
-                                            <button onClick={(e) => {e.stopPropagation(); navigate(`/product/${product.id}`);}}>View Product</button>
+                                            <p>Category: {product.category}</p>
+
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate(`/product/${product.id}`);
+                                                }}
+                                            >
+                                                View Product
+                                            </button>
+
                                         </div>
                                     ))}
+
                                 </div>
                             )}
+
                         </div>
                     )}
 
                     <div className="user-banner-slider">
                         <div className="user-banner-track">
-                            {[...banners, ...banners].map((banner, index) => (
-                                <div className="user-banner" key={`${banner.id}-${index}`} onClick={() => navigate(banner.link)}>
+                            {[...banners, ...banners].map((banner, i) => (
+                                <div className="user-banner" key={`${banner.id}-${i}`} onClick={() => navigate(banner.link)}>
                                     <img src={`${import.meta.env.VITE_API_URL.replace("/api", "")}${banner.imageUrl}`} alt={banner.title} />
-
                                     <div className="user-banner-content">
                                         <h2>{banner.title}</h2>
                                         <p>{banner.description}</p>

@@ -1,10 +1,8 @@
-﻿using ECommerceBackend.Data;
-using ECommerceBackend.DTOs;
-using ECommerceBackend.Models;
+﻿using ECommerceBackend.DTOs;
 using ECommerceBackend.Logging;
+using ECommerceBackend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace ECommerceBackend.Controllers
@@ -13,12 +11,12 @@ namespace ECommerceBackend.Controllers
     [Route("api/[controller]")]
     public class OrderController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly OrderService _orderService;
         private readonly IApplicationLogger _logger;
 
-        public OrderController(AppDbContext context, IApplicationLogger logger)
+        public OrderController(OrderService orderService, IApplicationLogger logger)
         {
-            _context = context;
+            _orderService = orderService;
             _logger = logger;
         }
 
@@ -42,7 +40,12 @@ namespace ECommerceBackend.Controllers
 
                 await _logger.LogMessageAsync($"COD order creation - UserId: {userId}");
 
-                var result = await CreateOrderFromCart(userId, dto, "Cash on Delivery", "Pending");
+                var result = await _orderService.CreateOrderAsync(
+                    userId,
+                    dto,
+                    "Cash on Delivery",
+                    "Pending"
+                );
 
                 if (result.Order == null)
                 {
@@ -97,7 +100,12 @@ namespace ECommerceBackend.Controllers
 
                 await _logger.LogMessageAsync($"Online payment processing - UserId: {userId}");
 
-                var result = await CreateOrderFromCart(userId, dto, "Online Payment", "Paid");
+                var result = await _orderService.CreateOrderAsync(
+                    userId,
+                    dto,
+                    "Online Payment",
+                    "Paid"
+                );
 
                 if (result.Order == null)
                 {
@@ -122,7 +130,7 @@ namespace ECommerceBackend.Controllers
             }
             catch (Exception ex)
             {
-                await _logger.LogMessageAsync($"Online payment failed - Unexpected error. Error: {ex.Message}, StackTrace: {ex.StackTrace}","Error");
+                await _logger.LogMessageAsync($"Online payment failed - Unexpected error. Error: {ex.Message}, StackTrace: {ex.StackTrace}", "Error");
 
                 return StatusCode(500, new
                 {
@@ -138,46 +146,7 @@ namespace ECommerceBackend.Controllers
         {
             try
             {
-                await _logger.LogMessageAsync("Admin requested all orders.");
-
-                var orders = await _context.Orders
-                    .Include(o => o.User)
-                    .Include(o => o.OrderItems)
-                        .ThenInclude(oi => oi.Product)
-                    .OrderByDescending(o => o.OrderDate)
-                    .Select(o => new
-                    {
-                        o.Id,
-                        o.UserId,
-
-                        CustomerName = o.User.Name,
-                        CustomerEmail = o.User.Email,
-
-                        o.DeliveryName,
-                        o.Phone,
-                        o.Address,
-                        o.City,
-                        o.State,
-                        o.Pincode,
-
-                        o.TotalAmount,
-                        o.Status,
-                        o.PaymentMethod,
-                        o.PaymentStatus,
-                        o.OrderDate,
-
-                        OrderItems = o.OrderItems.Select(oi => new
-                        {
-                            oi.Id,
-                            oi.ProductId,
-                            ProductName = oi.Product.Name,
-                            oi.Quantity,
-                            oi.Price
-                        })
-                    })
-                    .ToListAsync();
-
-                await _logger.LogMessageAsync($"Admin retrieved all orders successfully - OrderCount: {orders.Count}");
+                var orders = await _orderService.GetAllOrdersAsync();
 
                 return Ok(orders);
             }
@@ -209,43 +178,7 @@ namespace ECommerceBackend.Controllers
 
                 int userId = int.Parse(userIdClaim.Value);
 
-                await _logger.LogMessageAsync($"User requested their orders - UserId: {userId}");
-
-                var orders = await _context.Orders
-                    .Where(o => o.UserId == userId)
-                    .Include(o => o.OrderItems)
-                        .ThenInclude(oi => oi.Product)
-                    .OrderByDescending(o => o.OrderDate)
-                    .Select(o => new
-                    {
-                        o.Id,
-                        o.DeliveryName,
-                        o.Phone,
-                        o.Address,
-                        o.City,
-                        o.State,
-                        o.Pincode,
-                        o.TotalAmount,
-                        o.Status,
-                        o.PaymentMethod,
-                        o.PaymentStatus,
-                        o.OrderDate,
-
-                        OrderItems = o.OrderItems.Select(oi => new
-                        {
-                            oi.Id,
-                            oi.ProductId,
-                            ProductName = oi.Product.Name,
-                            ProductImage = oi.Product.Images
-                                .Select(i => i.ImageUrl)
-                                .FirstOrDefault(),
-                            oi.Quantity,
-                            oi.Price
-                        })
-                    })
-                    .ToListAsync();
-
-                await _logger.LogMessageAsync($"User orders retrieved successfully - UserId: {userId}, OrderCount: {orders.Count}");
+                var orders = await _orderService.GetUserOrdersAsync(userId);
 
                 return Ok(orders);
             }
@@ -259,6 +192,7 @@ namespace ECommerceBackend.Controllers
                 });
             }
         }
+
         [HttpGet("User/{id}")]
         [Authorize(Roles = "User")]
         public async Task<IActionResult> GetUserOrderDetails(int id)
@@ -276,40 +210,7 @@ namespace ECommerceBackend.Controllers
 
                 int userId = int.Parse(userIdClaim.Value);
 
-                await _logger.LogMessageAsync($"User requested order details - UserId: {userId}, OrderId: {id}");
-
-                var order = await _context.Orders
-                    .Where(o => o.Id == id && o.UserId == userId)
-                    .Include(o => o.OrderItems)
-                        .ThenInclude(oi => oi.Product)
-                    .Select(o => new
-                    {
-                        o.Id,
-                        o.DeliveryName,
-                        o.Phone,
-                        o.Address,
-                        o.City,
-                        o.State,
-                        o.Pincode,
-                        o.TotalAmount,
-                        o.Status,
-                        o.PaymentMethod,
-                        o.PaymentStatus,
-                        o.OrderDate,
-
-                        OrderItems = o.OrderItems.Select(oi => new
-                        {
-                            oi.Id,
-                            oi.ProductId,
-                            ProductName = oi.Product.Name,
-                            ProductImage = oi.Product.Images
-                                .Select(i => i.ImageUrl)
-                                .FirstOrDefault(),
-                            oi.Quantity,
-                            oi.Price
-                        })
-                    })
-                    .FirstOrDefaultAsync();
+                var order = await _orderService.GetUserOrderDetailsAsync(userId, id);
 
                 if (order == null)
                 {
@@ -320,8 +221,6 @@ namespace ECommerceBackend.Controllers
                         message = "Order not found."
                     });
                 }
-
-                await _logger.LogMessageAsync($"Order details retrieved successfully - UserId: {userId}, OrderId: {id}, Status: {order.Status}, TotalAmount: {order.TotalAmount}");
 
                 return Ok(order);
             }
@@ -336,60 +235,82 @@ namespace ECommerceBackend.Controllers
             }
         }
 
-        private async Task<(Order? Order, int ItemCount)> CreateOrderFromCart(int userId, CreateOrderDto dto, string paymentMethod, string paymentStatus)
+// Admin updates order status
+[HttpPut("admin/{id}/status")]
+[Authorize(Roles = "Admin")]
+public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] string status)
         {
-            var cartItems = await _context.CartItems
-                .Include(c => c.Product)
-                .Where(c => c.UserId == userId)
-                .ToListAsync();
-
-            if (cartItems.Count == 0)
+            try
             {
-                return (null, 0);
-            }
+                var success = await _orderService.UpdateOrderStatusAsync(id, status);
 
-            decimal totalAmount = cartItems.Sum(item => item.Product.Price * item.Quantity);
-
-            var order = new Order
-            {
-                UserId = userId,
-
-                DeliveryName = dto.FullName,
-                Phone = dto.Phone,
-                Address = dto.Address,
-                City = dto.City,
-                State = dto.State,
-                Pincode = dto.Pincode,
-
-                TotalAmount = totalAmount,
-                Status = "Pending",
-
-                PaymentMethod = paymentMethod,
-                PaymentStatus = paymentStatus,
-
-                OrderDate = DateTime.UtcNow
-            };
-
-            _context.Orders.Add(order);// here order details are added to Order model
-
-            foreach (var cartItem in cartItems)
-            {
-                var orderItem = new OrderItem
+                if (!success)
                 {
-                    Order = order,
-                    ProductId = cartItem.ProductId,
-                    Quantity = cartItem.Quantity,
-                    Price = cartItem.Product.Price
-                };
+                    return BadRequest(new
+                    {
+                        message = "Invalid order ID or status."
+                    });
+                }
 
-                _context.OrderItems.Add(orderItem);// here order productid, quantity, price are added to OrderItem model
+                return Ok(new
+                {
+                    message = "Order status updated successfully."
+                });
             }
+            catch (Exception ex)
+            {
+                await _logger.LogMessageAsync($"Failed to update order status - OrderId: {id}, Error: {ex.Message}, StackTrace: {ex.StackTrace}", "Error");
 
-            _context.CartItems.RemoveRange(cartItems);
-
-            await _context.SaveChangesAsync();
-
-            return (order, cartItems.Count);
+                return StatusCode(500, new
+                {
+                    message = "An unexpected error occurred while updating the order status."
+                });
+            }
         }
+
+        // User cancels their own order
+        [HttpPut("User/{id}/cancel")]
+        [Authorize(Roles = "User")]
+        public async Task<IActionResult> CancelOrder(int id)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+                if (userIdClaim == null)
+                {
+                    await _logger.LogMessageAsync($"Order cancellation failed - NameIdentifier claim was missing. OrderId: {id}", "Warning");
+
+                    return Unauthorized();
+                }
+
+                int userId = int.Parse(userIdClaim.Value);
+
+                var success = await _orderService.CancelOrderAsync(userId, id);
+
+                if (!success)
+                {
+                    return BadRequest(new
+                    {
+                        message = "Order cannot be cancelled."
+                    });
+                }
+
+                return Ok(new
+                {
+                    message = "Order cancelled successfully."
+                });
+            }
+            catch (Exception ex)
+            {
+                await _logger.LogMessageAsync($"Failed to cancel order - OrderId: {id}, Error: {ex.Message}, StackTrace: {ex.StackTrace}", "Error");
+
+                return StatusCode(500, new
+                {
+                    message = "An unexpected error occurred while cancelling the order."
+                });
+            }
+        }
+
     }
 }

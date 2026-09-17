@@ -23,7 +23,6 @@
     margin-bottom: 28px;
 }
 
-/* CHANGED: font-size 26px (unchanged here, kept for parity with cart/orders) */
 .welcome-section h2 {
     font-size: 26px;
     font-weight: 600;
@@ -188,36 +187,42 @@
 
 .user-banner-slider {
     overflow: hidden;
-    border-radius: 12px;
+    border-radius: 15px;
     margin-bottom: 32px;
 }
 
 .user-banner-track {
     display: flex;
+    gap: 5px;
     width: max-content;
     animation: scrollBanners 20s linear infinite;
+}
+
+.user-banner-group {
+    display: flex;
+    margin-right: 10px;
+}
+
+.user-banner {
+    position: relative;
+    flex: 0 0 auto;
+    margin-right: 20px;
+    width: 1200px; 
+    height: 300px;
+    border-radius: 15px;
+    overflow: hidden;
+    cursor: pointer;
 }
 
 .user-banner-slider:hover .user-banner-track {
     animation-play-state: paused;
 }
 
-.user-banner {
-    position: relative;
-    flex-shrink: 0;
-    width: 100%;
-    max-width: 1200px;
-    height: 300px;
-    margin-right: 20px;
-    border-radius: 12px;
-    overflow: hidden;
-    cursor: pointer;
-}
-
 .user-banner img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
 }
 
 .user-banner-content {
@@ -247,7 +252,7 @@
 
 .user-banner-content button {
     width: fit-content;
-    padding: 12px 24px;
+    padding: 15px 25px;
     border: 0;
     border-radius: 8px;
     background: var(--button-color);
@@ -261,7 +266,12 @@
 }
 
 @keyframes scrollBanners {
-    to { transform: translateX(-50%); }
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(calc(-50%));
+    }
 }
 
 .categories-section {

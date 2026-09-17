@@ -4,13 +4,20 @@ import { getProductById } from "../Services/ProductService.jsx";
 import { addToCart, getCart, updateCartItemQuantity } from "../Services/CartService.jsx";
 import { addReview, getProductReviews } from "../Services/ReviewService.jsx";
 import "./ProductDetails.css";
-import Header from "../Header.jsx";
-import Sidebar from "../Sidebar.jsx";
+import Header from "../Components/Header.jsx";
+import Sidebar from "../Components/Sidebar.jsx";
 
-function ProductDetails({showToast}) {
+function ProductDetails({showToast, openLoginPopup}) {
 
     const { id } = useParams();
     const navigate = useNavigate();
+
+    const token = localStorage.getItem("token");
+    const userData = localStorage.getItem("user");
+    const user = userData ? JSON.parse(userData) : null;
+
+    const isLoggedIn = !!token;
+    const role = token ? user?.role : null;
 
     const [menuOpen, setMenuOpen] = useState(true);
     const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
@@ -40,6 +47,13 @@ function ProductDetails({showToast}) {
 }, [id]);
 
     useEffect(() => {
+    if (!isLoggedIn) {
+        setAddedToCart(false);
+        setCartItem(null);
+        setQuantity(1);
+        return;
+    }
+
     const checkCart = async () => {
         try {
             const cart = await getCart();
@@ -64,7 +78,7 @@ function ProductDetails({showToast}) {
     };
 
     checkCart();
-}, [id]);
+}, [id, isLoggedIn]);
 
 useEffect(() => {
     const loadReviews = async () => {
@@ -79,19 +93,58 @@ useEffect(() => {
     loadReviews();
 }, [id]);
 
-    const handleAddToCart = async () => {
+    const addToCartAfterLogin = async () => {
     try {
         const data = await addToCart(product.id, quantity);
 
-        setProduct({...product, stock: data.stock});
+        setProduct({ ...product, stock: data.stock });
         setAddedToCart(true);
         showToast("Added to cart", "success");
     } catch (error) {
-        alert(error.response?.data?.message || "Failed to add product to cart.");
+        showToast(
+            error.response?.data?.message || "Failed to add product to cart.",
+            "error"
+        );
     }
 };
 
+const handleAddToCart = async () => {
+    if (!isLoggedIn) {
+        openLoginPopup(addToCartAfterLogin);
+        return;
+    }
+
+    await addToCartAfterLogin();
+};
+
+const buyNowAfterLogin = async () => {
+    try {
+        if (!addedToCart) {
+            await addToCart(product.id, quantity);
+        }
+
+        navigate("/cart");
+    } catch (error) {
+        showToast("Unable to add product to cart.", "error");
+    }
+};
+
+const handleBuyNow = async () => {
+    if (!isLoggedIn) {
+        openLoginPopup(buyNowAfterLogin);
+        return;
+    }
+
+    await buyNowAfterLogin();
+};
+
 const handleSubmitReview = async () => {
+
+    if (!isLoggedIn) {
+        openLoginPopup();
+        return;
+    }
+
     if (!comment.trim()) {
         showToast("Please enter a review.", "warning");
         return;
@@ -166,9 +219,9 @@ const handleNextImage = () => {
 
     return (
         <>
-            <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="User" onCartClick={() => navigate("/cart")} />
+            <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role={role} onCartClick={() => navigate("/cart")} />
             <div className="page-layout">
-                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} onCartClick={() => navigate("/cart")}/>
+                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} onCartClick={() => navigate("/cart")} role={role}/>
            
             <div className="product-details-page">
 
@@ -267,14 +320,7 @@ const handleNextImage = () => {
                             {addedToCart ? "Go to Cart" : "Add to Cart"}
                             </button>
 
-                            <button className="buy-btn" onClick={async () => {
-                                if (!addedToCart) {
-                                        await addToCart(product.id, quantity);
-                                    }
-                                    navigate("/cart");
-                                }}
-                                >Buy Now
-                            </button>
+                            <button className="buy-btn" onClick={handleBuyNow}>Buy Now</button>
 
                         </div>
 
@@ -325,7 +371,7 @@ const handleNextImage = () => {
                 <div className="product-section">
 
                     <h2>Customer Reviews</h2>
-
+                    {isLoggedIn ? (
                         <div className="review-form">
                             <h3>Write a Review</h3>
                                 <div className="star-input">
@@ -341,6 +387,9 @@ const handleNextImage = () => {
                             <button onClick={handleSubmitReview}>Submit Review</button>
 
                             </div>
+                    ):(
+                        <p>Please <button onClick={() => openLoginPopup()}>login</button> to write a review.</p>
+                        )}
 
                             {reviews.length === 0 ? (
                                 <p>No reviews yet.</p>

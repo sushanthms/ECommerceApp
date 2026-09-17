@@ -1,7 +1,6 @@
 A Web API acts as the communication layer between the frontend application and the database.
 
-E-commerce project:
-
+E-commerce project
 React Frontend
       ↓
    HTTP request
@@ -113,3 +112,96 @@ A DTO is an object that is used to carry only the data that needs to be transfer
 
 AppDbContext is the main EF Core object that represents the connection/session with the database.
 It contains DbSets representing the database tables.  
+
+product.Price = 48000;
+changes the C# object in memory
+
+await _context.SaveChangesAsync();
+makes EF Core update that changes to the database
+
+EF Core keeps track of an entity's state.
+Some important states are:
+Detached means EF Core isn't tracking it
+Unchanged
+Added
+Modified
+Deleted
+
+[ApiController]
+It enables API-specific behavior
+Request model binding
+Automatic validation responses
+API-related conventions
+
+[FromBody] tells ASP.NET Core to get the parameter data from the HTTP request body
+
+export const updateProduct = async (id, product, token) => {
+    const response = await axios.put(`${API_URL}/${id}`, product, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+    return response.data;
+};
+
+The first argument of axios.put() is the request url.
+The second argument of axios.put() is the request body.
+
+product = {
+    name: "Phone",
+    price: 20000,
+    stock: 5
+}
+
+Here product is a JavaScript object, so Axios sends it as JSON.
+ASP.NET Core's model binding + JSON deserialization handles it.
+
+Content-Type: application/json
+        ↓
+Request body contains JSON
+        ↓
+Model binding/deserialization
+        ↓
+UpdateProductDto object is created
+        ↓
+product.Name
+product.Price
+product.Stock
+
+when do we use [FromForm]?
+Only when the frontend sends form-data
+
+| What we're sending  | Frontend          | Backend           |
+| ------------------- | ----------------- | ----------------- |
+| Normal JSON data    | JavaScript object | DTO/model         |
+| File                | FormData          | IFormFile         |
+| Multiple files      | FormData          | List<IFormFile>   |
+| Normal data + files | FormData          | [FromForm]        |
+
+
+[Route("api/[controller]")] is the base URL for the controller
+
+[HttpGet("{id}")]
+public async Task<IActionResult> GetProduct(int id)
+{
+}
+
+The http action adds {id} to the base URL
+
+[HttpPut("{id}")] public IActionResult UpdateProduct(int id, ProductDto product) { }  
+[HttpPut("{id}")] public IActionResult Update(int id, ProductDto product) { }
+we wll get error at runtime.
+we should change the url in such cases by adding extra word behind the url [HttpPut("update/{id}")] or [HttpPut("price/{id}")]
+we can also use a different HTTP method, HttpPatch.
+
+[HttpGet("{id:int}")]
+The :int is a route constraint.
+
+Content-Type is an HTTP request header.
+Content-Type: application/json
+Content-Type: multipart/form-data
+It tells the backend what format of data is in the request body
+
+ASP.NET Core sees Content-Type: application/json and understands that the body is JSON
+so it needs a JSON input formatter to convert that JSON into the expected C# object.
+ASP.NET Core has built-in support for JSON.

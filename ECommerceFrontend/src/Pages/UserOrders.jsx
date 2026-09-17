@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import Header from "../Header.jsx";
-import Sidebar from "../Sidebar.jsx";
+import { cancelOrder } from "../Services/OrderService.jsx";
+import Header from "../Components/Header.jsx";
+import Sidebar from "../Components/Sidebar.jsx";
 import "./UserOrders.css";
 
 function UserOrders() {
@@ -15,9 +16,41 @@ function UserOrders() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
+const handleCancelOrder = async (id) => {
+
+    const confirmCancel = window.confirm("Are you sure you want to cancel this order?");
+
+    if (!confirmCancel) {
+        return;
+    }
+
+    try {
+
+        await cancelOrder(id);
+
+        setOrders((previousOrders) =>
+            previousOrders.map((order) =>
+                order.id === id
+                    ? { ...order, status: "Cancelled" }
+                    : order
+            )
+        );
+
+        alert("Order cancelled successfully.");
+
+    } catch (error) {
+
+        console.error("Error cancelling order:", error);
+        alert(error.response?.data?.message || "Failed to cancel order.");
+    }
+};
+
     useEffect(() => {
         const fetchOrders = async () => {
             try {
+
+             // const result = window.confirm("Continue?");
+             // console.log(result);
                 const token = localStorage.getItem("token");
 
                 const response = await axios.get(
@@ -121,6 +154,10 @@ function UserOrders() {
 
                                                 <div className="order-footer">
                                                     <Link to={`/orders/${order.id}`} className="view-order-button">View Order Details</Link>
+                                                    {(order.status === "Pending" || order.status === "Processing") && (
+                                                        <button className="cancel-order-button" onClick={() => handleCancelOrder(order.id)}>Cancel Order</button>
+                                                    )}
+
                                                 </div>
 
                                             </div>

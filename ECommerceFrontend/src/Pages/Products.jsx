@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-import Header from "../Header.jsx";
-import Sidebar from "../Sidebar.jsx";
+import Header from "../Components/Header.jsx";
+import Sidebar from "../Components/Sidebar.jsx";
 import { getProducts, searchProducts, getCategories } from "../Services/ProductService.jsx";
 
 import "./Products.css";
 
 function Products({ showToast }) {
+
+    const navigate = useNavigate();
 
     const [searchParams] = useSearchParams();
 
@@ -25,7 +27,11 @@ function Products({ showToast }) {
     const [pageSize] = useState(20);
     const [totalPages, setTotalPages] = useState(1);
 
-    const navigate = useNavigate();
+    const token = localStorage.getItem("token");
+    const userData = localStorage.getItem("user");
+    const user = userData ? JSON.parse(userData) : null;
+
+    const role = token ? user?.role : null;
 
     useEffect(() => {document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");}, [darkMode]);
 
@@ -134,20 +140,15 @@ const handlePageChange = (pageNumber) => {
 
     return (
         <>
-            <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="User" onCartClick={() => navigate("/cart")} />
-
+            <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role={role} onCartClick={() => navigate("/cart")} search={search} setSearch={setSearch} onSearch={() => setPage(1)} />
             <div className="page-layout">
-                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} onCartClick={() => navigate("/cart")} role="User" />
+                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} onCartClick={() => navigate("/cart")} role={role} />
 
                 <main className="main-content">
 
                     <div className="welcome-section">
                         <h2>Products</h2>
                         <p>Browse all available products.</p>
-                    </div>
-
-                    <div className="search-section">
-                        <input type="text" value={search} onChange={(e) => handleSearch(e.target.value)} placeholder="Search products or categories..." />
                     </div>
 
                     <div className="filter-section">

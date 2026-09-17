@@ -4,7 +4,7 @@ import { registerUser} from "../Services/authService.jsx";
 
 import "./Login.css";
 
-function Register() {
+function Register({ showToast, isPopup = false, onClose, onLogin }) {
 
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -75,9 +75,11 @@ function Register() {
     };
 
     return (
-        <div className="auth-container">
+        <div className={isPopup ? "login-overlay" : "auth-container"} onClick={isPopup ? onClose : undefined}>
 
-            <div className="auth-card">
+            <div className={isPopup ? "auth-card login-popup" : "auth-card"} onClick={isPopup ? (e) => e.stopPropagation() : undefined}>
+
+                {isPopup && (<button className="login-close" onClick={onClose}>×</button>)}
 
                 <h1>Create Account</h1>
 
@@ -128,7 +130,19 @@ function Register() {
 
                 </form>
 
-                <p>Already have an account?{" "}<button type="button" onClick={() => navigate("/login")}>Login</button></p>
+                <p>Already have an account?{" "}
+                    <button type="button"
+                    onClick={() => {
+                            if (isPopup) {
+                                onLogin();
+                            } else {
+                                navigate("/login");
+                            }
+                        }}
+                    >
+                        Login
+                    </button>
+                </p>
 
             </div>
         </div>

@@ -178,6 +178,21 @@
     background: var(--button-hover);
 }
 
+.cancel-order-button {
+    padding: 9px 16px;
+    margin-left: 10px;
+    border: none;
+    border-radius: 6px;
+    background-color: var(--button-color);
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.cancel-order-button:hover {
+    background-color: var(--button-hover);
+}
+
 @media (max-width: 768px) {
     .order-details-page {
         padding: 20px;

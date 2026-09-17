@@ -11,17 +11,13 @@ const authHeader = () => {
 };
 
 export const getBanners = async () => {
-    const response = await axios.get(API_URL, {
-        headers: authHeader()
-    });
+    const response = await axios.get(API_URL);
 
     return response.data;
 };
 
 export const getBanner = async (id) => {
-    const response = await axios.get(`${API_URL}/${id}`, {
-        headers: authHeader()
-    });
+    const response = await axios.get(`${API_URL}/${id}`);
 
     return response.data;
 };

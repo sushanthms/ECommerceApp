@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
+import Header from "../Components/Header.jsx";
+import Sidebar from "../Components/Sidebar.jsx";
 import {getBanners, addBanner, updateBanner, deleteBanner} from "../Services/BannerService.jsx";
 import "./AdminBanner.css";
 
 function AdminBanner() {
 
+    const [menuOpen, setMenuOpen] = useState(true);
+    const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
+
     const [banners, setBanners] = useState([]);
-
     const [showBannerForm, setShowBannerForm] = useState(false);
-
     const [editingBannerId, setEditingBannerId] = useState(null);
 
     const [bannerTitle, setBannerTitle] = useState("");
@@ -127,6 +130,13 @@ function AdminBanner() {
     };
 
     return (
+        <>
+
+        <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="Admin"/>
+
+            <div className="page-layout">
+
+                <Sidebar menuOpen={menuOpen} role="Admin"/>
         <div className="banner-management-section">
 
             <div className="section-heading">
@@ -160,11 +170,7 @@ function AdminBanner() {
                         <div className="form-item">
                             <label>Banner Image</label>
 
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => setBannerImage(e.target.files[0])}
-                            />
+                            <input type="file" accept="image/*" onChange={(e) => setBannerImage(e.target.files[0])}/>
 
                             {bannerImage && (
                                 <p>Selected image: {bannerImage.name}</p>
@@ -225,6 +231,8 @@ function AdminBanner() {
 </div>
 
         </div>
+    </div>
+</>
     );
 }
 

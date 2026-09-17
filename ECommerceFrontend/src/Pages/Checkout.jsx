@@ -2,14 +2,15 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-import Header from "../Header.jsx";
-import Sidebar from "../Sidebar.jsx";
+import Header from "../Components/Header.jsx";
+import Sidebar from "../Components/Sidebar.jsx";
 import { getCart } from "../Services/CartService.jsx";
 import "./Checkout.css";
 
 const API_URL = `${import.meta.env.VITE_API_URL}/Order`;
 
 function Checkout({ showToast }) {
+    console.log("Checkout Page Rendered");
     const [menuOpen, setMenuOpen] = useState(true);
     const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
     const [cartItems, setCartItems] = useState([]);
@@ -166,7 +167,6 @@ function Checkout({ showToast }) {
                 );
 
                 showToast(response.data.message);
-
                 navigate("/home");
             } catch (error) {
                 console.error("Payment error:", error);
@@ -179,6 +179,9 @@ function Checkout({ showToast }) {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        // this is 
+        // const name = e.target.name;
+        // const value = e.target.value;
         setCustomerDetails({...customerDetails, [name]: value});
     };
 
@@ -198,9 +201,7 @@ function Checkout({ showToast }) {
 
                     {showPayment ? (
                         <div className="payment-page">
-
                             <h2>Online Payment</h2>
-
                             <p>Total Amount: ₹{total.toFixed(2)}</p>
 
                             <form onSubmit={handlePayment}>
@@ -211,17 +212,14 @@ function Checkout({ showToast }) {
                                 </div>
 
                                 <div className="form-row">
-
                                     <div className="form-group">
                                         <label>Expiry</label>
                                         <input type="text" value={expiry} onChange={(e) => setExpiry(e.target.value.slice(0, 5))} placeholder="MM/YY"/>
                                     </div>
-
                                     <div className="form-group">
                                         <label>CVV</label>
                                         <input type="password" value={cvv} onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 3))} placeholder="CVV"/>
                                     </div>
-
                                 </div>
 
                                 <button type="submit" className="place-order-btn" disabled={paymentProcessing}>

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import "./Login.css";
 
-function Login({showToast}) {
+function Login({ showToast, isPopup = false, onClose, onLoginSuccess, onRegister }) {
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -25,15 +25,9 @@ function Login({showToast}) {
 
         try {
 
-            const data = await loginUser({
-                email,
-                password
-            });
-
-            console.log("Login response:", data);
+            const data = await loginUser({email, password});
 
             localStorage.setItem("token", data.token);
-
             localStorage.setItem(
                 "user",// key
                 JSON.stringify({// value
@@ -43,23 +37,28 @@ function Login({showToast}) {
                     role: data.role
                 })
             );
+
+            showToast("Login successful!");
 // login success for admin, admin gets navigated to /admin which is adminhome. moves to app.jsx, app.jsx has ProtectedRoute allowedRole="User">
 // so protectedroute file gets allowedroute parameter from app.jsx.
+            if (isPopup) {
+                onLoginSuccess(data);
+                onClose();
+                return;
+            }
+
             if (data.role === "Admin") {
                 navigate("/admin");
             }
             else {
                 navigate("/home");
             }
-            showToast("Login successful!");
-        } catch (error) {
+
+            } catch (error) {
 
             if (error.response) {
 
-                setError(
-                    error.response.data.message ||
-                    "Invalid email or password."
-                );
+                setError(error.response.data.message || "Invalid email or password.");
 
             } else {
 
@@ -70,40 +69,44 @@ function Login({showToast}) {
     };
 
     return (
-        <div className="auth-container">
+        <div className={isPopup ? "login-overlay" : "auth-container"} onClick={isPopup ? onClose : undefined}>
 
-            <div className="auth-card">
+            <div className={isPopup ? "auth-card login-popup" : "auth-card"} onClick={isPopup ? (e) => e.stopPropagation() : undefined}>
+
+                {isPopup && (<button className="login-close" onClick={onClose}>×</button>)}
 
                 <h1>Login</h1>
 
                 <form onSubmit={handleLogin}>
 
                     <div className="form-group">
-
                         <label>Email</label>
-                        <input type="text" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email" />
+                        <input type="text" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email"/>
                     </div>
 
                     <div className="form-group">
                         <label>Password</label>
-                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" />
-
+                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password"/>
                     </div>
 
-                    {error && (
-                        <p className="error-message">
-                            {error}
-                        </p>
-                    )}
+                    {error && (<p className="error-message">{error}</p>)}
 
-                    <button type="submit">
-                        Login
-                    </button>
+                    <button type="submit">Login</button>
 
                 </form>
 
-                <p> New user?{" "}
-                    <button type="button" onClick={() => navigate("/register")}>Register</button>
+                <p>
+                    New user?{" "}
+                    <button type="button" onClick={() => {
+                            if (isPopup) {
+                                onRegister();
+                            } else {
+                                navigate("/register");
+                            }
+                        }}
+                    >
+                        Register
+                    </button>
                 </p>
 
             </div>

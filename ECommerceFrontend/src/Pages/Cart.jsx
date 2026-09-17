@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import Header from "../Header.jsx";
-import Sidebar from "../Sidebar.jsx";
+import Header from "../Components/Header.jsx";
+import Sidebar from "../Components/Sidebar.jsx";
 import { getCart, updateCartItemQuantity, removeFromCart } from "../Services/CartService.jsx";
 import "./Cart.css";
 
@@ -69,7 +69,7 @@ function Cart({showToast}) {
         <>
         <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="User" onCartClick={() => navigate("/cart")}/>
     <div className="page-layout">
-        <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} onCartClick={() => navigate("/cart")}/>
+        <Sidebar menuOpen={menuOpen} role="User" />
 
         <div className="cart-page">
     

@@ -97,6 +97,21 @@
     font-size: 20px;
 }
 
+.order-detail-section select {
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.order-detail-section select:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 @media (max-width: 768px) {
     .admin-order-details-page {
         padding: 20px;

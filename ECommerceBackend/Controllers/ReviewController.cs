@@ -1,8 +1,8 @@
-﻿using ECommerceBackend.Data;
-using ECommerceBackend.Models;
+﻿using ECommerceBackend.Models;
+using ECommerceBackend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using System.Net;
 using System.Security.Claims;
 
 namespace ECommerceBackend.Controllers
@@ -11,76 +11,55 @@ namespace ECommerceBackend.Controllers
     [Route("api/[controller]")]
     public class ReviewController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly ReviewService _reviewService;
 
-        public ReviewController(AppDbContext context)
+        public ReviewController(ReviewService reviewService)
         {
-            _context = context;
+            _reviewService = reviewService;
         }
 
         [Authorize(Roles = "User")]
         [HttpPost]
         public async Task<IActionResult> AddReview(Review review)
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            var product = await _context.Products
-                .FirstOrDefaultAsync(p => p.Id == review.ProductId && !p.IsDeleted);
+            if (userIdClaim == null)
+            {
+                return Unauthorized();
+            }
 
-            if (product == null)
-                return NotFound("Product not found.");
+            int userId = int.Parse(userIdClaim);
 
-            if (review.Rating < 1 || review.Rating > 5)
-                return BadRequest("Rating must be between 1 and 5.");
+            var result = await _reviewService.AddReviewAsync(
+                review,
+                userId);
 
-            var existingReview = await _context.Reviews
-                .FirstOrDefaultAsync(r =>
-                    r.UserId == userId &&
-                    r.ProductId == review.ProductId);
+            if (result.Review == null)
+            {
+                if (result.Error == "Product not found.")
+                {
+                    return NotFound(result.Error);
+                }
 
-            if (existingReview != null)
-                return BadRequest("You have already reviewed this product.");
-
-            review.UserId = userId;
-            review.CreatedAt = DateTime.UtcNow;
-
-            _context.Reviews.Add(review);
-            await _context.SaveChangesAsync();
-
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Id == userId);
+                return BadRequest(result.Error);
+            }
 
             return Ok(new
             {
-                review.Id,
-                review.ProductId,
-                review.Rating,
-                review.Comment,
-                review.CreatedAt,
-                UserName = user.Name
+                result.Review.Id,
+                result.Review.ProductId,
+                result.Review.Rating,
+                result.Review.Comment,
+                result.Review.CreatedAt,
+                UserName = result.UserName
             });
         }
 
         [HttpGet("product/{productId}")]
         public async Task<IActionResult> GetProductReviews(int productId)
         {
-            var reviews = await _context.Reviews// first table
-                .Where(r => r.ProductId == productId)
-                .Join(
-                    _context.Users,// second table to join with
-                    review => review.UserId,// from a review, use its UserId. LEFT side of the condition
-                    user => user.Id,// from a user, use its Id. RIGHT side of the condition
-                    (review, user) => new// after review.userid and user.id are matched, then it builds a new object by combining the data from both table
-                    {
-                        review.Id,
-                        review.ProductId,
-                        review.Rating,
-                        review.Comment,
-                        review.CreatedAt,
-                        UserName = user.Name
-                    })
-                .OrderByDescending(r => r.CreatedAt)
-                .ToListAsync();
+            var reviews = await _reviewService.GetProductReviewsAsync(productId);
 
             return Ok(reviews);
         }
@@ -89,33 +68,7 @@ namespace ECommerceBackend.Controllers
         [HttpGet("admin")]
         public async Task<IActionResult> GetAllReviews()
         {
-            var reviews = await _context.Reviews
-                .Join(
-                    _context.Users,
-                    review => review.UserId,
-                    user => user.Id,
-                    (review, user) => new
-                    {
-                        review,
-                        user
-                    })
-                .Join(// The second Join() is performed on the result produced by the first Join()
-                    _context.Products,
-                    x => x.review.ProductId,// x represents the result from the first Join.
-                    product => product.Id,
-                    (x, product) => new
-                    {
-                        x.review.Id,
-                        x.review.ProductId,
-                        ProductName = product.Name,
-                        UserId = x.user.Id,
-                        UserName = x.user.Name,
-                        x.review.Rating,
-                        x.review.Comment,
-                        x.review.CreatedAt
-                    })
-                .OrderByDescending(r => r.CreatedAt)
-                .ToListAsync();
+            var reviews = await _reviewService.GetAllReviewsAsync();
 
             return Ok(reviews);
         }
@@ -124,14 +77,12 @@ namespace ECommerceBackend.Controllers
         [HttpDelete("admin/{id}")]
         public async Task<IActionResult> DeleteReview(int id)
         {
-            var review = await _context.Reviews
-                .FirstOrDefaultAsync(r => r.Id == id);
+            var success = await _reviewService.DeleteReviewAsync(id);
 
-            if (review == null)
+            if (!success)
+            {
                 return NotFound("Review not found.");
-
-            _context.Reviews.Remove(review);
-            await _context.SaveChangesAsync();
+            }
 
             return Ok("Review deleted successfully.");
         }

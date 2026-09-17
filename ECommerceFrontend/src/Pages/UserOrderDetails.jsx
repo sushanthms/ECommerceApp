@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import Header from "../Header.jsx";
-import Sidebar from "../Sidebar.jsx";
+import { cancelOrder } from "../Services/OrderService.jsx";
+import Header from "../Components/Header.jsx";
+import Sidebar from "../Components/Sidebar.jsx";
 import "./UserOrderDetails.css";
 
 function UserOrderDetails() {
@@ -40,6 +41,29 @@ function UserOrderDetails() {
 
         fetchOrderDetails();
     }, [id]);
+
+const handleCancelOrder = async () => {
+    const confirmCancel = window.confirm("Are you sure you want to cancel this order?");
+
+    if (!confirmCancel) {
+        return;
+    }
+
+    try {
+        await cancelOrder(order.id);
+
+        setOrder({
+            ...order,
+            status: "Cancelled"
+        });
+
+        alert("Order cancelled successfully.");
+    } catch (error) {
+        console.error("Error cancelling order:", error);
+
+        alert(error.response?.data?.message || "Failed to cancel order.");
+    }
+};
 
     if (loading) {
         return (
@@ -148,6 +172,10 @@ function UserOrderDetails() {
                     </div>
 
                     <Link to="/orders" className="back-orders-button">Back to Orders</Link>
+
+                    {(order.status === "Pending" || order.status === "Processing") && (
+                        <button className="cancel-order-button" onClick={handleCancelOrder}>Cancel Order</button>
+                    )}
 
                 </div>
 

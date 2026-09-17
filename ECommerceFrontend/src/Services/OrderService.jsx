@@ -13,3 +13,36 @@ export const getAllOrders = async () => {
 
     return response.data;
 };
+
+export const updateOrderStatus = async (id, status) => {
+    const token = localStorage.getItem("token");
+
+    const response = await axios.put(
+        `${API_URL}/admin/${id}/status`,
+        status,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        }
+    );
+
+    return response.data;
+};
+
+export const cancelOrder = async (id) => {
+    const token = localStorage.getItem("token");
+
+    const response = await axios.put(
+        `${API_URL}/User/${id}/cancel`,
+        {},
+        {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }
+    );
+
+    return response.data;
+};

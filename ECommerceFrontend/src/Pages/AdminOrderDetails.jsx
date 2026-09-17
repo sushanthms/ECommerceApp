@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 // useLocation is used to access the state that was passed during navigation.
 // useParams is used to get the parameters from the URL. we have id in the url
-import Header from "../Header.jsx";
-import Sidebar from "../Sidebar.jsx";
-import { getAllOrders } from "../Services/OrderService.jsx";
+import Header from "../Components/Header.jsx";
+import Sidebar from "../Components/Sidebar.jsx";
+import { getAllOrders, updateOrderStatus } from "../Services/OrderService.jsx";
 
 import "./AdminOrderDetails.css";
 // when id changes the url becomes /admin/orders/:id. when ever this url is updated means new id is being searched,
@@ -17,10 +17,12 @@ function AdminOrderDetails() {
     const navigate = useNavigate();
     const { id } = useParams();
 
-    const [order, setOrder] = useState(location.state?.order || null);// order object
-    const [loading, setLoading] = useState(!location.state?.order);// if order was not passed then loading is true and shows Loading.
     const [menuOpen, setMenuOpen] = useState(true);
     const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
+
+    const [updatingStatus, setUpdatingStatus] = useState(false);
+    const [order, setOrder] = useState(location.state?.order || null);// order object
+    const [loading, setLoading] = useState(!location.state?.order);// if order was not passed then loading is true and shows Loading.
 // even if the id is updated by clicking view orders or by directly typing admin/orders/7 the process in AdminOrderDetails is same
 // if we click view order, the order object will be passed to the AdminOrderDetails page, if we directly type admin/Orders/7 the order object will be fetched from the backend
     useEffect(() => {
@@ -61,6 +63,30 @@ function AdminOrderDetails() {
         return (<p>Order not found.</p>);
     }
 
+const handleStatusChange = async (e) => {
+
+    const newStatus = e.target.value;
+
+    try {
+
+        setUpdatingStatus(true);
+
+        await updateOrderStatus(order.id, newStatus);
+
+        setOrder({...order, status: newStatus});
+
+    } catch (error) {
+
+        console.error("Error updating order status:", error);
+        alert(error.response?.data?.message || "Failed to update order status.");
+
+    } finally {
+
+        setUpdatingStatus(false);
+
+    }
+};
+
     return (
         <>
             <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="Admin"/>
@@ -77,7 +103,21 @@ function AdminOrderDetails() {
                     <div className="order-detail-section">
                         <h3>Order Details</h3>
                         <p><strong>Date:</strong>{" "}{new Date(order.orderDate).toLocaleString()}</p>
-                        <p><strong>Status:</strong>{" "}{order.status}</p>
+                        <p>
+                            <strong>Status:</strong>{" "}
+                            {order.status === "Cancelled" ?
+                            ( 
+                            <span>Cancelled</span> ) 
+                            : (
+                            <select value={order.status} onChange={handleStatusChange} disabled={updatingStatus}>
+                                <option value="Pending">Pending</option>
+                                <option value="Processing">Processing</option>
+                                <option value="Shipped">Shipped</option>
+                                <option value="Delivered">Delivered</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                            )}
+                        </p>
                         <p><strong>Payment Method:</strong>{" "}{order.paymentMethod}</p>
                         <p><strong>Payment Status:</strong>{" "}{order.paymentStatus}</p>
                     </div>

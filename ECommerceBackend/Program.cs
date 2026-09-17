@@ -2,6 +2,7 @@ using ECommerceBackend;
 using ECommerceBackend.Data;
 using ECommerceBackend.Logging;
 using ECommerceBackend.Models;
+using ECommerceBackend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -30,6 +31,12 @@ else
     throw new Exception("Invalid logging provider. Use File or Database.");
 }
 
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<BannerService>();
+builder.Services.AddScoped<CartService>();
+builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<ReviewService>();
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 

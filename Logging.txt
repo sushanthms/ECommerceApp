@@ -157,6 +157,8 @@ It is not written to the log file yet.
 It is only temporarily stored in the current request's HttpContext.Items.
 Because the middleware is going to finish creating the complete log after the controller finishes.
 
+Explanation:
+
 First RequestLoggingMiddleware runs, and when it reaches _next(context), the request continues towards the controller.
 in the controller the flow reached here await _logger.LogMessageAsync("User registration failed - email already registered");
 we _logger is dependency injected from IApplicationLogger, IApplicationLogger knows whether to use FileLogger or DatabaseLogger.
@@ -172,6 +174,15 @@ middleware creates an ApplicationLog object
 Middleware calls await logger.LogAsync(log);
 The LogAsync() function of the FileLogger or DatabaseLogger runs
 
+Explanation:
+
+First, the code flow reaches this file. It runs the await _next(context) inside the try block. Then the flow goes to CORS, authentication, authorization, and finally the controller.
+In the controller, we call LogMessageAsync(). It puts the message and level into HttpContext.Items.
+After the controller finishes, _next(context) completes, and execution returns to the middleware.
+Then the finally block runs. It stops the stopwatch and puts the controller's message into ApplicationLog if a message is present. Otherwise, it uses its own default message.
+Finally, RequestLoggingMiddleware calls LogAsync(), which goes to FileLogger. FileLogger writes the log inside the ecommerce log file and returns Task.CompletedTask.
+
+
 If there was no interface, we have to directly inject FileLogger into the controller
 private readonly FileLogger _logger;
 
@@ -182,7 +193,7 @@ public AuthController(AppDbContext context, FileLogger logger)
 }
 
 then await _logger.LogMessageAsync("User registration failed..."); would call the FileLogger function.
-Now if we want to change from FileLogger to DatabaseLogger we have change the code in the constructors inside the controllers.
+Now if we want to change from FileLogger to DatabaseLogger we have to change the code in the constructors inside the controllers.
 
 With the interface, the controller and the constructor doesnot know whether they are using FileLogger or DatabaseLogger
 It gives the controller a common contract instead of tying it directly to FileLogger or DatabaseLogger.

@@ -2,59 +2,56 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import axios from "axios";
 
-const API_URL = `${import.meta.env.VITE_API_URL}/Auth`;
-
 function ProtectedRoute({ children, allowedRole }) {
+    const [checking, setChecking] = useState(true);
+    const [authorized, setAuthorized] = useState(false);
 
     const token = localStorage.getItem("token");
 
-    const [authorized, setAuthorized] = useState(false);
-    const [checking, setChecking] = useState(true);// checking means Are we still waiting
-
-    if (!token) {
-        return <Navigate to="/login" replace />;
-    }
-
     useEffect(() => {
-
-        const checkAuthorization = async () => {
+        const verifyToken = async () => {
+            if (!token) {
+                setChecking(false);
+                return;
+            }
 
             try {
-
-                let url = "";
-
-                if (allowedRole === "Admin") {
-                    url = `${API_URL}/admin-test`;
-                }
-                else if (allowedRole === "User") {
-                    url = `${API_URL}/user-test`;
-                }
-
-                await axios.get(url, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
+                const response = await axios.get(
+                    `${import.meta.env.VITE_API_URL}/Auth/verify`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
                     }
-                });
+                );
+
+                const actualRole = response.data.role;
+
+                if (allowedRole && actualRole !== allowedRole) {
+                    setAuthorized(false);
+                    setChecking(false);
+                    return;
+                }
 
                 setAuthorized(true);
-
-            } catch (error) {
+                setChecking(false);
+            } 
+            catch (error) {
+                console.log("VERIFY ERROR:", error);
+                console.log("STATUS:", error.response?.status);
+                console.log("DATA:", error.response?.data);
 
                 setAuthorized(false);
-
-            } finally {
-
                 setChecking(false);
-
             }
         };
 
-        checkAuthorization();
-
+        verifyToken();
     }, [token, allowedRole]);
 
     if (checking) {
-        return <p>Checking authorization...</p>;    }
+        return <div>Checking authentication...</div>;
+    }
 
     if (!authorized) {
         return <Navigate to="/login" replace />;
