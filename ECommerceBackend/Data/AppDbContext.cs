@@ -34,6 +34,17 @@ namespace ECommerceBackend.Data
             modelBuilder.Entity<OrderItem>()
                 .Property(o => o.Price)
                 .HasPrecision(18, 2);
+
+            modelBuilder.Entity<CartItem>()
+                .HasIndex(c => new { c.UserId, c.ProductId })// Creates an index using UserId and ProductId, and makes that combination unique.
+                .IsUnique();
         }
     }
 }
+// A database index is usually organized as a B-tree structure in SQL Server.
+// INDEX: UserId + ProductId
+// (3, 43)  → CartItem row 1
+// (3, 50)  → CartItem row 2
+// (5, 43)  → CartItem row 3
+// (5, 50)  → CartItem row 5
+// (8, 20)  → CartItem row 4

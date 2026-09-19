@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { cancelOrder } from "../Services/OrderService.jsx";
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
+import { cancelOrder } from "../Services/OrderService";
 import "./UserOrders.css";
 
 function UserOrders() {

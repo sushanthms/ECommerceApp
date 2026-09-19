@@ -6,6 +6,13 @@ using System.Security.Claims;
 
 namespace ECommerceBackend.Controllers
 {
+
+    // app runs
+    // React sends a request to the CartController. But ASP.NET needs to create a CartController object to execute the endpoint.
+    // DI looks at the constructor and knows it needs CartService
+    // It checks builder.Services.AddScoped<CartService>();
+    // So DI creates/provides a CartService object.
+    // now _cartService gets the CartService object through the cartService object.
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
@@ -16,21 +23,30 @@ namespace ECommerceBackend.Controllers
         public CartController(CartService cartService)
         {// CartService says: "whatever value gets passed in here must be an object of type CartService."
          // It gets a reference (a memory address) pointing to the fully-built CartService.
+         // cartService is a parameter used to receive the CartService object that DI gives to the controller.
             _cartService = cartService;
+        }
+
+        private int? GetUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)// Claim means a piece of information about the user stored inside the authentication token.
+            {
+                return null;
+            }
+            return int.Parse(userIdClaim.Value);
         }
 
         [HttpPost]
         public async Task<IActionResult> AddToCart(AddToCartDto dto)// dto is a variable/parameter that this function accepts, but it should be of the type AddToCartDto.
         {// ASP.NET Core's model binding checks whether the parameter is same type as it is required. model binding reports a validation/model-state error
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
+            var userId = GetUserId();
+            if (userId == null)
             {
                 return Unauthorized();
             }
-            // Claim means a piece of information about the user stored inside the authentication token.
-            int userId = int.Parse(userIdClaim.Value);
 
-            var result = await _cartService.AddToCartAsync(userId, dto);
+            var result = await _cartService.AddToCartAsync(userId.Value, dto);
 
             if (result.NotFound)
             {
@@ -52,16 +68,13 @@ namespace ECommerceBackend.Controllers
         [HttpGet]
         public async Task<IActionResult> GetCart()
         {
-            // A claim is a key value, value is string, id is also converted to string and stored in claims
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
+            var userId = GetUserId();
+            if (userId == null)
             {
                 return Unauthorized();
             }
 
-            int userId = int.Parse(userIdClaim.Value);
-
-            var cartItems = await _cartService.GetCartAsync(userId);
+            var cartItems = await _cartService.GetCartAsync(userId.Value);
 
             return Ok(cartItems);
         }
@@ -70,16 +83,13 @@ namespace ECommerceBackend.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateQuantity(int id, UpdateCartItemDto dto)
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-
-            if (userIdClaim == null)
+            var userId = GetUserId();
+            if (userId == null)
             {
                 return Unauthorized();
             }
 
-            int userId = int.Parse(userIdClaim.Value);
-
-            var result = await _cartService.UpdateQuantityAsync(userId, id, dto);
+            var result = await _cartService.UpdateQuantityAsync(userId.Value, id, dto);
 
             if (result.NotFound)
             {
@@ -100,20 +110,16 @@ namespace ECommerceBackend.Controllers
             });
         }
 
-        // DELETE /api/Cart/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> RemoveFromCart(int id)
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-
-            if (userIdClaim == null)
+            var userId = GetUserId();
+            if (userId == null)
             {
                 return Unauthorized();
             }
 
-            int userId = int.Parse(userIdClaim.Value);
-
-            var result = await _cartService.RemoveFromCartAsync(userId, id);
+            var result = await _cartService.RemoveFromCartAsync(userId.Value, id);
 
             if (!result.Success)
             {

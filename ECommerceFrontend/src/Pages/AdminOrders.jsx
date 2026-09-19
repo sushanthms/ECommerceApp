@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
-import { getAllOrders } from "../Services/OrderService.jsx";
+import { getAllOrders } from "../Services/OrderService";
 
 import "./AdminOrders.css";
 

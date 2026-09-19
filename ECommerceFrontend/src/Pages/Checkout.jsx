@@ -4,7 +4,7 @@ import axios from "axios";
 
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
-import { getCart } from "../Services/CartService.jsx";
+import { getCart } from "../Services/CartService";
 import "./Checkout.css";
 
 const API_URL = `${import.meta.env.VITE_API_URL}/Order`;

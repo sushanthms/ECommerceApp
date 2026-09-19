@@ -4,7 +4,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 // useParams is used to get the parameters from the URL. we have id in the url
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
-import { getAllOrders, updateOrderStatus } from "../Services/OrderService.jsx";
+import { getAllOrders, updateOrderStatus } from "../Services/OrderService";
 
 import "./AdminOrderDetails.css";
 // when id changes the url becomes /admin/orders/:id. when ever this url is updated means new id is being searched,

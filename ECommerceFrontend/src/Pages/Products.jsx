@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
-import { getProducts, searchProducts, getCategories } from "../Services/ProductService.jsx";
+import { getProducts, searchProducts, getCategories } from "../Services/ProductService";
 
 import "./Products.css";
 

@@ -2,12 +2,7 @@
 using ECommerceBackend.DTOs;
 using ECommerceBackend.Logging;
 using ECommerceBackend.Models;
-using ECommerceBackend.Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace ECommerceBackend.Services
 {

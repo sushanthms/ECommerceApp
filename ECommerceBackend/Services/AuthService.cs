@@ -1,15 +1,12 @@
-﻿using BCrypt.Net;
-using ECommerceBackend.Data;
+﻿using ECommerceBackend.Data;
 using ECommerceBackend.DTOs;
 using ECommerceBackend.Logging;
 using ECommerceBackend.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.Win32;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using static System.Net.WebRequestMethods;
 
 namespace ECommerceBackend.Services
 {

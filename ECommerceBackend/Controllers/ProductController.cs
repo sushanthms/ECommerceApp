@@ -150,8 +150,11 @@ public async Task<IActionResult> UploadCsv([FromForm] IFormFile file, [FromForm]
                 });
             }
 
-            return Ok(result.Product);
+            return CreatedAtAction(nameof(GetProduct), new { id = result.Product.Id }, result.Product);
         }
+        // nameof() is a C# keyword that converts a method name into a string at compile-time.
+        // nameof(GetProduct) becomes "GetProduct".
+        // this return means it says the ASP.NET Core to find the action method called GetProduct in this controller and find its route and use it to the build the url
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { registerUser} from "../Services/authService.jsx";
+import { registerUser} from "../Services/authService";
 
 import "./Login.css";
 
@@ -53,21 +53,15 @@ function Register({ showToast, isPopup = false, onClose, onLogin }) {
 
         try {
 
-            const data = await registerUser({
-                name,
-                email,
-                password
-            });
-
+            const data = await registerUser({name, email,password});
             setSuccess(data.message);
+            showToast("Registration Successfull", "Success")
+            navigate("/home");
 
         } catch (error) {
 
             if (error.response) {
-                setError(
-                    error.response.data.message ||
-                    "Registration failed."
-                );
+                setError(error.response.data.message || "Registration failed.");
             } else {
                 setError("Unable to connect to the server.");
             }

@@ -117,13 +117,22 @@ RequestDelegate is a reference to a method that takes HttpContext and performs a
 _next holds a reference to the next part of the middleware pipeline.
 _next holds a reference to the remaining pipeline.
 
+public delegate Task RequestDelegate(HttpContext context);
+
+RequestDelegate is a delegate type defined by ASP.NET Core. It is a reference to a method that receives an HttpContext and returns a Task
+A delegate is a type that can hold a reference to a method.
+The method must accept an HttpContext.
+
+ASP.NET Core creates/builds the middleware pipeline when the application starts.
 When we run the .NET project, ASP.NET Core builds the request pipeline and creates/links delegates internally, even though we don't write Delegate code.
 
 what does the next parameter do here, from where the next parameter get data to pass it to _next. private readonly RequestDelegate _next; public RequestLoggingMiddleware(RequestDelegate next) { _next = next; }
 
 from where does next get its value?
 ASP.NET Core gives it the value when it creates the middleware.
-next is the function that will continue the request to the next middleware
+_next is a variable (field) that stores a reference to the next RequestDelegate.
+
+Storing the reference means the variable holds information about where the actual object/method/delegate can be accessed, rather than Storing the value in it.
 
 context.Items is the temporary storage area for the current request.
 

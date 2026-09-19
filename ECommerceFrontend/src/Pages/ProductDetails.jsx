@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getProductById } from "../Services/ProductService.jsx";
-import { addToCart, getCart, updateCartItemQuantity } from "../Services/CartService.jsx";
-import { addReview, getProductReviews } from "../Services/ReviewService.jsx";
+import { getProductById } from "../Services/ProductService";
+import { addToCart, getCart, updateCartItemQuantity  } from "../Services/CartService";
+import { addReview, getProductReviews } from "../Services/ReviewService";
 import "./ProductDetails.css";
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
@@ -15,6 +15,7 @@ function ProductDetails({showToast, openLoginPopup}) {
     const token = localStorage.getItem("token");
     const userData = localStorage.getItem("user");
     const user = userData ? JSON.parse(userData) : null;
+    console.log(user);
 
     const isLoggedIn = !!token;
     const role = token ? user?.role : null;
@@ -23,10 +24,18 @@ function ProductDetails({showToast, openLoginPopup}) {
     const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
 
     const [product, setProduct] = useState(null);
+    const [originalStock, setOriginalStock] = useState(0);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [addedToCart, setAddedToCart] = useState(false);
     const [cartItem, setCartItem] = useState(null);
-    const [quantity, setQuantity] = useState(1);
+
+    const [quantity, setQuantity] = useState(() => {
+        if (!isLoggedIn) return 1;
+
+        const savedQuantity = localStorage.getItem(`productQuantity_${user?.userId}_${id}`);
+
+        return savedQuantity ? Number(savedQuantity) : 1;
+    });
 
     const [reviews, setReviews] = useState([]);
     const [rating, setRating] = useState(5);
@@ -37,6 +46,7 @@ function ProductDetails({showToast, openLoginPopup}) {
         try {
             const data = await getProductById(id);
             setProduct(data);
+            setOriginalStock(data.stock);
             setCurrentImageIndex(0);
         } catch (error) {
             console.error("Error loading product:", error);
@@ -65,11 +75,17 @@ function ProductDetails({showToast, openLoginPopup}) {
             if (existingItem) {
                 setAddedToCart(true);
                 setCartItem(existingItem);
-                setQuantity(existingItem.quantity);
+
+                const savedQuantity = localStorage.getItem(`productQuantity_${user?.userId}_${id}`);
+
+                setQuantity(savedQuantity ? Number(savedQuantity) : existingItem.quantity);
             } else {
                 setAddedToCart(false);
                 setCartItem(null);
-                setQuantity(1);
+
+                const savedQuantity = localStorage.getItem(`productQuantity_${user?.userId}_${id}`);
+
+                setQuantity(savedQuantity ? Number(savedQuantity) : 1);
             }
 
         } catch (error) {
@@ -78,7 +94,7 @@ function ProductDetails({showToast, openLoginPopup}) {
     };
 
     checkCart();
-}, [id, isLoggedIn]);
+}, [id, isLoggedIn, user?.userId]);
 
 useEffect(() => {
     const loadReviews = async () => {
@@ -97,9 +113,25 @@ useEffect(() => {
     try {
         const data = await addToCart(product.id, quantity);
 
-        setProduct({ ...product, stock: data.stock });
+        setProduct(prev => ({
+            ...prev,
+            stock: data.stock
+        }));
+
+        setOriginalStock(data.stock);
+
+        // Gets the updated cart item so we have its actual cartItem.id
+        const cart = await getCart();
+
+        const updatedCartItem = cart.find(
+            item => item.productId === Number(id)
+        );
+
+        setCartItem(updatedCartItem);
         setAddedToCart(true);
+
         showToast("Added to cart", "success");
+
     } catch (error) {
         showToast(
             error.response?.data?.message || "Failed to add product to cart.",
@@ -117,15 +149,58 @@ const handleAddToCart = async () => {
     await addToCartAfterLogin();
 };
 
+const handleUpdateCart = async () => {
+    if (!cartItem) {
+        showToast("Cart item not found.", "error");
+        return;
+    }
+
+    try {
+        const data = await updateCartItemQuantity(
+            cartItem.id,
+            quantity
+        );
+
+        setProduct(prev => ({
+            ...prev,
+            stock: data.stock
+        }));
+
+        setOriginalStock(data.stock);
+
+        setCartItem(prev => ({
+            ...prev,
+            quantity: quantity
+        }));
+
+        showToast("Cart updated successfully", "success");
+
+    } catch (error) {
+        showToast(error.response?.data?.message || "Failed to update cart.","error");
+    }
+};
+
 const buyNowAfterLogin = async () => {
     try {
-        if (!addedToCart) {
-            await addToCart(product.id, quantity);
+        if (cartItem) {
+            const data = await updateCartItemQuantity(cartItem.id,quantity);
+
+            setProduct(prev => ({...prev, stock: data.stock}));
+
+            setOriginalStock(data.stock);
+
+        } else {
+            const data = await addToCart(product.id,quantity);
+
+            setProduct(prev => ({...prev,stock: data.stock}));
+
+            setOriginalStock(data.stock);
         }
 
         navigate("/cart");
+
     } catch (error) {
-        showToast("Unable to add product to cart.", "error");
+        showToast(error.response?.data?.message || "Unable to process Buy Now.","error");
     }
 };
 
@@ -153,8 +228,6 @@ const handleSubmitReview = async () => {
     try {
         const newReview = await addReview(product.id, rating, comment);
 
-        const user = JSON.parse(localStorage.getItem("user"));
-
         setReviews([newReview, ...reviews]);// makes a new array, puts the newreview first(prepends) then puts all the old reviews after it
 
         setRating(5);// makes star selector back to 5
@@ -167,45 +240,34 @@ const handleSubmitReview = async () => {
     }
 };
 
+useEffect(() => {
+    if (!isLoggedIn) return;
+
+    localStorage.setItem(`productQuantity_${user?.userId}_${id}`,quantity);
+}, [quantity, id, isLoggedIn, user?.userId]);
+
     if (!product) {
         return <p>Product not found.</p>;
     }
 
     const averageRating = reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length: 0;
 
-    const handleQuantityChange = async (newQuantity) => {
+    const handleQuantityChange = (newQuantity) => {
 
-    const maxQuantity = (cartItem?.quantity || 0) + product.stock;
+    const cartQuantity = cartItem?.quantity || 0;
+
+    const maxQuantity = cartQuantity + originalStock;
 
     if (newQuantity < 1 || newQuantity > maxQuantity) {
         return;
     }
 
-    if (!cartItem) {
-        setQuantity(newQuantity);
-        return;
-    }
-
-    try {
-
-        const data = await updateCartItemQuantity(
-            cartItem.id,
-            newQuantity
-        );
-
-        setQuantity(newQuantity);
-        setCartItem(prev => ({ ...prev, quantity: newQuantity }));
-        setProduct(prev => ({ ...prev, stock: data.stock }));
-    } catch (error) {
-
-        console.error("Error updating quantity:", error);
-
-        alert(
-            error.response?.data?.message ||
-            "Failed to update quantity."
-        );
-    }
+    setQuantity(newQuantity);
 };
+
+const cartQuantity = cartItem?.quantity || 0;
+
+const availableStock = originalStock - (quantity - cartQuantity);// for temporary calculation
 
 const images = product.images || [];
 
@@ -296,7 +358,7 @@ const handleNextImage = () => {
 
                         <p className="tax">Inclusive of all taxes</p>
 
-                        <p className="stock">✓ {product.stock > 0 ? `${product.stock} more items available` : "Out of Stock"}</p>
+                        <p className="stock">✓ {availableStock > 0 ? `${availableStock} more items available` : "Out of Stock"}</p>
 
                         <div className="quantity"><span>Quantity:</span>
 
@@ -304,20 +366,21 @@ const handleNextImage = () => {
 
                             <span>{quantity}</span>
 
-                           <button disabled={quantity === (cartItem?.quantity || 0) + product.stock} onClick={() => handleQuantityChange(quantity + 1)}>+</button>
+                           <button disabled={availableStock === 0} onClick={() => handleQuantityChange(quantity + 1)}>+</button>
                         </div>
 
                         <div className="product-buttons">
 
-                            <button className="add-cart-btn" onClick={() => {
+                            <button className="add-cart-btn"
+                            onClick={() => {
                                 if (addedToCart) {
-                                    navigate("/cart");
+                                    handleUpdateCart();
                                 } else {
                                     handleAddToCart();
-                                    }
+                                }
                                 }}
-                            >🛒
-                            {addedToCart ? "Go to Cart" : "Add to Cart"}
+                            >
+                                🛒 {addedToCart ? "Update Cart" : "Add to Cart"}
                             </button>
 
                             <button className="buy-btn" onClick={handleBuyNow}>Buy Now</button>
@@ -361,7 +424,7 @@ const handleNextImage = () => {
 
                         <div>
                             <span>Availability</span>
-                            <strong>{product.stock > 0? "In Stock": "Out of Stock"}</strong>
+                            <strong>{availableStock > 0? "In Stock": "Out of Stock"}</strong>
                         </div>
 
                     </div>

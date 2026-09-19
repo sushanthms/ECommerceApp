@@ -20,32 +20,36 @@ namespace ECommerceBackend.Controllers
             _logger = logger;
         }
 
+        private int? GetUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                return null;
+            }
+            return int.Parse(userIdClaim.Value);
+        }
+
         [HttpPost]
         [Authorize(Roles = "User")]
         public async Task<IActionResult> CreateOrder(CreateOrderDto dto)
         {
+            var correlationId = HttpContext.Items["CorrelationId"]?.ToString();
+
             try
             {
-                await _logger.LogMessageAsync("Order creation started - User is attempting to place an order.");
+                await _logger.LogMessageAsync($"Order creation started - User is attempting to place an order. CorrelationId: {correlationId}");
 
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-
-                if (userIdClaim == null)
+                var userId = GetUserId();
+                if (userId == null)
                 {
                     await _logger.LogMessageAsync("Order creation failed - NameIdentifier claim was missing from the authenticated user.", "Warning");
                     return Unauthorized();
                 }
 
-                int userId = int.Parse(userIdClaim.Value);
+                await _logger.LogMessageAsync($"COD order creation - UserId: {userId}, CorrelationId: {correlationId}");
 
-                await _logger.LogMessageAsync($"COD order creation - UserId: {userId}");
-
-                var result = await _orderService.CreateOrderAsync(
-                    userId,
-                    dto,
-                    "Cash on Delivery",
-                    "Pending"
-                );
+                var result = await _orderService.CreateOrderAsync(userId.Value, dto, "Cash on Delivery","Pending");
 
                 if (result.Order == null)
                 {
@@ -57,7 +61,11 @@ namespace ECommerceBackend.Controllers
                     });
                 }
 
-                await _logger.LogMessageAsync($"Order created successfully - OrderId: {result.Order.Id}, UserId: {userId}, ItemCount: {result.ItemCount}, TotalAmount: {result.Order.TotalAmount}, PaymentMethod: {result.Order.PaymentMethod}, PaymentStatus: {result.Order.PaymentStatus}");
+                await _logger.LogMessageAsync(
+                    $"Order created successfully - OrderId: {result.Order.Id}, UserId: {userId}, " +
+                    $"ItemCount: {result.ItemCount}, TotalAmount: {result.Order.TotalAmount}, " +
+                    $"PaymentMethod: {result.Order.PaymentMethod}, PaymentStatus: {result.Order.PaymentStatus}, " +
+                    $"CorrelationId: {correlationId}");
 
                 return Ok(new
                 {
@@ -88,28 +96,20 @@ namespace ECommerceBackend.Controllers
             {
                 await _logger.LogMessageAsync("Online payment started - User is attempting to make a payment.");
 
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-
-                if (userIdClaim == null)
+                var userId = GetUserId();
+                if (userId == null)
                 {
                     await _logger.LogMessageAsync("Online payment failed - NameIdentifier claim was missing.", "Warning");
                     return Unauthorized();
                 }
 
-                int userId = int.Parse(userIdClaim.Value);
-
                 await _logger.LogMessageAsync($"Online payment processing - UserId: {userId}");
 
-                var result = await _orderService.CreateOrderAsync(
-                    userId,
-                    dto,
-                    "Online Payment",
-                    "Paid"
-                );
+                var result = await _orderService.CreateOrderAsync(userId.Value, dto, "Online Payment", "Paid");
 
                 if (result.Order == null)
                 {
-                    await _logger.LogMessageAsync($"Online payment failed - Cart is empty for UserId: {userId}.", "Warning");
+                    await _logger.LogMessageAsync($"Online payment failed - Cart is empty for UserId: {userId.Value}.", "Warning");
 
                     return BadRequest(new
                     {
@@ -167,18 +167,16 @@ namespace ECommerceBackend.Controllers
         {
             try
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                var userId = GetUserId();
 
-                if (userIdClaim == null)
+                if (userId == null)
                 {
                     await _logger.LogMessageAsync("Get user orders failed - NameIdentifier claim was missing.", "Warning");
 
                     return Unauthorized();
                 }
 
-                int userId = int.Parse(userIdClaim.Value);
-
-                var orders = await _orderService.GetUserOrdersAsync(userId);
+                var orders = await _orderService.GetUserOrdersAsync(userId.Value);
 
                 return Ok(orders);
             }
@@ -199,18 +197,16 @@ namespace ECommerceBackend.Controllers
         {
             try
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                var userId = GetUserId();
 
-                if (userIdClaim == null)
+                if (userId == null)
                 {
                     await _logger.LogMessageAsync($"Order details request failed - NameIdentifier claim was missing. RequestedOrderId: {id}", "Warning");
 
                     return Unauthorized();
                 }
 
-                int userId = int.Parse(userIdClaim.Value);
-
-                var order = await _orderService.GetUserOrderDetailsAsync(userId, id);
+                var order = await _orderService.GetUserOrderDetailsAsync(userId.Value, id);
 
                 if (order == null)
                 {
@@ -275,18 +271,16 @@ public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] string sta
         {
             try
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                var userId = GetUserId();
 
-                if (userIdClaim == null)
+                if (userId == null)
                 {
                     await _logger.LogMessageAsync($"Order cancellation failed - NameIdentifier claim was missing. OrderId: {id}", "Warning");
 
                     return Unauthorized();
                 }
 
-                int userId = int.Parse(userIdClaim.Value);
-
-                var success = await _orderService.CancelOrderAsync(userId, id);
+                var success = await _orderService.CancelOrderAsync(userId.Value, id);
 
                 if (!success)
                 {

@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
-import { getBanners } from "../Services/BannerService.jsx";
-import { searchProducts } from "../Services/ProductService.jsx";
+import { getBanners } from "../Services/BannerService";
+import { searchProducts } from "../Services/ProductService";
 
 import "./UserHome.css";
 

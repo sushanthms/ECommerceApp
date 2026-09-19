@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
-import {getBanners, addBanner, updateBanner, deleteBanner} from "../Services/BannerService.jsx";
+import {getBanners, addBanner, updateBanner, deleteBanner} from "../Services/BannerService";
 import "./AdminBanner.css";
 
 function AdminBanner() {

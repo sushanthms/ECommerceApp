@@ -1,0 +1,59 @@
+api.js is the common entry point for all HTTP requests from the React frontend to the backend.
+
+different services needed common things:
+
+Request
+ ├── Backend URL
+ ├── SessionId
+ ├── JWT token
+ ├── possibly other headers
+ └── actual endpoint/data
+
+ Instead of using Axios directly everywhere, we create our own Axios instance.
+
+baseURL is not a JavaScript keyword.
+It is a configuration property understood by Axios.
+If we are using Vite, client-side environment variables must start with VITE_
+
+API_URL=https://localhost:7144/api
+will not be exposed to your the frontend through import.meta.env.
+
+api.interceptors.request
+is an Axios request interceptor, means before the request goes to the backend or leaves the browser, it runs this code.
+interceptor run the code inside it before leaving the browser
+
+It is not a feature built directly into the React core framework. 
+it is a middleware-like function provided by HTTP clients(Axios) that allows us to globally intercept, modify, or handle network requests and responses before they are processed by the components
+
+UUID means Universally Unique Identifier.
+
+config contains Axios's information about the request, such as method , url, headers, data, params
+
+config.headers["X-Session-Id"] = sessionId;
+adds a custom HTTP header.
+
+config.headers.Authorization means modifies the Authorization header of the Axios request.
+
+sessionStorage is a browser-provided storage area.
+
+Why is SessionId in a header?
+Because it is request metadata, not the actual business data.
+
+login process stores the JWT:
+localStorage.setItem("token", token);
+Later, when the user makes a protected request, api.js gets it.
+
+api.interceptors.request is an object (axios sets this up internally) that manages a list of interceptor functions.
+.use is a method on that object. means: it takes whatever function that is passed to it
+and it adds them to its internal list of functions and runs it before every request or response
+
+Express's app.use(...) registers middleware — functions that run on every incoming request to the server, before the route handlers.
+Axios's api.interceptors.request.use(...) registers interceptors — functions that run on every outgoing request from the frontend, before it is sent to the backend.
+
+CORS preflight is a preliminary HTTP request that the browser sends to the backend to check whether the actual request is allowed.
+
+every cross-origin request does not requires preflight. Simple requests can be sent directly, while requests that don't meet the browser's simple-request conditions may require it.
+cors preflight request donot to go to the backend through api.js, so its logs does not have session id
+
+CORS preflight request is not sent by the axios. it is sent by the browser. whenver there is a request ready to go for the backend axios prepares it and has the request in it
+when the origins are different browser see that request url and sends a preflight reequest to that url

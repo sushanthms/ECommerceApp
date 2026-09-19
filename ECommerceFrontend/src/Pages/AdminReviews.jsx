@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAllReviews, deleteReview } from "../Services/ReviewService.jsx";
+import { getAllReviews, deleteReview } from "../Services/ReviewService";
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
 import "./AdminReviews.css";

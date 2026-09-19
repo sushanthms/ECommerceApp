@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
-import { getCart, updateCartItemQuantity, removeFromCart } from "../Services/CartService.jsx";
+import { getCart, updateCartItemQuantity, removeFromCart } from "../Services/CartService";
 import "./Cart.css";
 
 function Cart({showToast}) {

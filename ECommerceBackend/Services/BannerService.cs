@@ -1,8 +1,6 @@
 ﻿using ECommerceBackend.Data;
 using ECommerceBackend.Models;
-using ECommerceBackend.Services;
 using Microsoft.EntityFrameworkCore;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace ECommerceBackend.Services
 {
@@ -32,7 +30,6 @@ namespace ECommerceBackend.Services
             return banner;
         }
 
-        // Add banner
         public async Task<Banner> AddBannerAsync(
             string title,
             string description,

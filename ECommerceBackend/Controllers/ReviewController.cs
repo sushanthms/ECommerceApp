@@ -39,10 +39,10 @@ namespace ECommerceBackend.Controllers
             {
                 if (result.Error == "Product not found.")
                 {
-                    return NotFound(result.Error);
+                    return NotFound(new { message = result.Error });
                 }
 
-                return BadRequest(result.Error);
+                return BadRequest(new { message = result.Error });
             }
 
             return Ok(new
@@ -81,10 +81,10 @@ namespace ECommerceBackend.Controllers
 
             if (!success)
             {
-                return NotFound("Review not found.");
+                return NotFound(new { message = "Review not found." });
             }
 
-            return Ok("Review deleted successfully.");
+            return Ok(new { message = "Review deleted successfully." });
         }
     }
 }

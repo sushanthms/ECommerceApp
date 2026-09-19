@@ -2,6 +2,15 @@
 
 namespace ECommerceBackend.Logging
 {
+    // IMiddleware is an interface in ASP.NET Core used to create custom middleware as a class.
+    // in our approach middleware is registered and then the filelogger or database logger works with addscoped lifetime.
+    // the middleware instance is created once and reused for the application's lifetime.
+    // app.UseMiddleware<RequestLoggingMiddleware>();
+
+    // In IMiddleware approach we dependency inject the IMidlleware and then we register it in program.cs by writing the lifetime
+    // we explicitly register the middleware in Program.cs and choose its lifetime in program.cs.
+    // builder.Services.AddTransient<RequestLoggingMiddleware>();
+    // app.UseMiddleware<RequestLoggingMiddleware>();
     public class RequestLoggingMiddleware
     {
         private readonly RequestDelegate _next;
@@ -24,7 +33,10 @@ namespace ECommerceBackend.Logging
                 correlationId = Guid.NewGuid().ToString();
             }
 
+            context.Items["CorrelationId"] = correlationId;
             context.Response.Headers["X-Correlation-ID"] = correlationId;
+            var sessionId = context.Request.Headers["X-Session-Id"].FirstOrDefault();
+
             Exception? exception = null;
 
             try
@@ -52,6 +64,7 @@ namespace ECommerceBackend.Logging
                     ExecutionDuration = stopwatch.ElapsedMilliseconds,
                     ClientIp = context.Connection.RemoteIpAddress?.ToString() ?? "Unknown",
                     CorrelationId = correlationId,
+                    SessionId = sessionId,
                     ExceptionType = exception?.GetType().Name ?? "",
                     ExceptionMessage = exception?.Message ?? "",
                     StackTrace = exception?.StackTrace ?? ""

@@ -21,6 +21,7 @@
         public string ClientIp { get; set; } = string.Empty;
 
         public string CorrelationId { get; set; } = string.Empty;
+        public string? SessionId { get; set; }
         public string ExceptionType { get; set; } = string.Empty;
         public string ExceptionMessage { get; set; } = string.Empty;
         public string StackTrace { get; set; } = string.Empty;

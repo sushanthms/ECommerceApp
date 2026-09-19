@@ -81,8 +81,8 @@ public IActionResult VerifyToken()
 
             return Ok(new
             {
-                UserId = userId,
-                Role = role
+                userId,
+                role
             });
         }
 

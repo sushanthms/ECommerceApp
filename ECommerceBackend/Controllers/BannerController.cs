@@ -1,9 +1,7 @@
-﻿using CsvHelper;
-using ECommerceBackend.Controllers;
+﻿using ECommerceBackend.DTOs;
 using ECommerceBackend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace ECommerceBackend.Controllers
 {
@@ -41,23 +39,22 @@ namespace ECommerceBackend.Controllers
             return Ok(banner);
         }
 
-        // Add banner
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> AddBanner(
-            [FromForm] string title,
-            [FromForm] string description,
-            [FromForm] string buttonText,
-            [FromForm] string link,
-            [FromForm] IFormFile image)
+        public async Task<IActionResult> AddBanner([FromForm] BannerDto dto)
         {
-            if (image == null || image.Length == 0)
+            if (string.IsNullOrWhiteSpace(dto.Title) || string.IsNullOrWhiteSpace(dto.Link))
+            {
+                return BadRequest(new { message = "Title and link are required." });
+            }
+
+            if (dto.Image == null || dto.Image.Length == 0)
             {
                 return BadRequest(new { message = "Banner image is required." });
             }
 
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-            var extension = Path.GetExtension(image.FileName).ToLower();
+            var extension = Path.GetExtension(dto.Image.FileName).ToLower();
 
             if (!allowedExtensions.Contains(extension))
             {
@@ -65,35 +62,33 @@ namespace ECommerceBackend.Controllers
             }
 
             var banner = await _bannerService.AddBannerAsync(
-                title,
-                description,
-                buttonText,
-                link,
-                image
+                dto.Title,
+                dto.Description,
+                dto.ButtonText,
+                dto.Link,
+                dto.Image
             );
 
-            return Ok(new
+            return CreatedAtAction(nameof(GetBanner), new { id = banner.Id }, new
             {
                 message = "Banner added successfully.",
                 banner
             });
         }
 
-        // Update banner
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateBanner(
-            int id,
-            [FromForm] string title,
-            [FromForm] string description,
-            [FromForm] string buttonText,
-            [FromForm] string link,
-            [FromForm] IFormFile? image)
+        public async Task<IActionResult> UpdateBanner(int id, [FromForm] BannerDto dto)
         {
-            if (image != null && image.Length > 0)
+            if (string.IsNullOrWhiteSpace(dto.Title) || string.IsNullOrWhiteSpace(dto.Link))
+            {
+                return BadRequest(new { message = "Title and link are required." });
+            }
+
+            if (dto.Image != null && dto.Image.Length > 0)
             {
                 var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-                var extension = Path.GetExtension(image.FileName).ToLower();
+                var extension = Path.GetExtension(dto.Image.FileName).ToLower();
 
                 if (!allowedExtensions.Contains(extension))
                 {
@@ -103,11 +98,11 @@ namespace ECommerceBackend.Controllers
 
             var banner = await _bannerService.UpdateBannerAsync(
                 id,
-                title,
-                description,
-                buttonText,
-                link,
-                image
+                dto.Title,
+                dto.Description,
+                dto.ButtonText,
+                dto.Link,
+                dto.Image
             );
 
             if (banner == null)
