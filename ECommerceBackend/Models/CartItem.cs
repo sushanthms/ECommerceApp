@@ -1,5 +1,9 @@
-﻿namespace ECommerceBackend.Models
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace ECommerceBackend.Models
+    
 {
+    [Index(nameof(UserId), nameof(ProductId), IsUnique = true)]
     public class CartItem
     {
         public int Id { get; set; }

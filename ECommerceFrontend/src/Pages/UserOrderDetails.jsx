@@ -17,6 +17,8 @@ function UserOrderDetails() {
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const [paying, setPaying] = useState(false);
+
     useEffect(() => {
         const fetchOrderDetails = async () => {
             try {
@@ -62,6 +64,65 @@ const handleCancelOrder = async () => {
         console.error("Error cancelling order:", error);
 
         alert(error.response?.data?.message || "Failed to cancel order.");
+    }
+};
+
+const handleCompletePayment = async () => {
+    try {
+        setPaying(true);
+
+        const token = localStorage.getItem("token");
+
+        const paymentResponse = await axios.post(
+            `${import.meta.env.VITE_API_URL}/payment/create/${order.id}`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const paymentData = paymentResponse.data;
+
+        const options = {
+            key: paymentData.keyId,
+            amount: Math.round(paymentData.amount * 100),
+            currency: paymentData.currency,
+            name: "ECommerceApp",
+            description: `Order #${order.id}`,
+            order_id: paymentData.razorpayOrderId,
+
+            handler: async function (response) {
+                try {
+                    await axios.post(
+                        `${import.meta.env.VITE_API_URL}/payment/verify`,
+                        {
+                            razorpayOrderId: response.razorpay_order_id,
+                            razorpayPaymentId: response.razorpay_payment_id,
+                            razorpaySignature: response.razorpay_signature
+                        },
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    );
+
+                    setOrder({ ...order, paymentStatus: "Paid" });
+                    alert("Payment successful.");
+                } catch (error) {
+                    alert(error.response?.data?.message || "Payment verification failed.");
+                } finally {
+                    setPaying(false);
+                }
+            },
+
+            modal: {
+                ondismiss: function () {
+                    setPaying(false);
+                }
+            }
+        };
+
+        const razorpay = new window.Razorpay(options);
+        razorpay.open();
+
+    } catch (error) {
+        alert(error.response?.data?.message || "Unable to start payment.");
+        setPaying(false);
     }
 };
 
@@ -172,6 +233,12 @@ const handleCancelOrder = async () => {
                     </div>
 
                     <Link to="/orders" className="back-orders-button">Back to Orders</Link>
+
+                    {order.paymentMethod === "Online Payment" && order.paymentStatus === "Pending" && (
+                        <button className="place-order-btn" onClick={handleCompletePayment} disabled={paying}>
+                            {paying ? "Processing..." : "Complete Payment"}
+                        </button>
+                    )}
 
                     {(order.status === "Pending" || order.status === "Processing") && (
                         <button className="cancel-order-button" onClick={handleCancelOrder}>Cancel Order</button>

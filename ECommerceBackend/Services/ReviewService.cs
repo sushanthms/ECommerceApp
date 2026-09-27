@@ -1,4 +1,5 @@
-﻿using ECommerceBackend.Data;
+﻿using ECommerceBackend.DTOs;
+using ECommerceBackend.Data;
 using ECommerceBackend.Logging;
 using ECommerceBackend.Models;
 using Microsoft.EntityFrameworkCore;
@@ -16,84 +17,115 @@ namespace ECommerceBackend.Services
             _logger = logger;
         }
 
-        // Add review
-        public async Task<(Review? Review, string? Error, string? UserName)> AddReviewAsync(Review review, int userId)
+        // (Review? Review, string? Error, string? UserName are the return types. AddReviewDto dto, int userId are the parameter/arguments
+        public async Task<(Review? Review, string? Error, string? UserName)> AddReviewAsync(AddReviewDto dto, int userId)
         {
-            await _logger.LogMessageAsync($"Add review started - UserId: {userId}, ProductId: {review.ProductId}, Rating: {review.Rating}");
-
             var product = await _context.Products
-                .FirstOrDefaultAsync(p =>
-                    p.Id == review.ProductId &&
-                    !p.IsDeleted);
+                .FirstOrDefaultAsync(p => p.Id == dto.ProductId && !p.IsDeleted);
 
             if (product == null)
             {
-                await _logger.LogMessageAsync($"Add review failed - Product not found or is deleted. UserId: {userId}, ProductId: {review.ProductId}","Warning");
-
+                await _logger.LogMessageAsync($"Add review failed - Product not found or is deleted. UserId: {userId}, ProductId: {dto.ProductId}", "Warning");
                 return (null, "Product not found.", null);
             }
 
-            if (review.Rating < 1 || review.Rating > 5)
-            {
-                await _logger.LogMessageAsync($"Add review failed - Invalid rating. UserId: {userId}, ProductId: {review.ProductId}, Rating: {review.Rating}", "Warning");
+            var hasBought = await _context.OrderItems.AnyAsync(oi =>
+                  oi.ProductId == dto.ProductId &&
+                  oi.Order.UserId == userId &&
+                  oi.Order.Status != "Cancelled");
 
+            if (!hasBought)
+            {
+                return (null, "You can review only products you have ordered.", null);
+            }
+
+            if (dto.Rating < 1 || dto.Rating > 5)
+            {
+                await _logger.LogMessageAsync($"Add review failed - Invalid rating. UserId: {userId}, ProductId: {dto.ProductId}, Rating: {dto.Rating}", "Warning");
                 return (null, "Rating must be between 1 and 5.", null);
             }
 
-            var existingReview = await _context.Reviews
-                .FirstOrDefaultAsync(r =>
-                    r.UserId == userId &&
-                    r.ProductId == review.ProductId);
+            var alreadyReviewed = await _context.Reviews
+                .AnyAsync(r => r.UserId == userId && r.ProductId == dto.ProductId);
 
-            if (existingReview != null)
+            if (alreadyReviewed)
             {
-                await _logger.LogMessageAsync($"Add review failed - User has already reviewed this product. UserId: {userId}, ProductId: {review.ProductId}", "Warning");
-
+                await _logger.LogMessageAsync($"Add review failed - User has already reviewed this product. UserId: {userId}, ProductId: {dto.ProductId}", "Warning");
                 return (null, "You have already reviewed this product.", null);
             }
 
-            review.UserId = userId;
-            review.CreatedAt = DateTime.UtcNow;
+            // We build the Review ourselves, so the caller cannot control any other field
+            var review = new Review
+            {
+                ProductId = dto.ProductId,
+                UserId = userId,
+                Rating = dto.Rating,
+                Comment = dto.Comment?.Trim() ?? string.Empty,
+                CreatedAt = DateTime.UtcNow
+            };
 
             _context.Reviews.Add(review);
 
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // Two requests at the same moment
+                await _logger.LogMessageAsync($"Add review failed - duplicate review (race). UserId: {userId}, ProductId: {dto.ProductId}", "Warning");
+                return (null, "You have already reviewed this product.", null);
+            }
 
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Id == userId);
+            var userName = await _context.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.Name)
+                .FirstOrDefaultAsync();
 
-            await _logger.LogMessageAsync($"Review added successfully - ReviewId: {review.Id}, UserId: {userId}, ProductId: {review.ProductId}, Rating: {review.Rating}");
+            await _logger.LogMessageAsync($"Review added successfully - ReviewId: {review.Id}, UserId: {userId}, ProductId: {dto.ProductId}, Rating: {dto.Rating}");
 
-            return (review, null, user?.Name);
+            return (review, null, userName);
         }
 
-        // Get reviews for one product
-        public async Task<List<object>> GetProductReviewsAsync(int productId)
+        // Get reviews of one product for users
+        public async Task<(List<ReviewDto> Reviews, int TotalCount, double AverageRating)> GetProductReviewsAsync(int productId, int page = 1, int pageSize = 10)
         {
-            await _logger.LogMessageAsync($"Product reviews requested - ProductId: {productId}");
+            await _logger.LogMessageAsync($"Product reviews requested - ProductId: {productId}, Page: {page}");
 
-            var reviews = await _context.Reviews// first table
-                .Where(r => r.ProductId == productId)
+            var baseQuery = _context.Reviews
+                .AsNoTracking()
+                .Where(r => r.ProductId == productId);
+
+            var totalCount = await baseQuery.CountAsync();
+
+            // Computed over ALL reviews for this product, not just the current page
+            var averageRating = totalCount > 0
+                ? await baseQuery.AverageAsync(r => r.Rating)
+                : 0;
+
+            var reviews = await baseQuery
+                .OrderByDescending(r => r.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Join(
-                    _context.Users,// second table to join with
-                    review => review.UserId,// from a review, use its UserId. LEFT side of the condition
-                    user => user.Id,// from a user, use its Id. RIGHT side of the condition
-                    (review, user) => new// after review.userid and user.id are matched, then it builds a new object by combining the data from both table
+                    _context.Users,
+                    review => review.UserId,
+                    user => user.Id,
+                    (review, user) => new ReviewDto
                     {
-                        review.Id,
-                        review.ProductId,
-                        review.Rating,
-                        review.Comment,
-                        review.CreatedAt,
+                        Id = review.Id,
+                        ProductId = review.ProductId,
+                        UserId = review.UserId,
+                        Rating = review.Rating,
+                        Comment = review.Comment,
+                        CreatedAt = review.CreatedAt,
                         UserName = user.Name
                     })
-                .OrderByDescending(r => r.CreatedAt)
-                .Cast<object>()
                 .ToListAsync();
 
-            await _logger.LogMessageAsync($"Product reviews retrieved successfully - ProductId: {productId}, ReviewCount: {reviews.Count}");
+            await _logger.LogMessageAsync($"Product reviews retrieved - ProductId: {productId}, Returned: {reviews.Count}, Total: {totalCount}");
 
-            return reviews;
+            return (reviews, totalCount, averageRating);
         }
 
         // Get all reviews for admin
@@ -157,6 +189,31 @@ namespace ECommerceBackend.Services
             await _logger.LogMessageAsync($"Review deleted successfully - ReviewId: {id}");
 
             return true;
+        }
+
+        public async Task<(bool Success, string? Error)> DeleteOwnReviewAsync(int id, int userId)
+        {
+            await _logger.LogMessageAsync($"Delete own review started - ReviewId: {id}, UserId: {userId}");
+
+            var review = await _context.Reviews.FirstOrDefaultAsync(r => r.Id == id);
+
+            if (review == null)
+            {
+                await _logger.LogMessageAsync($"Delete own review failed - Review not found. ReviewId: {id}", "Warning");
+                return (false, "Review not found.");
+            }
+
+            if (review.UserId != userId)
+            {
+                await _logger.LogMessageAsync($"Delete own review blocked - not owner. ReviewId: {id}, RequestingUserId: {userId}, OwnerUserId: {review.UserId}", "Warning");
+                return (false, "You can only delete your own reviews.");
+            }
+
+            _context.Reviews.Remove(review);
+            await _context.SaveChangesAsync();
+
+            await _logger.LogMessageAsync($"Own review deleted successfully - ReviewId: {id}, UserId: {userId}");
+            return (true, null);
         }
     }
 }

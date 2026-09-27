@@ -205,3 +205,6 @@ It tells the backend what format of data is in the request body
 ASP.NET Core sees Content-Type: application/json and understands that the body is JSON
 so it needs a JSON input formatter to convert that JSON into the expected C# object.
 ASP.NET Core has built-in support for JSON.
+
+
+in query, the query is building know

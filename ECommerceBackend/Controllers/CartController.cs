@@ -6,7 +6,6 @@ using System.Security.Claims;
 
 namespace ECommerceBackend.Controllers
 {
-
     // app runs
     // React sends a request to the CartController. But ASP.NET needs to create a CartController object to execute the endpoint.
     // DI looks at the constructor and knows it needs CartService

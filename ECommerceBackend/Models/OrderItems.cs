@@ -1,4 +1,6 @@
-﻿namespace ECommerceBackend.Models
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace ECommerceBackend.Models
 {
     public class OrderItem
     {
@@ -12,6 +14,7 @@
 
         public int Quantity { get; set; }
 
+        [Precision(18, 2)]
         public decimal Price { get; set; }
     }
 }

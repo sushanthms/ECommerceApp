@@ -3,61 +3,35 @@ import { Navigate } from "react-router-dom";
 import axios from "axios";
 
 function ProtectedRoute({ children, allowedRole }) {
-    const [checking, setChecking] = useState(true);
-    const [authorized, setAuthorized] = useState(false);
-
-    const token = localStorage.getItem("token");
+    const [ok, setOk] = useState(null); // null = still checking, true means allowed, false means not allowed
 
     useEffect(() => {
-        const verifyToken = async () => {
-            if (!token) {
-                setChecking(false);
-                return;
-            }
+        const token = localStorage.getItem("token");
 
-            try {
-                const response = await axios.get(
-                    `${import.meta.env.VITE_API_URL}/Auth/verify`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    }
-                );
+        if (!token) {
+            setOk(false);
+            return;
+        }
 
-                const actualRole = response.data.role;
+        axios
+            .get(`${import.meta.env.VITE_API_URL}/Auth/verify`, {
+                headers: { Authorization: `Bearer ${token}` }// axios.get gives a result
+            })// .then runs only when the server answered with a success status (200)
+            //.then(...) needs a function to run when the server's answer arrives.
+            .then((res) => setOk(!allowedRole || res.data.role === allowedRole))
+            // !allowedrole means if there is no role, no role is required
+            // !allowedRole is required when we have a route like <ProtectedRoute><Profile /></ProtectedRoute>,here  !allowedRole || res.data.role === allowedRole
+            // It is useful when we have a page that both Admin and User should access means when we have no allowedRole
+            .catch((error) => {
+                if (error.response?.status === 401)
+                    localStorage.removeItem("token");
+                setOk(false);
+            });
+    }, [allowedRole]);
 
-                if (allowedRole && actualRole !== allowedRole) {
-                    setAuthorized(false);
-                    setChecking(false);
-                    return;
-                }
+    if (ok === null) return <div>Checking authentication...</div>;
 
-                setAuthorized(true);
-                setChecking(false);
-            } 
-            catch (error) {
-                console.log("VERIFY ERROR:", error);
-                console.log("STATUS:", error.response?.status);
-                console.log("DATA:", error.response?.data);
-
-                setAuthorized(false);
-                setChecking(false);
-            }
-        };
-
-        verifyToken();
-    }, [token, allowedRole]);
-
-    if (checking) {
-        return <div>Checking authentication...</div>;
-    }
-
-    if (!authorized) {
-        return <Navigate to="/login" replace />;
-    }
-
-    return children;
+    return ok ? children : <Navigate to="/login" replace />;
 }
 
 export default ProtectedRoute;

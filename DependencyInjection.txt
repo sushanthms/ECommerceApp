@@ -1,0 +1,185 @@
+Dependency Injection
+
+we can do posting and getting some data using Swagger in a list/variable for AddSingleton, AddScoped, and AddTransient
+Counter class
+
+in transient, we have one variable to store the data.
+if we use same instance object to add a data and use same instance to get the data then we will get
+but if we use one instance to add a data and use another instance to get the data we wont get the data
+
+public class Counter
+{
+    private int i = 0;
+
+    public int Increment()
+    {
+        i++;
+        return i;
+    }
+}
+
+Controller
+
+public class TestController : ControllerBase
+{
+    private readonly Counter _counter;
+
+    public TestController(Counter counter)
+    {
+        _counter = counter;
+    }
+
+    [HttpGet]
+    public IActionResult Test()
+    {
+        return Ok(_counter.Increment());
+    }
+}
+
+Singleton
+For the entire application/server lifetime, one object is created for that DI registration.
+even if we public TestController(Counter counter1, Counter counter2) both object1 and obejct2 point to same object.
+For multiple requests, same object is used
+
+we set some id or some data that is not in database and two users request for that id/data
+then both get same data because in singleton same service object can edit the data and give.
+
+Scoped
+For one request/scope, one object is created.
+even if we have public TestController(Counter counter1, Counter counter2) both point to the same object for that request
+
+Transient creates a new object every time the service is requested from DI.
+public TestController(Counter counter1, Counter counter2)
+counter1 is counter1 object
+counter2 is counter2 object
+both are separate. both share separate data
+
+Without DI
+The controller creates the dependency
+
+public class ProductController
+{
+    private ProductService _productService;
+
+    public ProductController()
+    {
+        _productService = new ProductService();
+    }
+}
+
+With DI
+The controller receives the dependency. That is Dependency Injection
+public class ProductController
+{
+    private ProductService _productService;
+
+    public ProductController(ProductService productService)
+    {
+        _productService = productService;
+    }
+}
+
+ProductController needs ProductService, AppDbContext, ApplicationLogger
+
+Without DI
+
+public ProductController()
+{
+    _productService = new ProductService(
+        new AppDbContext(),
+        new FileLogger()
+    );
+}
+
+Now the controller is responsible for creating everything.
+This becomes difficult when the application grows.
+
+With DI
+ASP.NET Core creates the required objects and supplies them.
+
+Constructor Injection
+Property Injection
+Method Injection
+
+Constructor Injection
+dependency is injected through the constructor.
+When a reques comes ASP.NET Core needs ProductController, sees the constructor ProductController(ProductService productService)
+understands it needs productService
+DI container creates ProductService
+Passes it to ProductController
+Controller is created
+
+private readonly ProductService _productService; Creating a field to store the dependency.
+_productService stores the dependency
+
+_productService = productService;
+
+Property Injection
+dependency is injected through the property.
+public ProductService ProductService { get; set; }
+public string Name { get; set; } this is not dependency injection. this is C# property
+Property injection is mainly useful when a dependency is optional
+public class ReportService
+{
+    public IEmailService? EmailService { get; set; }
+
+    public void GenerateReport()
+    {
+        // Generate report
+    }
+
+    public void SendReport()
+    {
+        EmailService?.Send();
+    }
+}
+
+ReportService can work without EmailService
+
+If the service must have the dependency, we should use constructor injection. If dependency is optional we can use property injection
+
+Method Injection
+public class ProductService
+{
+    public void ExportProducts(ICsvExporter exporter)
+    {
+        exporter.Export();
+    }
+}
+there are many methods in a class, only some methods needs dependency. so we use method injection.
+It can be used when the dependency is temporary or specific to one operation.
+
+Constructor Injection
+public ProductController(
+    ProductService productService,
+    ReportService reportService)
+{
+    _productService = productService;
+    _reportService = reportService;
+}
+we have 10 methods, all the 10 methods have this dependency service even if they dont need it.
+
+by using methods injection we inject the service only to the method that needs the service
+[HttpGet]
+public IActionResult GenerateReport([FromServices] ReportService reportService)
+{
+    reportService.Generate();
+
+    return Ok();
+}
+
+[FromServices] tells the ASP.NET Core to get the ReportService from the application's Dependency Injection services container.
+
+Normal registration
+builder.Services.AddScoped<ProductService>();
+
+Interface registration
+builder.Services.AddScoped<IProductService, ProductService>();
+When somebody asks for IProductService, it gives them ProductService
+
+Factory delegate
+builder.Services.AddScoped<IProductService>(sp =>
+{
+    return new ProductService();
+});
+When somebody asks for IProductService, it runs this function to decide/create what to give them.

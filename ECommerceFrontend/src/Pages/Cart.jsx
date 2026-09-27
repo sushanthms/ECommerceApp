@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import Header from "../Components/Header.jsx";
@@ -11,6 +11,8 @@ function Cart({showToast}) {
     const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(false);
+
+    const timers = useRef({});    // one waiting timer per cart item
 
     const navigate = useNavigate();
 
@@ -31,28 +33,32 @@ function Cart({showToast}) {
         loadCart();
     }, []);
 
-    const handleQuantityChange = async (cartItemId, newQuantity) => {
-    if (newQuantity < 1) {
-        return;
-    }
+    const handleQuantityChange = (cartItemId, newQuantity) => {
+    if (newQuantity < 1) return;
 
-    try {
-        const data = await updateCartItemQuantity(cartItemId, newQuantity);
+    setCartItems(prev =>// makes a copy with the new quantity
+        prev.map(item => item.id === cartItemId ? { ...item, quantity: newQuantity } : item)
+    );
 
-        setCartItems(prev =>
-            prev.map(item =>
-                item.id === cartItemId
-                    ? { ...item, quantity: newQuantity, stock: data.stock }
-                    : item
-            )
-        );
-    } catch (error) {
-        console.error("Error updating quantity:", error);
-        alert(error.response?.data?.message || "Failed to update quantity.");
-    }
+    clearTimeout(timers.current[cartItemId]);// cancels the old timer for this item
+
+    // starts a new 600 ms timer and stores its id in the box. If the user clicks again within 600 ms, this timer is cancelled
+    timers.current[cartItemId] = setTimeout(async () => {
+        try {
+            const data = await updateCartItemQuantity(cartItemId, newQuantity);
+
+            setCartItems(prev =>
+                prev.map(item => item.id === cartItemId ? { ...item, stock: data.stock } : item)
+            );
+        } catch (error) {
+            alert(error.response?.data?.message || "Failed to update quantity.");
+            await loadCart();
+        }
+    }, 600);
 };
 
     const handleRemove = async (cartItemId) => {
+        clearTimeout(timers.current[cartItemId]);
         try {
             await removeFromCart(cartItemId);
             showToast("Item removed from the Cart");

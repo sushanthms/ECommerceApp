@@ -1,13 +1,16 @@
 ﻿using ECommerceBackend.Logging;
 using ECommerceBackend.Models;
+using Payment = ECommerceBackend.Payments.Models.Payment;
 using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceBackend.Data
 {
     public class AppDbContext : DbContext
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options)
-            : base(options)
+        // AddDbContext knows how to register a class for the Dependency Injection process. <AppDbContext> is the class that is being registered.
+        // When a constructor wants a service, the DI container calls AppDbContext's constructor, and the constructor runs
+        public AppDbContext(DbContextOptions<AppDbContext> options)// constructor. DbContextOptions<AppDbContext> is the type. DbContextOptions are specifically for the AppDbContext class
+            : base(options)// sends options to the parent(DbContext) 
         {
         }
 
@@ -21,30 +24,34 @@ namespace ECommerceBackend.Data
         public DbSet<Banner> Banners { get; set; }
         public DbSet<ApplicationLog> ApplicationLogs { get; set; }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<Payment> Payments { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Product>()
-            .Property(p => p.Price)
-            .HasPrecision(18, 2);
-
-            modelBuilder.Entity<Order>()
-                .Property(o => o.TotalAmount)
-                .HasPrecision(18, 2);
-
             modelBuilder.Entity<OrderItem>()
-                .Property(o => o.Price)
+                .HasOne(oi => oi.Product)
+                .WithMany()
+                .HasForeignKey(oi => oi.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Review>()
+                .HasOne<Product>().WithMany()
+                .HasForeignKey(r => r.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Review>()
+                .HasOne<User>().WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Payment>()
+                .Property(p => p.Amount)
                 .HasPrecision(18, 2);
 
-            modelBuilder.Entity<CartItem>()
-                .HasIndex(c => new { c.UserId, c.ProductId })// Creates an index using UserId and ProductId, and makes that combination unique.
-                .IsUnique();
+            // we have created, captured, failed, refunded. their indexes are 0, 1, 2, 3 so when the order is created, the status is 0. later we will change the status in the services
+            modelBuilder.Entity<Payment>()
+                .HasIndex(p => p.OrderId)
+                .IsUnique()
+                .HasFilter("[Status] = 0");
         }
     }
 }
-// A database index is usually organized as a B-tree structure in SQL Server.
-// INDEX: UserId + ProductId
-// (3, 43)  → CartItem row 1
-// (3, 50)  → CartItem row 2
-// (5, 43)  → CartItem row 3
-// (5, 50)  → CartItem row 5
-// (8, 20)  → CartItem row 4

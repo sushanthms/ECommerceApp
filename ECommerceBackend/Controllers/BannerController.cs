@@ -10,13 +10,17 @@ namespace ECommerceBackend.Controllers
     public class BannerController : ControllerBase
     {
         private readonly BannerService _bannerService;
+        private const long MaxImageSize = 5 * 1024 * 1024;
+        private static bool IsSafeLink(string link) =>
+            link.StartsWith("/") ||
+            (Uri.TryCreate(link, UriKind.Absolute, out var uri) &&
+             (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps));
 
         public BannerController(BannerService bannerService)
         {
             _bannerService = bannerService;
         }
 
-        // Get all banners
         [HttpGet]
         public async Task<IActionResult> GetBanners()
         {
@@ -25,7 +29,6 @@ namespace ECommerceBackend.Controllers
             return Ok(banners);
         }
 
-        // Get one banner
         [HttpGet("{id}")]
         public async Task<IActionResult> GetBanner(int id)
         {
@@ -48,9 +51,19 @@ namespace ECommerceBackend.Controllers
                 return BadRequest(new { message = "Title and link are required." });
             }
 
+            if (!IsSafeLink(dto.Link))
+            {
+                return BadRequest(new { message = "Link must start with / or http(s)://." });
+            }
+
             if (dto.Image == null || dto.Image.Length == 0)
             {
                 return BadRequest(new { message = "Banner image is required." });
+            }
+
+            if (dto.Image.Length > MaxImageSize)
+            {
+                return BadRequest(new { message = "Image must be 5 MB or smaller." });
             }
 
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
@@ -85,8 +98,18 @@ namespace ECommerceBackend.Controllers
                 return BadRequest(new { message = "Title and link are required." });
             }
 
+            if (!IsSafeLink(dto.Link))
+            {
+                return BadRequest(new { message = "Link must start with / or http(s)://." });
+            }
+
             if (dto.Image != null && dto.Image.Length > 0)
             {
+                if (dto.Image.Length > MaxImageSize)
+                {
+                    return BadRequest(new { message = "Image must be 5 MB or smaller." });
+                }
+
                 var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
                 var extension = Path.GetExtension(dto.Image.FileName).ToLower();
 
@@ -117,7 +140,6 @@ namespace ECommerceBackend.Controllers
             });
         }
 
-        // Delete banner
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteBanner(int id)

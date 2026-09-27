@@ -1,20 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ECommerceBackend.DTOs
+public class RegisterDto
 {
-    public class RegisterDto
-    {
-        [Required]
-        public string Name { get; set; } = string.Empty;
+    [Required, MaxLength(100)]
+    public string Name { get; set; } = string.Empty;
 
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; } = string.Empty;
+    [Required, EmailAddress, MaxLength(256)]
+    public string Email { get; set; } = string.Empty;
 
-        [Required]
-        [MinLength(6)]
-        public string Password { get; set; } = string.Empty;
-    }
+    [Required, MinLength(8), MaxLength(72)]
+    public string Password { get; set; } = string.Empty;
 }
 
 // The Register DTO represents the data required when creating a new account.

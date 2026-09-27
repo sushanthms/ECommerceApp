@@ -1,11 +1,21 @@
-﻿namespace ECommerceBackend.DTOs
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ECommerceBackend.DTOs
 {
     public class BannerDto
     {
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public string ButtonText { get; set; }
-        public string Link { get; set; }
+        [Required, MaxLength(100)]
+        public string Title { get; set; } = string.Empty;
+
+        [MaxLength(300)]
+        public string Description { get; set; } = string.Empty;
+
+        [MaxLength(50)]
+        public string ButtonText { get; set; } = string.Empty;
+
+        [Required, MaxLength(500)]
+        public string Link { get; set; } = string.Empty;
+
         public IFormFile? Image { get; set; }
     }
 }

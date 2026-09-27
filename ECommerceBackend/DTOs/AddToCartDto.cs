@@ -1,4 +1,6 @@
-﻿namespace ECommerceBackend.DTOs
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ECommerceBackend.DTOs
 {
     public class CartItemDto
     {
@@ -12,12 +14,16 @@
     }
     public class AddToCartDto
     {
-        public int ProductId { get; set; }// It defines what data is expected when adding something to the cart.
+        [Range(1, int.MaxValue)]
+        public int ProductId { get; set; }
+
+        [Range(1, 100)]
         public int Quantity { get; set; }
     }
 
     public class UpdateCartItemDto
     {
+        [Range(0, 100)]
         public int Quantity { get; set; }
     }
 }

@@ -1,0 +1,47 @@
+we want to make a payment
+backend wants to create a payment order
+backend sends data(amount, receipt) to razorpay
+razorpay gives orderid. we save it in database. we make the payment
+razorpay gives 3 values to react, react gives it to the backend
+backend calls razorpay utils to verify
+if verfied we call MarkPaymentCapturedAsync
+
+the user filled checkout form. choosed online payment. the submit button shows pay now.
+
+when clicked pay now or place order(for cash on delivery) handlesubmit runs
+
+handlesubmit checks whether it is online payment, if it is online payment then it makes setshowpayment=true
+now a usestate is chnaged so react re-renders the component but remembers old states
+now the small Online payment, total amount, pay now, back field is opened
+now when we click Pay some rupees button the handlepayment function runs
+it makes setpaymentprocessing=true
+now in Checkout.jsx inside return the components are re-rendered and inside showPayment paymentProcessing is checked whether it is true or false using ternary operator
+now paymentProcessing is true and it shows Opening Payment
+now the setpaymentprocessing is made true by handlepayment function, so we see Opening Payment
+after setpayemtprocessing is made true by handlPpayment function we may see OpeningPayment but within that time razorpay page is called by handlepayemnt function so we see razorpay page
+handlepayment is continuously running within that time
+
+inside handlePayment first the order is placed(created) in the Orders tables
+
+then the handlePayment function calls the paymentservice in the backend to create Razorpay order
+Razorpay creates its own order and sends information(razorpay orderid) back.
+the CreateRazorpayOrderAsync sends orderid, razorpay order id, amount, and payment status to 
+var payment = await _paymentService.CreateRazorpayOrderAsync(userId, orderId); in the payment controller
+the payment controller sends razorpay order id, amount, razorpay key id to the frontend
+
+The Key ID tells Razorpay Checkout which Razorpay account/application the payment belongs to.
+Key Secret is used for Secure server-side authentication/signature verification
+
+now when the payment is successfull razor pay calls the handler function.
+inside the handler fucntion it calls the verfiy in the backend
+
+while payment has happened successfully, the razor pay has generated signature using key secret.
+the razor pay knows the key secret even though we did not send it because it knows which account is connected
+now the signature is sent to the verify in the backend.
+the backend verifies the signature using the key secret
+
+Modal means a popup/window that appears on top of the current webpage and asks the user to interact with it.
+modal is the razorpay payment window. when that window is closed the ondismiss() function is called by Razorpay's Checkout code, not by our frontend react
+When the user clicks close button of the razorpay, razorpay calls ondismiss(). The Razorpay Checkout window is closed
+It is not payment failure
+react makes setPaymentProcessing(false); and now user will be on the pay 500 rupees page

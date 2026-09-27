@@ -3,6 +3,10 @@
     public class ApplicationLog
     {
         public int Id { get; set; }
+        public string EventName { get; set; } = string.Empty;
+        public int? UserId { get; set; }
+        public string? EntityId { get; set; }
+        public string? ErrorCode { get; set; }
         public string Message { get; set; } = string.Empty;
         public string Level { get; set; } = "Information";
 

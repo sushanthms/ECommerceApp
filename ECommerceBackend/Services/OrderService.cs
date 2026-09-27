@@ -17,22 +17,14 @@ namespace ECommerceBackend.Services
             _logger = logger;
         }
 
-        public async Task<(Order? Order, int ItemCount)> CreateOrderAsync(
-            int userId,
-            CreateOrderDto dto,
-            string paymentMethod,
-            string paymentStatus)
+        public async Task<(Order? Order, int ItemCount, List<string> UnavailableItems)> CreateOrderAsync(int userId, CreateOrderDto dto, string paymentMethod, string paymentStatus)
         {
-            var result = await CreateOrderFromCart(
-                userId,
-                dto,
-                paymentMethod,
-                paymentStatus
-            );
+            var result = await CreateOrderFromCart(userId, dto, paymentMethod, paymentStatus);
 
             return result;
         }
 
+        // admin sees their orders
         // Orders table has userid, userid is the foriegn key, using userid it accessess Users table and can get the details of the user. public User User { get; set; } this helps to navigate from the Order to User table
         public async Task<List<object>> GetAllOrdersAsync()
         {
@@ -165,11 +157,7 @@ namespace ECommerceBackend.Services
             return order;
         }
 
-        private async Task<(Order? Order, int ItemCount)> CreateOrderFromCart(
-            int userId,
-            CreateOrderDto dto,
-            string paymentMethod,
-            string paymentStatus)
+        private async Task<(Order? Order, int ItemCount, List<string> UnavailableItems)> CreateOrderFromCart(int userId, CreateOrderDto dto, string paymentMethod, string paymentStatus)
         {
             var cartItems = await _context.CartItems
                 .Include(c => c.Product)
@@ -178,7 +166,19 @@ namespace ECommerceBackend.Services
 
             if (cartItems.Count == 0)
             {
-                return (null, 0);
+                return (null, 0, new List<string>());
+            }
+
+            var unavailableItems = cartItems
+                .Where(c => c.Product.IsDeleted)
+                .Select(c => c.Product.Name)
+                .ToList();
+
+            if (unavailableItems.Count > 0)
+            {
+                var productIds = string.Join(", ", cartItems.Where(c => c.Product.IsDeleted).Select(c => c.ProductId));
+                await _logger.LogMessageAsync($"Order creation failed - cart has removed the products. UserId: {userId}, ProductIds: {productIds}", "Warning");
+                return (null, 0, unavailableItems);
             }
 
             decimal totalAmount = cartItems.Sum(item => item.Product.Price * item.Quantity);
@@ -222,11 +222,10 @@ namespace ECommerceBackend.Services
 
             await _context.SaveChangesAsync();
 
-            return (order, cartItems.Count);
+            return (order, cartItems.Count, new List<string>());
         }
 
-// Admin changes order status
-public async Task<bool> UpdateOrderStatusAsync(int id, string status)
+        public async Task<bool> UpdateOrderStatusAsync(int id, string status)
         {
             await _logger.LogMessageAsync($"Admin requested order status update - OrderId: {id}, NewStatus: {status}");
 
@@ -235,24 +234,41 @@ public async Task<bool> UpdateOrderStatusAsync(int id, string status)
 
             if (order == null)
             {
-                await _logger.LogMessageAsync($"Order status update failed - Order not found. OrderId: {id}","Warning");
+                await _logger.LogMessageAsync($"Order status update failed - Order not found. OrderId: {id}", "Warning");
 
                 return false;
             }
 
-            if (order.Status == "Cancelled") 
-            { await _logger.LogMessageAsync($"Order status update failed - Cancelled order cannot be changed. OrderId: {id}", "Warning"); 
-                return false;
-            }
-
-            var allowedStatuses = new[]
+            if (order.Status == "Cancelled")
             {
-        "Pending",
-        "Processing",
-        "Shipped",
-        "Delivered",
-        "Cancelled"
-    };
+                await _logger.LogMessageAsync($"Order status update failed - Cancelled order cannot be changed. OrderId: {id}", "Warning");
+                return false;
+            }
+            // if the incoming status is cancelled, then CancelOrderAndRestoreStockAsync function runs, othewise the status is changed as per the incoming status
+            if (status == "Cancelled")
+            {
+                // when changes the status to cance, the product stock is restored
+                var cancelled = await CancelOrderAndRestoreStockAsync(id, null);
+
+                if (!cancelled)
+                {
+                    await _logger.LogMessageAsync($"Order status update failed - order cannot be cancelled in its current state. OrderId: {id}", "Warning");
+                    return false;
+                }
+
+                await _logger.LogMessageAsync($"Order cancelled by admin and stock restored - OrderId: {id}");
+                return true;
+            }
+
+            // if the incoming status value is not "cancelled", then the next code runs
+            var allowedStatuses = new[]
+                        {
+                    "Pending",
+                    "Processing",
+                    "Shipped",
+                    "Delivered",
+                    "Cancelled"
+                };
 
             if (!allowedStatuses.Contains(status))
             {
@@ -261,59 +277,87 @@ public async Task<bool> UpdateOrderStatusAsync(int id, string status)
                 return false;
             }
 
-            order.Status = status;
+            var rows = await _context.Orders
+                .Where(o => o.Id == id && o.Status != "Cancelled")
+                .ExecuteUpdateAsync(s => s// this method does not need save changes to database
+                    .SetProperty(o => o.Status, status)// changes the order status
+                    .SetProperty(o => o.PaymentStatus,// changes the payment status
+                        o => status == "Delivered" && o.PaymentMethod == "Cash on Delivery"
+                             ? "Paid"
+                             : o.PaymentStatus));// for online payment the status will be paid. this setproperty keeps the status paid as it is
 
-            await _context.SaveChangesAsync();
+            if (rows == 0)
+            {
+                await _logger.LogMessageAsync($"Order status update failed - order was cancelled meanwhile. OrderId: {id}", "Warning");
+                return false;
+            }
 
             await _logger.LogMessageAsync($"Order status updated successfully - OrderId: {id}, Status: {status}");
 
             return true;
         }
 
-// User cancels their own order
-public async Task<bool> CancelOrderAsync(int userId, int id)
+        public async Task<bool> CancelOrderAsync(int userId, int id)
         {
-            await _logger.LogMessageAsync($"User requested order cancellation - UserId: {userId}, OrderId: {id}");
+            var cancelled = await CancelOrderAndRestoreStockAsync(id, userId);
 
-            var order = await _context.Orders
-                .Include(o => o.OrderItems)
-                .FirstOrDefaultAsync(o =>
-                    o.Id == id &&
-                    o.UserId == userId);
-
-            if (order == null)
+            if (!cancelled)
             {
-                await _logger.LogMessageAsync($"Order cancellation failed - Order not found. UserId: {userId}, OrderId: {id}", "Warning");
-
+                await _logger.LogMessageAsync($"Order cancellation failed - not found or cannot be cancelled. UserId: {userId}, OrderId: {id}", "Warning");
                 return false;
             }
-
-            if (order.Status != "Pending" && order.Status != "Processing")
-            {
-                await _logger.LogMessageAsync($"Order cancellation failed - Order cannot be cancelled. UserId: {userId}, OrderId: {id}, Status: {order.Status}", "Warning");
-
-                return false;
-            }
-
-            foreach (var orderItem in order.OrderItems)
-            {
-                var product = await _context.Products
-                    .FirstOrDefaultAsync(p => p.Id == orderItem.ProductId);
-
-                if (product != null)
-                {
-                    product.Stock += orderItem.Quantity;
-                }
-            }
-
-            order.Status = "Cancelled";
-
-            await _context.SaveChangesAsync();
 
             await _logger.LogMessageAsync($"Order cancelled successfully and stock restored - UserId: {userId}, OrderId: {id}");
-
             return true;
         }
 
+        // CancelOrderAsync(user) calls this function with the user's id. admin calls this function with null, which means "any user's order".
+        private async Task<bool> CancelOrderAndRestoreStockAsync(int orderId, int? userId)
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var query = _context.Orders.Where(o =>
+                    o.Id == orderId &&
+                    (o.Status == "Pending" || o.Status == "Processing"));
+
+                if (userId != null)
+                {
+                    query = query.Where(o => o.UserId == userId.Value);// userId can be null, so to get the id we write userId.Value
+                }
+
+                // ExecuteUpdateAsync sets the status to Cancelled
+                var rows = await query.ExecuteUpdateAsync(s => s.SetProperty(o => o.Status, "Cancelled"));
+                // it gives output 0 means it cant be cancelled( means shipped or already cancelled)
+                // prevents double clicking cancel
+
+                if (rows == 0)
+                {
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+                // i.Order.Id is the Id of the parent order (from the Orders table) that a given OrderItem row belongs to.
+                var items = await _context.OrderItems// OrderItems contains, OrderId, ProductId, Quantity, Price
+                    .Where(i => i.Order.Id == orderId)// Order contains detail of the order. i.Order.Id means the id of the individual product order in the Order table
+                    .Select(i => new { i.ProductId, i.Quantity })
+                    .ToListAsync();
+
+                foreach (var item in items)
+                {
+                    await _context.Products
+                        .Where(p => p.Id == item.ProductId)
+                        .ExecuteUpdateAsync(s => s.SetProperty(p => p.Stock, p => p.Stock + item.Quantity));
+                }
+
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
     }
 }

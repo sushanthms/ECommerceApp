@@ -16,6 +16,8 @@ function UserOrders() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const [payingOrderId, setPayingOrderId] = useState(null);
+
 const handleCancelOrder = async (id) => {
 
     const confirmCancel = window.confirm("Are you sure you want to cancel this order?");
@@ -42,6 +44,72 @@ const handleCancelOrder = async (id) => {
 
         console.error("Error cancelling order:", error);
         alert(error.response?.data?.message || "Failed to cancel order.");
+    }
+};
+
+const handleCompletePayment = async (orderId) => {
+    try {
+        setPayingOrderId(orderId);
+
+        const token = localStorage.getItem("token");
+
+        const paymentResponse = await axios.post(
+            `${import.meta.env.VITE_API_URL}/payment/create/${orderId}`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const paymentData = paymentResponse.data;
+
+        const options = {
+            key: paymentData.keyId,
+            amount: Math.round(paymentData.amount * 100),
+            currency: paymentData.currency,
+            name: "ECommerceApp",
+            description: `Order #${orderId}`,
+            order_id: paymentData.razorpayOrderId,
+
+            handler: async function (response) {
+                try {
+                    await axios.post(
+                        `${import.meta.env.VITE_API_URL}/payment/verify`,
+                        {
+                            razorpayOrderId: response.razorpay_order_id,
+                            razorpayPaymentId: response.razorpay_payment_id,
+                            razorpaySignature: response.razorpay_signature
+                        },
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    );
+
+                    setOrders((previousOrders) =>
+                        previousOrders.map((order) =>
+                            order.id === orderId
+                                ? { ...order, paymentStatus: "Paid" }
+                                : order
+                        )
+                    );
+
+                    alert("Payment successful.");
+                } catch (error) {
+                    alert(error.response?.data?.message || "Payment verification failed.");
+                } finally {
+                    setPayingOrderId(null);
+                }
+            },
+
+            modal: {
+                ondismiss: function () {
+                    setPayingOrderId(null);
+                }
+            }
+        };
+
+        const razorpay = new window.Razorpay(options);
+        razorpay.open();
+
+    } catch (error) {
+        alert(error.response?.data?.message || "Unable to start payment.");
+        setPayingOrderId(null);
     }
 };
 
@@ -154,10 +222,22 @@ const handleCancelOrder = async (id) => {
 
                                                 <div className="order-footer">
                                                     <Link to={`/orders/${order.id}`} className="view-order-button">View Order Details</Link>
-                                                    {(order.status === "Pending" || order.status === "Processing") && (
-                                                        <button className="cancel-order-button" onClick={() => handleCancelOrder(order.id)}>Cancel Order</button>
+
+                                                    {order.paymentMethod === "Online Payment" && order.paymentStatus === "Pending" && (
+                                                        <button
+                                                            className="place-order-btn"
+                                                            onClick={() => handleCompletePayment(order.id)}
+                                                            disabled={payingOrderId === order.id}
+                                                        >
+                                                            {payingOrderId === order.id ? "Processing..." : "Complete Payment"}
+                                                        </button>
                                                     )}
 
+                                                    {(order.status === "Pending" || order.status === "Processing") && (
+                                                        <button className="cancel-order-button" onClick={() => handleCancelOrder(order.id)}>
+                                                            Cancel Order
+                                                        </button>
+                                                    )}
                                                 </div>
 
                                             </div>

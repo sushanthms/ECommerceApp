@@ -4,26 +4,37 @@ namespace ECommerceBackend.Logging
 {
     public class DatabaseLogger : IApplicationLogger
     {
-        private readonly AppDbContext _context;
+        private readonly IServiceScopeFactory _scopeFactory;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public DatabaseLogger(AppDbContext context, IHttpContextAccessor httpContextAccessor)
+        public DatabaseLogger(IServiceScopeFactory scopeFactory, IHttpContextAccessor httpContextAccessor)
         {
-            _context = context;
+            _scopeFactory = scopeFactory;
             _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task LogAsync(ApplicationLog log)
         {
-            _context.ApplicationLogs.Add(log);
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            await _context.SaveChangesAsync();
+            db.ApplicationLogs.Add(log);
+            await db.SaveChangesAsync();
         }
 
         public Task LogMessageAsync(string message, string level = "Information")
         {
-            _httpContextAccessor.HttpContext!.Items["LogMessage"] = message;
-            _httpContextAccessor.HttpContext!.Items["LogLevel"] = level;
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext == null)
+                return Task.CompletedTask;
+
+            if (!httpContext.Items.ContainsKey("LogMessages"))
+            {
+                httpContext.Items["LogMessages"] = new List<(string Message, string Level)>();
+            }
+
+            var messages = (List<(string Message, string Level)>)httpContext.Items["LogMessages"]!;
+            messages.Add((message, level));
 
             return Task.CompletedTask;
         }

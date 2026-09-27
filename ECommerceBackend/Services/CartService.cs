@@ -15,8 +15,8 @@ namespace ECommerceBackend.Services
         }
 
         public async Task<(bool Success, string? Message, int? Stock, bool NotFound)> AddToCartAsync(int userId, AddToCartDto dto)
-        {// Task means the method performs an asynchronous operation and will eventually produce a result.
-            // Inside the task we have return type as tuple, Tuple allows to return multiple in the return
+        {// Task means the method performs an asynchronous operation and will produce a result.
+         // Inside the task we have return type as tuple, Tuple allows to return multiple values in the return
             var product = await _context.Products
                 .FirstOrDefaultAsync(p =>
                     p.Id == dto.ProductId &&
@@ -49,7 +49,7 @@ namespace ECommerceBackend.Services
                         SET Stock = Stock - {dto.Quantity}
                         WHERE Id = {dto.ProductId}
                         AND Stock >= {dto.Quantity}
-                    ");// // changes the stock based on the where condition
+                    ");// changes the stock based on the where condition
 
                 // 0 means the database could not decrease the stock.
                 if (rowsAffected == 0)
@@ -100,7 +100,7 @@ namespace ECommerceBackend.Services
             }
         }
 
-        public async Task<List<CartItemDto>>GetCartAsync(int userId)
+        public async Task<List<CartItemDto>> GetCartAsync(int userId)
         {
             return await _context.CartItems
                 .Where(c => c.UserId == userId)
@@ -136,64 +136,70 @@ namespace ECommerceBackend.Services
 
             await using var transaction = await _context.Database.BeginTransactionAsync();
 
-            try {
+            try
+            {
                 // If quantity is 0 or less, removing the item.
                 if (dto.Quantity <= 0)
                 {
-                    cartItem.Product.Stock += cartItem.Quantity;
+                    await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                            UPDATE Products
+                            SET Stock = Stock + {cartItem.Quantity}
+                            WHERE Id = {cartItem.ProductId}
+                        ");
 
                     _context.CartItems.Remove(cartItem);
                     await _context.SaveChangesAsync();
+
+                    await _context.Entry(cartItem.Product).ReloadAsync();
                     await transaction.CommitAsync();
 
                     return (true, null, cartItem.Product.Stock, false);
                 }
-                
-                
+
+                // dto.Quantity is the total quantity sent by the frontend not the increased or decreased value, it is the total quantity of that cart item
                 int quantityDifference = dto.Quantity - cartItem.Quantity;
 
-            if (quantityDifference > 0)
-            {
-                var rowsAffected =
-                    await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                if (quantityDifference > 0)
+                {
+                    var rowsAffected =
+                        await _context.Database.ExecuteSqlInterpolatedAsync($@"
                         UPDATE Products
                         SET Stock = Stock - {quantityDifference}
                         WHERE Id = {cartItem.ProductId}
                         AND Stock >= {quantityDifference}
                     ");
 
-                // The database could not reserve the additional stock.
-                if (rowsAffected == 0)
-                {
-                    var currentStock = await _context.Products
-                        .Where(p => p.Id == cartItem.ProductId)
-                        .Select(p => p.Stock)
-                        .FirstAsync();
+                    if (rowsAffected == 0)
+                    {
+                        var currentStock = await _context.Products
+                            .Where(p => p.Id == cartItem.ProductId)
+                            .Select(p => p.Stock)
+                            .FirstAsync();
 
-                 await transaction.RollbackAsync();
-                 return (false, $"Only {currentStock} more in stock.", currentStock, false);
+                        await transaction.RollbackAsync();
+                        return (false, $"Only {currentStock} more in stock.", currentStock, false);
+                    }
                 }
-            }
-            else if (quantityDifference < 0)
-            {
-                // The user decreased the quantity.
-                int stockToReturn = -quantityDifference;
+                else if (quantityDifference < 0)
+                {
+                    // The user decreased the quantity.
+                    int stockToReturn = -quantityDifference;// sign is changed(-(-3) not stockToReturn = stockToReturn - quantityDifference
 
-                await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                    await _context.Database.ExecuteSqlInterpolatedAsync($@"
                     UPDATE Products
                     SET Stock = Stock + {stockToReturn}
                     WHERE Id = {cartItem.ProductId}
                 ");
+                }
+
+                cartItem.Quantity = dto.Quantity;
+
+                await _context.SaveChangesAsync();
+
+                await _context.Entry(cartItem.Product).ReloadAsync();
+                await transaction.CommitAsync();
+                return (true, null, cartItem.Product.Stock, false);
             }
-            
-            cartItem.Quantity = dto.Quantity;
-
-            await _context.SaveChangesAsync();
-
-            await _context.Entry(cartItem.Product).ReloadAsync();
-            await transaction.CommitAsync();
-            return (true, null, cartItem.Product.Stock, false);
-        }
 
             catch
             {
@@ -215,8 +221,7 @@ namespace ECommerceBackend.Services
                 return (false, null);
             }
 
-            await using var transaction =
-                await _context.Database.BeginTransactionAsync();
+            await using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {

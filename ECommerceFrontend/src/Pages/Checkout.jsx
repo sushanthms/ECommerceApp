@@ -20,10 +20,6 @@ function Checkout({ showToast }) {
     const [showPayment, setShowPayment] = useState(false);
     const [paymentProcessing, setPaymentProcessing] = useState(false);
 
-    const [cardNumber, setCardNumber] = useState("");
-    const [expiry, setExpiry] = useState("");
-    const [cvv, setCvv] = useState("");
-
     const navigate = useNavigate();
 
     const [customerDetails, setCustomerDetails] = useState({
@@ -84,6 +80,7 @@ function Checkout({ showToast }) {
         return Object.keys(newErrors).length === 0;
     };
 
+// this is called when we do cash on delivery
     const placeOrder = async () => {
         try {
             setLoading(true);
@@ -129,57 +126,103 @@ function Checkout({ showToast }) {
         await placeOrder();
     };
 
-    const handlePayment = async (e) => {
-        e.preventDefault();
-
-        if (cardNumber.length !== 16) {
-            alert("Card number must be 16 digits.");
-            return;
-        }
-
-        if (!/^\d{2}\/\d{2}$/.test(expiry)) {
-            alert("Expiry must be in MM/YY format.");
-            return;
-        }
-
-        if (cvv.length !== 3) {
-            alert("CVV must be 3 digits.");
-            return;
-        }
-
+    const handlePayment = async () => {
+    try {
         setPaymentProcessing(true);
 
-        setTimeout(async () => {
-            try {
-                const token = localStorage.getItem("token");
+        const token = localStorage.getItem("token");
 
-                const response = await axios.post(
-                    `${API_URL}/Pay`,
-                    {
-                        ...customerDetails,
-                        paymentMethod: "Online Payment"
-                    },
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    }
-                );
-
-                showToast(response.data.message);
-                navigate("/home");
-            } catch (error) {
-                console.error("Payment error:", error);
-                alert(error.response?.data?.message || "Payment failed.");
-            } finally {
-                setPaymentProcessing(false);
+        // Creating the order in Orders table
+        const orderResponse = await axios.post(
+            API_URL,
+            {
+                ...customerDetails,
+                paymentMethod: "Online Payment"
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
             }
-        }, 1500);
-    };
+        );
+
+        const orderId = orderResponse.data.orderId;
+
+        // Asking the paymentservice in the backend to create Razorpay order
+        const paymentResponse = await axios.post(
+            `${import.meta.env.VITE_API_URL}/payment/create/${orderId}`,
+            {},
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        const paymentData = paymentResponse.data;
+
+        // Creating a JavaScript object containing instructions for Razorpay. This doesn't open Razorpay yet.
+        // const options is creating settings/instructions the handler function does not run now, the call to verify in the backend does not go now
+        // after the payment is done the handler function runs.
+        const options = {
+            key: paymentData.keyId,// this is from the paymentresponse where the razorpay order is created
+            amount: Math.round(paymentData.amount * 100),// amount is in paise
+            currency: paymentData.currency,
+            name: "ECommerceApp",
+            description: `Order #${orderId}`,
+            order_id: paymentData.razorpayOrderId,
+
+// It is called by Razorpay when the Checkout reports a successful payment. handler is a feature provided by the Razorpay Checkout JavaScript SDK
+// Handler is a property name defined by Razorpay's Checkout API.
+            handler: async function (response) {
+                try {
+                    // Sends the Razorpay result to the backend for verification
+                    await axios.post(
+                        `${import.meta.env.VITE_API_URL}/payment/verify`,
+                        {
+                            razorpayOrderId: response.razorpay_order_id,
+                            razorpayPaymentId: response.razorpay_payment_id,
+                            razorpaySignature: response.razorpay_signature
+                        },
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`
+                            }
+                        }
+                    );
+
+                    showToast("Payment successful and order placed.");
+                    navigate("/home");
+                } catch (error) {
+                    console.error("Payment verification failed:", error);
+                    alert(error.response?.data?.message || "Payment verification failed.");
+                } finally {
+                    setPaymentProcessing(false);
+                }
+            },
+
+            modal: {
+                ondismiss: function () {
+                    setPaymentProcessing(false);
+                }
+            }
+        };
+
+        const razorpay = new window.Razorpay(options);// the Razorpay SDK receives that entire options object.
+
+        razorpay.open();
+
+    } catch (error) {
+        console.error("Payment error:", error);
+
+        alert(error.response?.data?.message || "Unable to start payment.");
+
+        setPaymentProcessing(false);
+    }
+};
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        // this is 
         // const name = e.target.name;
         // const value = e.target.value;
         setCustomerDetails({...customerDetails, [name]: value});
@@ -203,33 +246,14 @@ function Checkout({ showToast }) {
                         <div className="payment-page">
                             <h2>Online Payment</h2>
                             <p>Total Amount: ₹{total.toFixed(2)}</p>
+                            <button type="button" className="place-order-btn" onClick={handlePayment} disabled={paymentProcessing}
+                            >
+                                {paymentProcessing
+                                    ? "Opening Payment..."
+                                    : `Pay ₹${total.toFixed(2)}`}
+                            </button>
 
-                            <form onSubmit={handlePayment}>
-
-                                <div className="form-group">
-                                    <label>Card Number</label>
-                                    <input type="text" value={cardNumber} onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, "").slice(0, 16))} placeholder="Enter 16 digit card number"/>
-                                </div>
-
-                                <div className="form-row">
-                                    <div className="form-group">
-                                        <label>Expiry</label>
-                                        <input type="text" value={expiry} onChange={(e) => setExpiry(e.target.value.slice(0, 5))} placeholder="MM/YY"/>
-                                    </div>
-                                    <div className="form-group">
-                                        <label>CVV</label>
-                                        <input type="password" value={cvv} onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 3))} placeholder="CVV"/>
-                                    </div>
-                                </div>
-
-                                <button type="submit" className="place-order-btn" disabled={paymentProcessing}>
-                                    {paymentProcessing ? "Processing Payment..." : `Pay ₹${total.toFixed(2)}`}
-                                </button>
-
-                                <button type="button" onClick={() => setShowPayment(false)} disabled={paymentProcessing}>Back</button>
-
-                            </form>
-
+                            <button type="button" onClick={() => setShowPayment(false)} disabled={paymentProcessing}>Back</button>
                         </div>
                     ) : loading ? (
                         <p>Loading...</p>

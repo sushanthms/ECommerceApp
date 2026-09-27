@@ -34,6 +34,7 @@ namespace ECommerceBackend.Controllers
         [Authorize(Roles = "User")]
         public async Task<IActionResult> CreateOrder(CreateOrderDto dto)
         {
+            // ControllerBase gives the controller access to HttpContext
             var correlationId = HttpContext.Items["CorrelationId"]?.ToString();
 
             try
@@ -47,9 +48,18 @@ namespace ECommerceBackend.Controllers
                     return Unauthorized();
                 }
 
-                await _logger.LogMessageAsync($"COD order creation - UserId: {userId}, CorrelationId: {correlationId}");
+                await _logger.LogMessageAsync($"Order creation - UserId: {userId}, PaymentMethod: {dto.PaymentMethod}, CorrelationId: {correlationId}");
 
-                var result = await _orderService.CreateOrderAsync(userId.Value, dto, "Cash on Delivery","Pending");
+                var result = await _orderService.CreateOrderAsync(userId.Value, dto, dto.PaymentMethod, "Pending");
+
+                if (result.UnavailableItems.Count > 0)
+                {
+                    return BadRequest(new
+                    {
+                        message = "Some items in your cart are no longer available. Please remove them and try again.",
+                        unavailableItems = result.UnavailableItems
+                    });
+                }
 
                 if (result.Order == null)
                 {
@@ -231,10 +241,10 @@ namespace ECommerceBackend.Controllers
             }
         }
 
-// Admin updates order status
-[HttpPut("admin/{id}/status")]
-[Authorize(Roles = "Admin")]
-public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] string status)
+        // Admin updates order status
+        [HttpPut("admin/{id}/status")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] string status)
         {
             try
             {

@@ -4,6 +4,8 @@ namespace ECommerceBackend.Models
 {
     // An index is a database structure that speeds up lookups/searches on a column. It is used to make certain database operations faster. Uses B-tree structure.
     [Index(nameof(SKU), IsUnique = true)]
+    [Index(nameof(Category), nameof(IsDeleted), nameof(Id))]
+    [Index(nameof(IsDeleted), nameof(Id))]
     public class Product
     {
         public int Id { get; set; }
@@ -12,6 +14,7 @@ namespace ECommerceBackend.Models
             
         public string Description { get; set; } = string.Empty;
 
+        [Precision(18, 2)]
         public decimal Price { get; set; }
 
         public int Stock { get; set; }

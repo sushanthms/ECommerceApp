@@ -178,6 +178,27 @@
     background: var(--button-hover);
 }
 
+.place-order-btn {
+    padding: 9px 16px;
+    margin-left: 10px;
+    border: none;
+    border-radius: 6px;
+    background-color: var(--success-color);
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.place-order-btn:hover {
+    opacity: 0.9;
+}
+
+.place-order-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .cancel-order-button {
     padding: 9px 16px;
     margin-left: 10px;

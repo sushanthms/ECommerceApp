@@ -170,7 +170,7 @@ Explanation:
 
 First RequestLoggingMiddleware runs, and when it reaches _next(context), the request continues towards the controller.
 in the controller the flow reached here await _logger.LogMessageAsync("User registration failed - email already registered");
-we _logger is dependency injected from IApplicationLogger, IApplicationLogger knows whether to use FileLogger or DatabaseLogger.
+ _logger is dependency injected from IApplicationLogger, IApplicationLogger knows whether to use FileLogger or DatabaseLogger.
 _logger means the FileLogger or DatabaseLogger behind it.
 Then the LogMessageAsync function of the FileLogger or DatabaseLogger runs.
 the log message is put isndie HttpContext Items.
@@ -225,3 +225,14 @@ public async Task LogAsync(ApplicationLog log)
 
 the C# compiler automatically creates and returns the completed Task when the method finishes.  
 return Task.CompletedTask; says “this method is finished.”
+
+Global Exception Handling
+
+when a request came it goes to requestloggingmiddleware
+from there _next moves it to the controlller then service
+now a global exception occured, there is no catch block to handle the error
+now the flow goes back to middleware, the middleware now catches the error and has throw inside the catch block
+the throw inside the catch sends the exception back on the pipeline
+so the previous file is globalexceptionhandler(registered in Program.cs)
+GlobalExceptionHandler has parameter to receive the exception and the code inside it works and at last calls LogAsync
+LogAsync writes the log to where it is mentioned(file or database)

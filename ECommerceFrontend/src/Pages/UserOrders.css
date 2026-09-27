@@ -149,6 +149,8 @@
 .order-footer {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
     margin-top: 10px;
 }
 
@@ -174,6 +176,27 @@
     border-radius: 10px;
     color: var(--text-color);
 }
+
+.place-order-btn {
+    padding: 9px 16px;
+    border: none;
+    border-radius: 6px;
+    background-color: var(--success-color);
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.place-order-btn:hover {
+    opacity: 0.9;
+}
+
+.place-order-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .cancel-order-button {
     padding: 9px 16px;
     border: none;

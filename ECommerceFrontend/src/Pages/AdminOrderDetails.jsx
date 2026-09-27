@@ -26,7 +26,7 @@ function AdminOrderDetails() {
 // even if the id is updated by clicking view orders or by directly typing admin/orders/7 the process in AdminOrderDetails is same
 // if we click view order, the order object will be passed to the AdminOrderDetails page, if we directly type admin/Orders/7 the order object will be fetched from the backend
     useEffect(() => {
-        if (order.id === Number(id)) {// order.id is from the stored order state which happened in previous useEffect run
+        if (order?.id === Number(id)) {// order.id is from the stored order state which happened in previous useEffect run
             return;
         }
     setLoading(true);

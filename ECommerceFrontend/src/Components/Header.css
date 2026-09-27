@@ -6,7 +6,7 @@
     display: flex;
     align-items: center;
     gap: 20px;
-    padding: 0 24px;
+    padding: 0 25px;
     border-bottom: 1px solid var(--border-color);
     box-sizing: border-box;
 }
@@ -35,7 +35,7 @@
     background: none;
     border: none;
     color: white;
-    font-size: 24px;
+    font-size: 25px;
     cursor: pointer;
     border-radius: 6px;
     padding: 0;
@@ -45,8 +45,8 @@
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-.header-search {
-    flex: 1;
+.header-search {/*here flex 1 makes the full search box to take available space in the header. display flex makes its children as flex items */
+    flex: 1;/*for children we write flex 1. the children of header-search can have flex 1 and another children can have flex 2 to take 1:2 ratio of space */
     max-width: 650px;
     height: 40px;
     display: flex;
@@ -99,7 +99,7 @@
     padding: 0 10px;
     border-radius: 6px;
     font-size: 15px;
-    white-space: nowrap;
+    white-space: nowrap;/*Does not allows the text inside this element to move to the next line.*/
 }
 
 .site-nav a:hover {

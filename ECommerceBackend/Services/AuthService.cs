@@ -1,5 +1,4 @@
 ﻿using ECommerceBackend.Data;
-using ECommerceBackend.DTOs;
 using ECommerceBackend.Logging;
 using ECommerceBackend.Models;
 using Microsoft.EntityFrameworkCore;
@@ -23,15 +22,16 @@ namespace ECommerceBackend.Services
             _logger = logger;
         }
 
-        // Registration of User
         public async Task<bool> RegisterAsync(RegisterDto request)
         {
+            var email = request.Email.Trim().ToLowerInvariant();
+
             var existingUser = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == request.Email);
-            // searches through the table, and gives the first matching row or null if no row matches.
-            if (existingUser != null)// if a user is alreday registered existingUser stores taht otherwise it stores null. if existingUser is not null then that user is present
+                .FirstOrDefaultAsync(u => u.Email == email);
+            // searches through the table, and gives the first matching row, if no row matches it gives null.
+            if (existingUser != null)
             {
-                await _logger.LogMessageAsync($"User registration failed - email already registered: {request.Email}");
+                await _logger.LogMessageAsync($"User registration failed - email already registered: {email}");
                 return false;
             }
 
@@ -40,27 +40,36 @@ namespace ECommerceBackend.Services
             var user = new User
             {
                 Name = request.Name,
-                Email = request.Email,
+                Email = email,
                 PasswordHash = passwordHash,
                 Role = "User"
             };
 
             _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-            await _logger.LogMessageAsync($"User registration successful - UserId: {user.Id}, Email: {user.Email}");
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                await _logger.LogMessageAsync($"User registration failed - email already registered (race): {email}");
+                return false;
+            }
 
+            await _logger.LogMessageAsync($"User registration successful - UserId: {user.Id}, Email: {user.Email}");
             return true;
         }
 
-        // Login of User and Admin
         public async Task<(bool Success, string? Token, User? User)> LoginAsync(LoginDto request)
         {
+            var email = request.Email.Trim().ToLowerInvariant();
+
             var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == request.Email);
+                .FirstOrDefaultAsync(u => u.Email == email);
 
             if (user == null)
             {
-                await _logger.LogMessageAsync($"User login failed - no account found for Email: {request.Email}");
+                await _logger.LogMessageAsync($"User login failed - no account found for Email: {email}");
                 return (false, null, null);
             }
 
@@ -68,7 +77,7 @@ namespace ECommerceBackend.Services
 
             if (!passwordValid)
             {
-                await _logger.LogMessageAsync($"User login failed - incorrect password for Email: {request.Email}, UserId: {user.Id}", "Warning");
+                await _logger.LogMessageAsync($"User login failed - incorrect password for Email: {email}, UserId: {user.Id}", "Warning");
                 return (false, null, null);
             }
 
@@ -89,8 +98,6 @@ namespace ECommerceBackend.Services
             );
 
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            // creating the token
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],

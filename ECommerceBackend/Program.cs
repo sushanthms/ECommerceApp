@@ -1,16 +1,17 @@
 using ECommerceBackend;
 using ECommerceBackend.Data;
 using ECommerceBackend.Logging;
-using ECommerceBackend.Models;
+using ECommerceBackend.Payments.Services;
 using ECommerceBackend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-using System.Text; // allows Encoding
+using System.Text;// allows Encoding
 
 var builder = WebApplication.CreateBuilder(args);
 
+// puts the SQL Server configuration and connection string into the options object.
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")
@@ -37,8 +38,21 @@ builder.Services.AddScoped<CartService>();
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<ReviewService>();
+builder.Services.AddScoped<PaymentService>();
 builder.Services.AddControllers();
+builder.Services.AddMemoryCache();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 builder.Services.AddHttpContextAccessor();
+
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("Jwt:Key is missing in configuration.");
+
+if (jwtKey.Length < 32)
+{
+    throw new InvalidOperationException("Jwt:Key must be at least 32 characters long.");
+}
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -54,9 +68,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["Jwt:Audience"],
 
             IssuerSigningKey = new SymmetricSecurityKey(// for checking the token we need key
-                Encoding.UTF8.GetBytes(
-                    builder.Configuration["Jwt:Key"]!
-                )
+                Encoding.UTF8.GetBytes(jwtKey)
             )
         };
     });
@@ -90,7 +102,8 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins("http://localhost:5173")
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .WithExposedHeaders("X-Correlation-ID");
     });
 });
 
@@ -99,9 +112,9 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider
-        .GetRequiredService<AppDbContext>();
-
+    // ASP.NET Core's DI container creates/gets an AppDbContext instance for this scope and stores that instance in context.
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    // calls the SeedAdmin function, SeedAdmin is the method inside AdminSeeder class
     AdminSeeder.SeedAdmin(context, builder.Configuration);
 }
 
@@ -113,11 +126,13 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();// If an HTTP request should use HTTPS, it redirects it to HTTPS. 
-app.UseStaticFiles();
+app.UseStaticFiles();// ASP.NET Core can serve static files directly to the browser.
 app.UseMiddleware<RequestLoggingMiddleware>();
+app.UseExceptionHandler();
 app.UseCors("ReactPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers();// This connects incoming HTTP requests to the  controllers. finds the controllers and maps their routes to HTTP endpoints.
+// the ASP.NET Core already knows which methods have what attributes([Authorize]. the app.mapController is to map the requets to that method to execute the method
+app.MapControllers();// This connects incoming HTTP requests to the controllers. finds the controllers and maps their routes to the HTTP endpoints.
 
 app.Run();

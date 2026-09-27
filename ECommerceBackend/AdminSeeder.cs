@@ -5,9 +5,7 @@ namespace ECommerceBackend
 {
     public static class AdminSeeder
     {
-        public static void SeedAdmin(
-            AppDbContext context,
-            IConfiguration configuration)
+        public static void SeedAdmin(AppDbContext context, IConfiguration configuration)
         {
             // Check whether an Admin already exists
             var adminExists = context.Users
@@ -19,14 +17,13 @@ namespace ECommerceBackend
             }
 
             // Get admin credentials from User Secrets
-            var adminEmail = configuration["Admin:Email"];
+            var adminEmail = configuration["Admin:Email"]?.Trim().ToLowerInvariant();
             var adminPassword = configuration["Admin:Password"];
 
-            if (string.IsNullOrEmpty(adminEmail) ||
-                string.IsNullOrEmpty(adminPassword))
+            if (string.IsNullOrEmpty(adminEmail) || string.IsNullOrEmpty(adminPassword) || adminPassword.Length < 8)
             {
                 throw new InvalidOperationException(
-                    "Admin credentials are not configured."
+                    "Admin credentials are not configured (email required, password at least 8 characters)."
                 );
             }
 

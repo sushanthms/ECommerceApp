@@ -9,7 +9,8 @@ export const getAllOrders = async () => {
 export const updateOrderStatus = async (id, status) => {
     const response = await api.put(
         `/Order/admin/${id}/status`,
-        status
+        JSON.stringify(status),
+        { headers: { "Content-Type": "application/json" } }
     );
 
     return response.data;

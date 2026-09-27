@@ -13,12 +13,12 @@ export const addReview = async (productId, rating, comment) => {
     return response.data;
 };
 
-export const getProductReviews = async (productId) => {
+export const getProductReviews = async (productId, page = 1, pageSize = 10) => {
     const response = await api.get(
-        `/Review/product/${productId}`
+        `/Review/product/${productId}?page=${page}&pageSize=${pageSize}`
     );
 
-    return response.data;
+    return response.data;// { reviews, totalCount, page, pageSize }
 };
 
 export const getAllReviews = async () => {
@@ -32,6 +32,14 @@ export const getAllReviews = async () => {
 export const deleteReview = async (id) => {
     const response = await api.delete(
         `/Review/admin/${id}`
+    );
+
+    return response.data;
+};
+
+export const deleteOwnReview = async (id) => {
+    const response = await api.delete(
+        `/Review/${id}`
     );
 
     return response.data;

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Header.css";
 
-function Header({ darkMode, setDarkMode, role, menuOpen, setMenuOpen, onCartClick, search, setSearch, onSearch }) {
+function Header({ darkMode, setDarkMode, role, menuOpen, setMenuOpen, search, setSearch, onSearch }) {
 
     const navigate = useNavigate();
 
@@ -16,8 +16,7 @@ function Header({ darkMode, setDarkMode, role, menuOpen, setMenuOpen, onCartClic
     useEffect(() => {
         document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
 
-        localStorage.setItem("theme", darkMode ? "dark" : "light"
-        );
+        localStorage.setItem("theme", darkMode ? "dark" : "light");
     }, [darkMode]);
 
     const handleLogout = () => {
@@ -35,7 +34,7 @@ function Header({ darkMode, setDarkMode, role, menuOpen, setMenuOpen, onCartClic
             </div>
 
             <div className="header-search">
-                <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}placeholder="Search products..."/>
+                <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") onSearch(); }} placeholder="Search products..."/>
                 <button onClick={onSearch}>🔍</button>
             </div>
 
@@ -46,7 +45,8 @@ function Header({ darkMode, setDarkMode, role, menuOpen, setMenuOpen, onCartClic
                 {role === "User" && (<Link to="/cart">🛒 Cart</Link>)}
                 <button className="theme-toggle" onClick={() => setDarkMode(!darkMode)}>{darkMode ? "☀️" : "🌙"}</button>
 
-                {role ? (
+                {role ? (// if role has an value then it shows firstletter/profile icon and logout button in the header
+                // if role has no value it shows profile icon and login button
                     <>
                         <Link to="/profile" className="profile-link">{firstLetter || "👤"}</Link>
                         <button className="logout-btn" onClick={handleLogout}>Logout</button>

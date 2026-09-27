@@ -1,16 +1,14 @@
-﻿using ECommerceBackend.Models;
-using ECommerceBackend.Models.DTOs;
+﻿using ECommerceBackend.Models.DTOs;
 using ECommerceBackend.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;// IActionResult
+using Microsoft.AspNetCore.Mvc;
 
 namespace ECommerceBackend.Controllers
 {
-    [ApiController]// it gives the next line feature
+    [ApiController]
     [Route("api/[controller]")]
     public class ProductController : ControllerBase
     {
-        // ProductController depends on ProductService, and ASP.NET Core's DI container injects a ProductService object into the ProductController constructor.
         private readonly ProductService _productService;
 
         public ProductController(ProductService productService)
@@ -18,25 +16,29 @@ namespace ECommerceBackend.Controllers
             _productService = productService;
         }
 
-      
-// POST /api/Product/upload
-[HttpPost("upload")]
-[Authorize(Roles = "Admin")]
-public async Task<IActionResult> UploadCsv([FromForm] IFormFile file, [FromForm] List<IFormFile>? images)
+        public class ProductCsvUploadRequest
         {
-            if (file == null || file.Length == 0)
+            public IFormFile File { get; set; } = null!;
+            public List<IFormFile>? Images { get; set; }
+        }
+        // swashbuckle cannot handle/resolve two fromfrom in one parameter so we get error in swagger so we make a class to receive two fromform 
+        [HttpPost("upload")]
+        [Authorize(Roles = "Admin")]// this parameter receives formdata container which contains csv file and images. the ProductCsvUploadRequest class has two fields/properties
+        public async Task<IActionResult> UploadCsv([FromForm] ProductCsvUploadRequest request)
+        {
+            if (request.File == null || request.File.Length == 0)
             {
                 return BadRequest("Please upload a CSV file.");
             }
 
-            if (Path.GetExtension(file.FileName).ToLower() != ".csv")
+            if (Path.GetExtension(request.File.FileName).ToLower() != ".csv")
             {
                 return BadRequest("Only CSV files are allowed.");
             }
 
             try
             {
-                var (added, updated) = await _productService.UploadCsvAsync(file, images);
+                var (added, updated) = await _productService.UploadCsvAsync(request.File, request.Images);
 
                 return Ok(new
                 {
@@ -124,7 +126,7 @@ public async Task<IActionResult> UploadCsv([FromForm] IFormFile file, [FromForm]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> SearchProductsForAdmin(string search, int page = 1, int pageSize = 20)
         {
-            var result = await _productService.SearchProductsForAdminAsync(search, page,pageSize);
+            var result = await _productService.SearchProductsForAdminAsync(search, page, pageSize);
 
             return Ok(new
             {
@@ -222,20 +224,19 @@ public async Task<IActionResult> UploadCsv([FromForm] IFormFile file, [FromForm]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> PermanentlyDeleteProduct(int id)
         {
-            var success = await _productService.PermanentlyDeleteProductAsync(id);
+            var result = await _productService.PermanentlyDeleteProductAsync(id);
 
-            if (!success)
+            if (result.NotFound)
             {
-                return NotFound(new
-                {
-                    message = "Product not found"
-                });
+                return NotFound(new { message = "Product not found" });
             }
 
-            return Ok(new
+            if (!result.Success)
             {
-                message = "Product permanently deleted"
-            });
+                return BadRequest(new { message = result.Error });
+            }
+
+            return Ok(new { message = "Product permanently deleted" });
         }
 
         [HttpGet("categories")]
@@ -279,6 +280,12 @@ public async Task<IActionResult> UploadCsv([FromForm] IFormFile file, [FromForm]
                     i.ImageUrl
                 })
             });
+        }
+
+        [HttpGet("test-crash")]
+        public IActionResult TestCrash()
+        {
+            throw new Exception("This is a test exception");
         }
     }
 }

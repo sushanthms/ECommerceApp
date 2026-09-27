@@ -1,53 +1,32 @@
-﻿using ECommerceBackend.DTOs;
-using ECommerceBackend.Services;
+﻿using ECommerceBackend.Services;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;// ASP.NET Core's web framework tools. ControllerBase, [ApiController], IActionResult
 
 namespace ECommerceBackend.Controllers
 {
-    [ApiController]// automatically gives response like 400 based on the data input.
+    [ApiController]// http responses, mmodel binding and validation
     [Route("api/[controller]")]
     public class AuthController : ControllerBase // things like Ok(), BadRequest()
     {
-        private readonly AuthService _authService;
+        private readonly AuthService _authService;// Dependency Injection. DI container sees the builder.Services registrations and gives the scope
 
         public AuthController(AuthService authService)
         {
             _authService = authService;
         }
 
-        // Registration of User
         [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterDto request)// IActionResult knows how to produce/send the HTTP response. describes what should be sent
+        public async Task<IActionResult> Register(RegisterDto request)
         {
-            try
-            {
-                bool registered = await _authService.RegisterAsync(request);
+            bool registered = await _authService.RegisterAsync(request);
 
-                if (!registered)
-                {
-                    return BadRequest(new
-                    {
-                        message = "Email is already registered."
-                    });
-                }
+            if (!registered)
+                return BadRequest(new { message = "Email is already registered." });
 
-                return Ok(new
-                {
-                    message = "Registration successful."
-                });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, new
-                {
-                    message = "An unexpected error occurred."
-                });
-            }
+            return Ok(new { message = "Registration successful." });
         }
 
-        // Login of User and Admin
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto request)
         {
@@ -72,11 +51,11 @@ namespace ECommerceBackend.Controllers
             });
         }
 
-[Authorize]
-[HttpGet("verify")]
-public IActionResult VerifyToken()
+        [Authorize]// checks the signature, issuer, audience and expiry. If authentication fails VerifyToken method is not executed
+        [HttpGet("verify")]// If the token is valid, then [Authorize] allows to proceed with the request
+        public IActionResult VerifyToken()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);// reads information stored inside the token
             var role = User.FindFirstValue(ClaimTypes.Role);
 
             return Ok(new
@@ -85,6 +64,5 @@ public IActionResult VerifyToken()
                 role
             });
         }
-
     }
 }

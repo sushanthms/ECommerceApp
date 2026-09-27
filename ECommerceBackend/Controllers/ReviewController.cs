@@ -1,4 +1,5 @@
-﻿using ECommerceBackend.Models;
+﻿using ECommerceBackend.DTOs;
+using ECommerceBackend.Models;
 using ECommerceBackend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +21,7 @@ namespace ECommerceBackend.Controllers
 
         [Authorize(Roles = "User")]
         [HttpPost]
-        public async Task<IActionResult> AddReview(Review review)
+        public async Task<IActionResult> AddReview(AddReviewDto dto)
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -31,9 +32,7 @@ namespace ECommerceBackend.Controllers
 
             int userId = int.Parse(userIdClaim);
 
-            var result = await _reviewService.AddReviewAsync(
-                review,
-                userId);
+            var result = await _reviewService.AddReviewAsync(dto, userId);
 
             if (result.Review == null)
             {
@@ -57,11 +56,14 @@ namespace ECommerceBackend.Controllers
         }
 
         [HttpGet("product/{productId}")]
-        public async Task<IActionResult> GetProductReviews(int productId)
+        public async Task<IActionResult> GetProductReviews(int productId, int page = 1, int pageSize = 10)
         {
-            var reviews = await _reviewService.GetProductReviewsAsync(productId);
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 50) pageSize = 10;// to prevent a person to send page -1 or pagsize 1000 from the frontend
 
-            return Ok(reviews);
+            var (reviews, totalCount, averageRating) = await _reviewService.GetProductReviewsAsync(productId, page, pageSize);
+
+            return Ok(new { reviews, totalCount, averageRating, page, pageSize });
         }
 
         [Authorize(Roles = "Admin")]
@@ -82,6 +84,34 @@ namespace ECommerceBackend.Controllers
             if (!success)
             {
                 return NotFound(new { message = "Review not found." });
+            }
+
+            return Ok(new { message = "Review deleted successfully." });
+        }
+
+        [Authorize(Roles = "User")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteOwnReview(int id)
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null)
+            {
+                return Unauthorized();
+            }
+
+            int userId = int.Parse(userIdClaim);
+
+            var (success, error) = await _reviewService.DeleteOwnReviewAsync(id, userId);
+
+            if (!success)
+            {
+                if (error == "Review not found.")
+                {
+                    return NotFound(new { message = error });
+                }
+
+                return BadRequest();
             }
 
             return Ok(new { message = "Review deleted successfully." });

@@ -1,0 +1,9 @@
+ToListAsync()
+the result becomes a List<Product>
+
+ToListAsync() gives the list for the query done, and tracks that list if any changes happen to that data
+when we dont change the values, we dont do SaveChangesAsync() we can use AsNoTracking() instead of ToListAsync()
+
+AsNoTracking() tells the EF Core not to keep the returned entities in the DbContext's change tracker. It affects only that one query's context.
+It mainly changes what EF Core does with the returned entities. reduces EF tracking work
+reduces tracking overhead, memory used by tracking information, some CPU work

@@ -1,4 +1,6 @@
-﻿namespace ECommerceBackend.Models
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace ECommerceBackend.Models
 {
     public class Order
     {
@@ -21,6 +23,7 @@
         public string Pincode { get; set; } = string.Empty;
 
         // Order information
+        [Precision(18, 2)]
         public decimal TotalAmount { get; set; }
 
         public string Status { get; set; } = "Pending";
