@@ -3,52 +3,44 @@ import { useNavigate } from "react-router-dom";
 
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
-import { getAllOrders } from "../Services/OrderService";
+import { getOrdersPaged } from "../Services/OrderService";
 
 import "./AdminOrders.css";
 
 function AdminOrders() {
 
-    const [menuOpen, setMenuOpen] = useState(true);
-    const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
-
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const pageSize = 20;
 
     const navigate = useNavigate();
 
-    useEffect(() => {
+        useEffect(() => {
+            const loadOrders = async () => {
+                setLoading(true);
+                try {
+                    const data = await getOrdersPaged(page, pageSize);
+                    setOrders(data.orders);
+                    setTotalPages(data.totalPages);
+                } catch (error) {
+                    console.error("Error loading orders:", error);
+                } finally {
+                    setLoading(false);
+                }
+            };
 
-        const loadOrders = async () => {
-
-            try {
-
-                const data = await getAllOrders();
-
-                setOrders(data);
-
-            } catch (error) {
-
-                console.error("Error loading orders:", error);
-
-            } finally {
-
-                setLoading(false);
-
-            }
-        };
-
-        loadOrders();
-
-    }, []);
+            loadOrders();
+        }, [page]);
 
     return (
         <>
-            <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode}role="Admin"/>
+            <Header />
 
             <div className="page-layout">
 
-                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} role="Admin" />
+                <Sidebar />
 
                 <main className="admin-orders-page">
 
@@ -95,14 +87,20 @@ function AdminOrders() {
                                             <td>{order.paymentMethod}</td>
                                             <td>{order.paymentStatus}</td>
                                             <td>{order.status}</td>
-                                            <td><button onClick={() => navigate(`/admin/orders/${order.id}`, {state: {order}})}>View</button></td>
-                                        </tr>// state order means sending order object along with the navigation
+                                            <td><button onClick={() => navigate(`/admin/orders/${order.id}`)}>View</button></td>
+                                        </tr>
 
                                     ))}
 
                                 </tbody>
 
                             </table>
+
+                            <div className="pagination">
+                                <button onClick={() => setPage(page - 1)} disabled={page === 1}>← Previous</button>
+                                <span>Page {page} of {totalPages}</span>
+                                <button onClick={() => setPage(page + 1)} disabled={page >= totalPages}>Next →</button>
+                            </div>
 
                         </div>
 

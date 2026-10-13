@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../Services/api.js";
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
 import { cancelOrder } from "../Services/OrderService";
@@ -9,9 +9,6 @@ import "./UserOrders.css";
 function UserOrders() {
 
     const navigate = useNavigate();
-
-    const [menuOpen, setMenuOpen] = useState(true);
-    const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
 
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -53,11 +50,7 @@ const handleCompletePayment = async (orderId) => {
 
         const token = localStorage.getItem("token");
 
-        const paymentResponse = await axios.post(
-            `${import.meta.env.VITE_API_URL}/payment/create/${orderId}`,
-            {},
-            { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const paymentResponse = await api.post(`/payment/create/${orderId}`);
 
         const paymentData = paymentResponse.data;
 
@@ -71,14 +64,12 @@ const handleCompletePayment = async (orderId) => {
 
             handler: async function (response) {
                 try {
-                    await axios.post(
-                        `${import.meta.env.VITE_API_URL}/payment/verify`,
+                    await api.post(`/payment/verify`,
                         {
                             razorpayOrderId: response.razorpay_order_id,
                             razorpayPaymentId: response.razorpay_payment_id,
                             razorpaySignature: response.razorpay_signature
-                        },
-                        { headers: { Authorization: `Bearer ${token}` } }
+                        }
                     );
 
                     setOrders((previousOrders) =>
@@ -119,16 +110,8 @@ const handleCompletePayment = async (orderId) => {
 
              // const result = window.confirm("Continue?");
              // console.log(result);
-                const token = localStorage.getItem("token");
 
-                const response = await axios.get(
-                    `${import.meta.env.VITE_API_URL}/Order/UserOrders`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    }
-                );
+                const response = await api.get("/Order/UserOrders");
 
                 setOrders(response.data);
             } catch (error) {
@@ -143,11 +126,11 @@ const handleCompletePayment = async (orderId) => {
 
     return (
         <>
-            <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="User" onCartClick={() => navigate("/cart")} />
+            <Header />
 
             <div className="page-layout">
 
-                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} onCartClick={() => navigate("/cart")} role="User" />
+                <Sidebar />
 
                 <div className="orders-page">
 

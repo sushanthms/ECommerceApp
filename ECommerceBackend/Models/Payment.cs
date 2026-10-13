@@ -1,13 +1,12 @@
-﻿using ECommerceBackend.Models;
-
-namespace ECommerceBackend.Payments.Models
+﻿namespace ECommerceBackend.Models
 {
     public class Payment
     {
         public int Id { get; set; }
+        public int UserId { get; set; }
 
-        public int OrderId { get; set; }
-        public Order Order { get; set; } = null!;
+        public int? OrderId { get; set; }
+        public Order? Order { get; set; }
 
         public string RazorpayOrderId { get; set; } = null!;
         public string? RazorpayPaymentId { get; set; }

@@ -7,16 +7,14 @@ import { getProducts, searchProducts, getCategories } from "../Services/ProductS
 
 import "./Products.css";
 
-function Products({ showToast }) {
+function Products() {
 
     const navigate = useNavigate();
 
     const [searchParams] = useSearchParams();
 
     const categoryFromUrl = searchParams.get("category") || "";
-
-    const [menuOpen, setMenuOpen] = useState(true);
-    const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
+    const searchFromUrl = searchParams.get("search") || "";
 
     const [products, setProducts] = useState([]);
     const [search, setSearch] = useState("");
@@ -27,23 +25,11 @@ function Products({ showToast }) {
     const [pageSize] = useState(20);
     const [totalPages, setTotalPages] = useState(1);
 
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
-    const user = userData ? JSON.parse(userData) : null;
-
-    const role = token ? user?.role : null;
-
-    useEffect(() => {document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");}, [darkMode]);
-
     useEffect(() => {
         setCategory(categoryFromUrl);
+        setSearch(searchFromUrl);
         setPage(1);// whenever url changes, updates the category and goes to page 1
-    }, [categoryFromUrl]);
-
-    const handleSearch = (value) => {
-        setSearch(value);
-        setPage(1);
-    };
+    }, [categoryFromUrl, searchFromUrl]);
 
     const handleCategoryChange = (value) => {
         setCategory(value);
@@ -140,9 +126,9 @@ const handlePageChange = (pageNumber) => {
 
     return (
         <>
-            <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role={role} onCartClick={() => navigate("/cart")} search={search} setSearch={setSearch} onSearch={() => setPage(1)} />
+            <Header />
             <div className="page-layout">
-                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} onCartClick={() => navigate("/cart")} role={role} />
+                <Sidebar />
 
                 <main className="main-content">
 

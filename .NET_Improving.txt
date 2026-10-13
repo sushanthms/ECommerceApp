@@ -7,3 +7,213 @@ when we dont change the values, we dont do SaveChangesAsync() we can use AsNoTra
 AsNoTracking() tells the EF Core not to keep the returned entities in the DbContext's change tracker. It affects only that one query's context.
 It mainly changes what EF Core does with the returned entities. reduces EF tracking work
 reduces tracking overhead, memory used by tracking information, some CPU work
+
+N+1 Problem
+
+var products = await _context.Products
+    .ToListAsync();
+
+foreach (var product in products)
+{
+    var images = await _context.ProductImages
+        .Where(i => i.ProductId == product.Id)
+        .ToListAsync();
+}
+
+So we should use one query for both or we can use Include
+
+var products = await _context.Products
+    .AsNoTracking()
+    .Where(p => !p.IsDeleted)
+    .Select(p => new ProductDto
+    {
+        Id = p.Id,
+        Name = p.Name,
+        Price = p.Price,
+        Category = p.Category,
+        Images = p.ProductImages
+            .Select(i => i.ImageUrl)
+            .ToList()
+    })
+    .ToListAsync();
+
+var products = await _context.Products
+    .Include(p => p.ProductImages)
+    .ToListAsync();
+
+SQL Server Execution Plans
+Table Scan
+scanning the whole rows one by one
+
+Index Seek
+using the index to directly navigate towards the matching SKU
+
+Index Scan
+scans the indexes one by one
+
+SQL Server's optimizer looks at the query and available indexes and chooses the plan.
+
+It looks at things such as
+available indexes
+table size
+filtering conditions
+estimated number of matching rows
+statistics
+and creates an execution plan.
+
+now we are using offset pagination. 
+skip some products and take next products
+this is expensive if are in 50 page number
+so we use keyset pagination when data becomes large
+
+offset pagination means we have skip and take, keyset pagination means we have load more by scrolling(we can use skip and take)
+
+Referential integrity means a foreign key value in one table must refer to an existing primary key value in the related table.
+If a foreign-key constraint is violated
+we are inserting a foreign key value that is not present in the original table
+the database rejects the operation and we get an error(DbUpdateException)
+
+Concurrency means multiple requests/users are accessing or modifying data at around the same time.
+
+Optimistic concurrency assumes that conflicts are uncommon, so multiple requests are allowed to work with the data
+Before saving, the system checks whether somebody else changed the data.
+
+Product
+----------------
+Id       10
+Stock     5
+Version   7
+
+User A reads it
+Stock = 5
+Version = 7
+
+User B also reads it
+Stock = 5
+Version = 7
+
+Now User A changes the stock
+Database becomes
+Stock = 3
+Version = 8
+
+Then User B tries to save.
+User B originally saw
+Version = 7
+But the database now has
+Version = 8
+
+EF Core recognizes this as a concurrency conflict and can throw:
+DbUpdateConcurrencyException
+
+The update is rejected.
+
+EF Core knows this from concurrency token
+public byte[] RowVersion { get; set; } = null!;
+
+modelBuilder.Entity<Product>()
+    .Property(p => p.RowVersion)
+    .IsRowVersion();
+
+Cascade Delete
+If the parent is deleted, it automatically deletes the related children records
+
+Restrict
+Doesnot allows the parent to be deleted if related children records exist
+
+SetNull
+Deletes the parent, but makes the children foreign key to NULL
+
+SELECT Name, Price
+FROM Products
+WHERE SKU = 'ABC003';
+
+first it searches the row with that sku using index seek or index scan
+then from the output row it searches the table and gets the values, this is called as key lookup
+
+when we use Include, we write the values we need inside the Include
+the values we need is inside the Include, Key Lookup is not required
+teh values are extra data stored with the index entries.
+SQL Server stores the included values inside the index entry itself
+INCLUDE puts extra column values into the index leaf pages, so after finding the matching index entry
+SQL Server can get those values directly instead of going back to the table.
+
+var products = await _context.Products
+    .Include(p => p.Images)
+    .Include(p => p.Reviews)
+    .ToListAsync();
+
+the output will be 
+
+Product 1 | Image 1 | Review 1
+Product 1 | Image 1 | Review 2
+Product 1 | Image 1 | Review 3
+Product 1 | Image 1 | Review 4
+Product 1 | Image 2 | Review 1
+Product 1 | Image 2 | Review 2
+Product 1 | Image 3 | Review 3
+Product 1 | Image 3 | Review 4
+
+If we have many Include, then it becomes Cartesian Explosion
+
+So we use AsSplitQuery
+
+AsSplitQuery()
+var products = await _context.Products
+    .Include(p => p.Images)
+    .Include(p => p.Reviews)
+    .AsSplitQuery()
+    .ToListAsync();
+
+Query 1 — Products
+Product
+Product1
+
+Query 2 — Images
+ProductId   Image
+1           Image1
+1           Image2
+1           Image3
+
+Query 3 — Reviews
+ProductId   Review
+1           Review1
+1           Review2
+1           Review3
+1           Review4
+
+EF Core combines those separate results and gives normal object structure
+
+Product1
+│
+├── Images
+│   ├── Image1
+│   ├── Image2
+│   └── Image3
+│
+└── Reviews
+    ├── Review1
+    ├── Review2
+    ├── Review3
+    └── Review4
+
+Cancellation Token
+BackgroundService
+
+HttpClient
+A .NET class used to send HTTP requests and receive HTTP responses from another API/server
+
+HttpClientFactory
+A .NET mechanism used to create and manage HttpClient instances, including configuring their base URL, headers, timeout, logging, and resilience
+
+Message Queue
+A system that stores messages sent by one service so another service can process them asynchronously, without the sender having to wait for the receiver
+
+RabbitMQ
+Produce, Exchange, Queue, Consumer
+
+backend service sends request to other services through RabbitMQ. This is called decoupling
+The backend service does not know how the service happens. It only publishes an event/message
+
+A BackgroundService is long-lived, but it doesn't have an HTTP request scope.
+So we use IServiceScopeFactory to create a temporary scope whenever we need the database.

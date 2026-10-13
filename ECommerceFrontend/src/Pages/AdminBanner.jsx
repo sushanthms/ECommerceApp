@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
+import { useView } from "../Context/ViewContext.jsx";
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
 import {getBanners, addBanner, updateBanner, deleteBanner} from "../Services/BannerService";
 import "./AdminBanner.css";
 
 function AdminBanner() {
-
-    const [menuOpen, setMenuOpen] = useState(true);
-    const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
 
     const [banners, setBanners] = useState([]);
     const [showBannerForm, setShowBannerForm] = useState(false);
@@ -49,53 +47,53 @@ function AdminBanner() {
     };
 
     const handleSubmitBanner = async (e) => {
-    e.preventDefault();
+        e.preventDefault();
 
-    setBannerError("");
-    setBannerSuccess("");
+        setBannerError("");
+        setBannerSuccess("");
 
-    if (!bannerTitle || !bannerDescription || !bannerButtonText || !bannerLink) {
-        setBannerError("All banner fields are required.");
-        return;
-    }
-
-    if (!editingBannerId && !bannerImage) {
-        setBannerError("Banner image is required.");
-        return;
-    }
-
-    const formData = new FormData();
-
-    formData.append("title", bannerTitle);
-    formData.append("description", bannerDescription);
-    formData.append("buttonText", bannerButtonText);
-    formData.append("link", bannerLink);
-
-    if (bannerImage) {
-        formData.append("image", bannerImage);
-    }
-
-    try {
-        if (editingBannerId) {
-            await updateBanner(editingBannerId, formData);
-            setBannerSuccess("Banner updated successfully.");
-        } else {
-            await addBanner(formData);
-            setBannerSuccess("Banner added successfully.");
+        if (!bannerTitle || !bannerDescription || !bannerButtonText || !bannerLink) {
+            setBannerError("All banner fields are required.");
+            return;
         }
 
-        await loadBanners();
+        if (!editingBannerId && !bannerImage) {
+            setBannerError("Banner image is required.");
+            return;
+        }
 
-        resetBannerForm();
-        setShowBannerForm(false);
+        const formData = new FormData();
 
-    } catch (error) {
-        console.error("Save banner error:", error);
+        formData.append("title", bannerTitle);
+        formData.append("description", bannerDescription);
+        formData.append("buttonText", bannerButtonText);
+        formData.append("link", bannerLink);
 
-        setBannerError(
-            error.response?.data?.message || "Failed to save banner."
-        );
-    }
+        if (bannerImage) {
+            formData.append("image", bannerImage);
+        }
+
+        try {
+            if (editingBannerId) {
+                await updateBanner(editingBannerId, formData);
+                setBannerSuccess("Banner updated successfully.");
+            } else {
+                await addBanner(formData);
+                setBannerSuccess("Banner added successfully.");
+            }
+
+            await loadBanners();
+
+            resetBannerForm();
+            setShowBannerForm(false);
+
+        } catch (error) {
+            console.error("Save banner error:", error);
+
+            setBannerError(
+                error.response?.data?.message || "Failed to save banner."
+            );
+        }
 };
 
     const handleDeleteBanner = async (id) => {
@@ -131,13 +129,10 @@ function AdminBanner() {
 
     return (
         <>
-
-        <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="Admin"/>
-
+        <Header />
             <div className="page-layout">
-
-                <Sidebar menuOpen={menuOpen} role="Admin"/>
-        <div className="banner-management-section">
+                <Sidebar />
+                <div className="banner-management-section">
 
             <div className="section-heading">
                 <h2>Manage Banners</h2>

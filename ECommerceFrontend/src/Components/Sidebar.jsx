@@ -1,7 +1,12 @@
 import {Link, useLocation } from "react-router-dom";
+import { useAuth } from "../Context/AuthContext.jsx";
+import { useView } from "../Context/ViewContext.jsx";
 import "./Sidebar.css";
 
-function Sidebar({ menuOpen, role }) {
+function Sidebar() {
+
+    const { user } = useAuth();
+    const {menuOpen} = useView();
 
     const location = useLocation();
 
@@ -10,7 +15,7 @@ function Sidebar({ menuOpen, role }) {
 
             <ul className="sidebar-list">
 
-                {role === "Admin" ? (
+                {user?.role === "Admin" ? (
                     <>
                         <li><Link to="/admin" className={location.pathname === "/admin" ? "active" : ""}>Home</Link></li>
                         <li><Link to="/admin/orders" className={location.pathname === "/admin/orders" ? "active" : ""}>Manage Orders</Link></li>
@@ -19,7 +24,7 @@ function Sidebar({ menuOpen, role }) {
                         <li><Link to="/admin/reviews" className={location.pathname === "/admin/reviews" ? "active" : ""}>Manage Reviews</Link></li>
                         <li><Link to="#">Settings</Link></li>
                     </>
-                ) : role === "User" ? (
+                ) : user?.role === "User" ? (
                     <>
                         <li><Link to="/home" className={location.pathname === "/home" ? "active" : ""}>Home</Link></li>
                         <li><Link to="/products" className={location.pathname === "/products" ? "active" : ""}>Products</Link></li>

@@ -1,37 +1,31 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useSearchParams  } from "react-router-dom";
+import { useAuth } from "../Context/AuthContext.jsx";
 
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
 import { getBanners } from "../Services/BannerService";
-import { searchProducts } from "../Services/ProductService";
+import { searchProducts, getHomeProducts } from "../Services/ProductService";
 
 import "./UserHome.css";
 
-function UserHome({ showToast }) {
+function UserHome() {
 
-    const [menuOpen, setMenuOpen] = useState(true);
-    const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
+    const { user } = useAuth();
 
-    const [search, setSearch] = useState("");
+    const homeProductsLoaded = useRef(false);
+
+    const [searchParams] = useSearchParams();
+    const search = searchParams.get("search") || "";
     const [searchResults, setSearchResults] = useState([]);
     const [banners, setBanners] = useState([]);
 
-    const userData = localStorage.getItem("user");
-    const user = userData ? JSON.parse(userData) : null;
-
-    const token = localStorage.getItem("token");
-    const role = token ? user?.role : null;
+    const [homeProducts, setHomeProducts] = useState([]);
+    const [lastId, setLastId] = useState(null);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingProducts, setLoadingProducts] = useState(false);
 
     const navigate = useNavigate();
-
-    useEffect(() => {
-        document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
-    }, [darkMode]);
-
-    const handleSearch = (value) => {
-        setSearch(value);
-    };
 
     useEffect(() => {
     const timer = setTimeout(async () => {
@@ -67,12 +61,49 @@ function UserHome({ showToast }) {
     loadBanners();
 }, []);
 
+const loadHomeProducts = async () => {
+    if (loadingProducts || !hasMore) {// prevents api calls again and again when the user clicks the load more button continuously
+        return;// not loading products if already loading, then if there no products(hasMore is false) then it returns, does not make api call.
+    }
+
+    try {
+        setLoadingProducts(true);
+
+        const data = await getHomeProducts(lastId);
+
+setHomeProducts(prev => [...prev, ...(data.products || [])]);
+
+if (data.products?.length > 0) {
+    const lastProduct = data.products[data.products.length - 1];
+    setLastId(lastProduct.id);
+}
+
+setHasMore(data.hasMore ?? false);
+
+    } catch (error) {
+        console.error("Error loading home products:", error);
+    } finally {
+        setLoadingProducts(false);
+    }
+};
+
+// first time when the home page is rendered, useEffect calls the loadhomeproducts function.
+// then react strictmode makes the useffect to call loadhomeproducs again, now the same 20 products is added to the list again. so key product.id gives error.
+// so we used useRef to solve this.
+useEffect(() => {
+    if (homeProductsLoaded.current)
+        return;
+
+    homeProductsLoaded.current = true;
+    loadHomeProducts();
+}, []);
+
     return (
         <>
-            <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role={role} onCartClick={() => navigate("/cart")} search={search} setSearch={setSearch} onSearch={() => handleSearch(search)} />
+            <Header />
             <div className="page-layout">
 
-                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} onCartClick={() => navigate("/cart")} role={role}/>
+                <Sidebar />
 
                 <main className="main-content">
 
@@ -138,7 +169,7 @@ function UserHome({ showToast }) {
                         <div className="section-heading">
                             <div>
                                 <h2>Shop by Category</h2>
-                                <p>Explore products from differentcategories.</p>
+                                <p>Explore products from different categories.</p>
                             </div>
                         </div>
 
@@ -173,11 +204,49 @@ function UserHome({ showToast }) {
 
                     </div>
 
-
                     <div className="home-section">
                         <h2>Explore Our Products</h2>
-                        <p>Browse our complete collection of products.</p>
-                        <button onClick={() =>navigate("/products")}>View All Products</button>
+                        <p>Browse our products.</p>
+
+                        <div className="search-results-grid">
+                            {homeProducts.map((product) => (
+                                <div key={product.id} className="search-result-card" onClick={() => navigate(`/product/${product.id}`)}>
+                                    <div className="search-result-image">
+                                        {product.images?.length > 0 ? (
+                                            <img src={`${import.meta.env.VITE_API_URL.replace("/api", "")}${product.images[0].imageUrl}`} alt={product.name} loading="lazy"
+                                            />
+                                        ) : (
+                                            <span className="product-fallback">📦</span>
+                                        )}
+                                    </div>
+
+                                    <h3>{product.name}</h3>
+                                    <p>
+                                        {product.description?.slice(0, 80)}
+                                        {product.description?.length > 80 ? "..." : ""}
+                                    </p>
+                                    <strong>₹{product.price}</strong>
+                                
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate(`/product/${product.id}`);
+                                        }}
+                                    >
+                                        View Product
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="load-more-container">
+                            {hasMore && (
+                                <button className="load-more-button" onClick={loadHomeProducts} disabled={loadingProducts}>
+                                    {loadingProducts ? "Loading..." : "Load More"}
+                                </button>   
+                                )}
+
+                            <button className="view-all-products" onClick={() => navigate("/products")}>View All Products</button>
+                        </div>
                     </div>
 
                 </main>

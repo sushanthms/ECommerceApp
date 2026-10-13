@@ -1,5 +1,6 @@
 ﻿using ECommerceBackend.Data;
 using ECommerceBackend.DTOs;
+using ECommerceBackend.Logging;
 using ECommerceBackend.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,9 +10,13 @@ namespace ECommerceBackend.Services
     {
         private readonly AppDbContext _context;
         // we cannot reassign another AppDbContext to _context. only in this constructor we can assign AppDbContext to _context
-        public CartService(AppDbContext context)
+        private readonly IApplicationLogger _logger;
+        private readonly NotificationService _notificationService;
+        public CartService(AppDbContext context, IApplicationLogger logger, NotificationService notificationService)
         {
             _context = context;
+            _logger = logger;
+            _notificationService = notificationService;
         }
 
         public async Task<(bool Success, string? Message, int? Stock, bool NotFound)> AddToCartAsync(int userId, AddToCartDto dto)
@@ -39,6 +44,8 @@ namespace ECommerceBackend.Services
 
             try
             {
+                var oldStock = product.Stock;
+
                 // ExecuteSqlInterpolatedAsync() returns the number of database rows affected by the SQL statement.
                 // here output will be 0 or 1
                 // $ allows interpolation, {dto.Quantity}
@@ -88,7 +95,20 @@ namespace ECommerceBackend.Services
                 // Reloading the product row because we changed its Stock using raw SQL above
                 await _context.Entry(product).ReloadAsync();
 
+                var newStock = product.Stock;
+
                 await transaction.CommitAsync();
+
+                try
+                {
+                    await _notificationService.NotifyIfLowStockAsync(product.Id, product.Name, oldStock, newStock);
+                }
+                catch (Exception ex)
+                {
+                    await _logger.LogMessageAsync($"Low stock notify failed: {ex.Message}", "Error");
+                }
+
+                await _logger.LogMessageAsync($"Added to cart for UserId:{userId}", "Information");
 
                 return (true, "Product added to cart.", product.Stock, false);
             }
@@ -138,6 +158,9 @@ namespace ECommerceBackend.Services
 
             try
             {
+                var oldStock = cartItem.Product.Stock;
+                bool stockDecreased = false;
+
                 // If quantity is 0 or less, removing the item.
                 if (dto.Quantity <= 0)
                 {
@@ -150,7 +173,8 @@ namespace ECommerceBackend.Services
                     _context.CartItems.Remove(cartItem);
                     await _context.SaveChangesAsync();
 
-                    await _context.Entry(cartItem.Product).ReloadAsync();
+                    await _context.Entry(cartItem.Product).ReloadAsync();// we update the cart quantity using sql, but it does not change the cartitem object, so we relaod the database
+
                     await transaction.CommitAsync();
 
                     return (true, null, cartItem.Product.Stock, false);
@@ -179,6 +203,9 @@ namespace ECommerceBackend.Services
                         await transaction.RollbackAsync();
                         return (false, $"Only {currentStock} more in stock.", currentStock, false);
                     }
+
+                    stockDecreased = true;
+
                 }
                 else if (quantityDifference < 0)
                 {
@@ -198,6 +225,19 @@ namespace ECommerceBackend.Services
 
                 await _context.Entry(cartItem.Product).ReloadAsync();
                 await transaction.CommitAsync();
+
+                if (stockDecreased)
+                {
+                    try
+                    {
+                        await _notificationService.NotifyIfLowStockAsync(cartItem.Product.Id, cartItem.Product.Name, oldStock, cartItem.Product.Stock);
+                    }
+                    catch (Exception ex)
+                    {
+                        await _logger.LogMessageAsync($"Low stock notify failed: {ex.Message}", "Error");
+                    }
+                }
+
                 return (true, null, cartItem.Product.Stock, false);
             }
 

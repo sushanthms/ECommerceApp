@@ -1,4 +1,4 @@
-﻿namespace ECommerceBackend.Payments.DTOs
+﻿namespace ECommerceBackend.DTOs
 {
     public class CreatePaymentResponse
     {

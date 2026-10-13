@@ -13,18 +13,13 @@ export const getBanner = async (id) => {
 };
 
 export const addBanner = async (bannerData) => {
-    const response = await api.post(
-        "/Banner",
-        bannerData
-    );
+    const response = await api.post("/Banner", bannerData);
 
     return response.data;
 };
 
 export const updateBanner = async (id, bannerData) => {
-    const response = await api.put(
-        `/Banner/${id}`,
-        bannerData
+    const response = await api.put(`/Banner/${id}`, bannerData
     );
 
     return response.data;

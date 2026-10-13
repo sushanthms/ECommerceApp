@@ -1,16 +1,21 @@
 import { useState } from "react";
-import { loginUser } from "../Services/authService";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../Context/AuthContext.jsx";
+import { useToast } from "../Context/ToastContext.jsx";
+import { loginUser } from "../Services/authService";
 
 import "./Login.css";
 
-function Login({ showToast, isPopup = false, onClose, onLoginSuccess, onRegister }) {
+function Login({isPopup = false, onClose, onLoginSuccess, onRegister }) {
+
+    const showToast = useToast();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
 
     const navigate = useNavigate();
+    const { login } = useAuth();
 
     const handleLogin = async (e) => {
 
@@ -27,20 +32,18 @@ function Login({ showToast, isPopup = false, onClose, onLoginSuccess, onRegister
 
             const data = await loginUser({email, password});
 
-            localStorage.setItem("token", data.token);
-            localStorage.setItem(
-                "user",// key
-                JSON.stringify({// value
-                    userId: data.userId,
-                    name: data.name,
-                    email: data.email,
-                    role: data.role
-                })
-            );
+            login(// we call this code after the loginUser function has executed and got response from the backend
+            {// here userId, name, email, role, all goes inside userData parameter of the login function in the AuthContext file.
+                userId: data.userId,// data.token goes inside the second parameter of the login function in the AuthContext file.
+                name: data.name,
+                email: data.email,
+                role: data.role
+            },
+            data.token
+        );
 
             showToast("Login successful!");
-// login success for admin, admin gets navigated to /admin which is adminhome. moves to app.jsx, app.jsx has ProtectedRoute allowedRole="User">
-// so protectedroute file gets allowedroute parameter from app.jsx.
+
             if (isPopup) {
                 onLoginSuccess(data);
                 onClose();
@@ -54,18 +57,22 @@ function Login({ showToast, isPopup = false, onClose, onLoginSuccess, onRegister
                 navigate("/home");
             }
 
-            } catch (error) {
-
-            if (error.response) {
-
-                setError(error.response.data.message || "Invalid email or password.");
-
-            } else {
-
-                setError("Unable to connect to the server.");
-
             }
-        }
+            catch (error) {
+                console.log("Login failed:", error.response?.status);
+                if (error.response?.status === 429)
+                    {
+                        setError("Too many login attempts. Please wait before trying again.");
+                    }
+                else if (error.response?.status === 401)
+                    {
+                        setError("Invalid email or password.");
+                    }
+                else
+                    {
+                        setError("Something went wrong. Please try again.");
+                    }
+            }
     };
 
     return (

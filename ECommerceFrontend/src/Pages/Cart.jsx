@@ -4,15 +4,17 @@ import { useNavigate } from "react-router-dom";
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
 import { getCart, updateCartItemQuantity, removeFromCart } from "../Services/CartService";
+import { useToast } from "../Context/ToastContext.jsx";
 import "./Cart.css";
 
-function Cart({showToast}) {
-    const [menuOpen, setMenuOpen] = useState(true);
-    const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
+function Cart() {
+
+    const showToast = useToast();
+
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    const timers = useRef({});    // one waiting timer per cart item
+    const timers = useRef({});// one waiting timer per cart item
 
     const navigate = useNavigate();
 
@@ -34,27 +36,26 @@ function Cart({showToast}) {
     }, []);
 
     const handleQuantityChange = (cartItemId, newQuantity) => {
-    if (newQuantity < 1) return;
+        if (newQuantity < 1) return;
 
-    setCartItems(prev =>// makes a copy with the new quantity
-        prev.map(item => item.id === cartItemId ? { ...item, quantity: newQuantity } : item)
-    );
-
-    clearTimeout(timers.current[cartItemId]);// cancels the old timer for this item
-
-    // starts a new 600 ms timer and stores its id in the box. If the user clicks again within 600 ms, this timer is cancelled
-    timers.current[cartItemId] = setTimeout(async () => {
-        try {
-            const data = await updateCartItemQuantity(cartItemId, newQuantity);
-
-            setCartItems(prev =>
-                prev.map(item => item.id === cartItemId ? { ...item, stock: data.stock } : item)
+            setCartItems(prev =>// makes a copy with the new quantity
+                prev.map(item => item.id === cartItemId ? { ...item, quantity: newQuantity } : item)
             );
-        } catch (error) {
-            alert(error.response?.data?.message || "Failed to update quantity.");
-            await loadCart();
-        }
-    }, 600);
+
+        clearTimeout(timers.current[cartItemId]);// cancels the old timer for this item
+
+        timers.current[cartItemId] = setTimeout(async () => {// timers.current remembers the values inside it. 10: timer123, 20: timer456
+            try {// runs this code after 600ms. in between 600ms, if we click the quantity change button again then handleQuantityChange function runs again and previous timer is cancelled
+                const data = await updateCartItemQuantity(cartItemId, newQuantity);
+
+                setCartItems(prev =>// creating a new object and updating, ...item copies all properties from item.
+                    prev.map(item => item.id === cartItemId ? { ...item, stock: data.stock } : item)
+                );
+            } catch (error) {
+                alert(error.response?.data?.message || "Failed to update quantity.");
+                await loadCart();
+            }
+        }, 600);
 };
 
     const handleRemove = async (cartItemId) => {
@@ -69,13 +70,12 @@ function Cart({showToast}) {
         }
     };
 
-    const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity,0);
-    // 0 is the initial value of the sum.
+    const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     return (
         <>
-        <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="User" onCartClick={() => navigate("/cart")}/>
+        <Header />
     <div className="page-layout">
-        <Sidebar menuOpen={menuOpen} role="User" />
+        <Sidebar />
 
         <div className="cart-page">
     

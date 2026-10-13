@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useParams, Link } from "react-router-dom";
+import api from "../Services/api.js";
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
 import { cancelOrder } from "../Services/OrderService";
@@ -9,40 +9,38 @@ import "./UserOrderDetails.css";
 function UserOrderDetails() {
 
     const { id } = useParams();
-    const navigate = useNavigate();
-
-    const [menuOpen, setMenuOpen] = useState(true);
-    const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
 
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
 
     const [paying, setPaying] = useState(false);
 
-    useEffect(() => {
-        const fetchOrderDetails = async () => {
-            try {
-                const token = localStorage.getItem("token");
+    const [editingAddress, setEditingAddress] = useState(false);
+    const [savedAddresses, setSavedAddresses] = useState([]);
+    const [addressMode, setAddressMode] = useState("new");
+    const [selectedAddressId, setSelectedAddressId] = useState("");
+    const [saveAddress, setSaveAddress] = useState(false);
+    const [addressErrors, setAddressErrors] = useState({});
+    const [newAddress, setNewAddress] = useState({
+        fullName: "", phone: "", address: "", city: "", state: "", pincode: ""
+    });
 
-                const response = await axios.get(
-                    `${import.meta.env.VITE_API_URL}/Order/User/${id}`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    }
-                );
+    
+const fetchOrderDetails = async () => {
+    try {
+        const response = await api.get(`/Order/User/${id}`);
+        setOrder(response.data);
+    } catch (error) {
+        console.error("Error fetching order details:", error);
+        return false;
+    } finally {
+        setLoading(false);
+    }
+};
 
-                setOrder(response.data);
-            } catch (error) {
-                console.error("Error fetching order details:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchOrderDetails();
-    }, [id]);
+useEffect(() => {
+    fetchOrderDetails();
+}, [id]);
 
 const handleCancelOrder = async () => {
     const confirmCancel = window.confirm("Are you sure you want to cancel this order?");
@@ -71,13 +69,7 @@ const handleCompletePayment = async () => {
     try {
         setPaying(true);
 
-        const token = localStorage.getItem("token");
-
-        const paymentResponse = await axios.post(
-            `${import.meta.env.VITE_API_URL}/payment/create/${order.id}`,
-            {},
-            { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const paymentResponse = await api.post(`/payment/create/${order.id}`);
 
         const paymentData = paymentResponse.data;
 
@@ -91,14 +83,12 @@ const handleCompletePayment = async () => {
 
             handler: async function (response) {
                 try {
-                    await axios.post(
-                        `${import.meta.env.VITE_API_URL}/payment/verify`,
+                    await api.post(`/payment/verify`,
                         {
                             razorpayOrderId: response.razorpay_order_id,
                             razorpayPaymentId: response.razorpay_payment_id,
                             razorpaySignature: response.razorpay_signature
-                        },
-                        { headers: { Authorization: `Bearer ${token}` } }
+                        }
                     );
 
                     setOrder({ ...order, paymentStatus: "Paid" });
@@ -126,6 +116,64 @@ const handleCompletePayment = async () => {
     }
 };
 
+const openEditAddress = async () => {
+    setEditingAddress(true);
+    setAddressErrors({});
+
+    try {
+        const res = await api.get("/Order/Addresses");
+        const list = Array.isArray(res.data) ? res.data : [];
+        setSavedAddresses(list);
+
+        if (list.length > 0) {
+            const def = list.find(a => a.isDefault) || list[0];
+            setSelectedAddressId(String(def.id));
+            setAddressMode("saved");
+        } else {
+            setAddressMode("new");
+        }
+    } catch (error) {
+        console.error("Error loading addresses:", error);
+    }
+};
+
+const validateNewAddress = () => {
+    const e = {};
+    if (!newAddress.fullName.trim()) e.fullName = "Full name is required.";
+    if (!/^\d{10}$/.test(newAddress.phone)) e.phone = "Phone number must be 10 digits.";
+    if (!newAddress.address.trim()) e.address = "Address is required.";
+    if (!newAddress.city.trim()) e.city = "City is required.";
+    if (!newAddress.state.trim()) e.state = "State is required.";
+    if (!/^\d{6}$/.test(newAddress.pincode)) e.pincode = "Pincode must be 6 digits.";
+    setAddressErrors(e);
+    return Object.keys(e).length === 0;
+};
+
+const handleSaveAddress = async () => {
+    if (addressMode === "new" && !validateNewAddress()) return;
+
+    const payload = addressMode === "saved"
+        ? { addressId: Number(selectedAddressId), saveAddress: false }
+        : { ...newAddress, addressId: null, saveAddress };
+
+    try {
+        await api.put(`/Order/User/${order.id}/address`, payload);
+
+        // reloading the order so the screen shows the new copy of the address
+        const refreshed = await fetchOrderDetails();
+
+        if (refreshed) {
+            setEditingAddress(false);
+            alert("Delivery address updated.");
+        } else {
+            alert("Address updated, but failed to refresh order details.");
+        }
+        
+    } catch (error) {
+        alert(error.response?.data?.message || "Failed to update address.");
+    }
+};
+
     if (loading) {
         return (
             <div className="order-details-page">
@@ -144,13 +192,15 @@ const handleCompletePayment = async () => {
 
     const orderItems = order.orderItems || [];
 
+    const canModifyOrder = order.status === "Pending" || order.status === "Processing";
+
     return (
         <>
-            <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="User" onCartClick={() => navigate("/cart")} />
+            <Header />
 
             <div className="page-layout">
 
-                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} onCartClick={() => navigate("/cart")} role="User" />
+                <Sidebar/>
 
                 <div className="order-details-page">
 
@@ -202,6 +252,54 @@ const handleCompletePayment = async () => {
                         </div>
                     </div>
 
+                    {canModifyOrder && !editingAddress && (
+                        <button onClick={openEditAddress}>Change Address</button>
+                    )}
+
+                    {editingAddress && (
+                        <div className="form-group">
+                            {savedAddresses.length > 0 && (
+                                <>
+                                    <label>
+                                        <input type="radio" checked={addressMode === "saved"} onChange={() => { setAddressMode("saved"); setAddressErrors({}); }} />Use a saved address
+                                    </label>
+                                    <label>
+                                        <input type="radio" checked={addressMode === "new"} onChange={() => { setAddressMode("new"); setAddressErrors({}); }} />Enter a new address
+                                    </label>
+                                </>
+                            )}
+
+                            {addressMode === "saved" && savedAddresses.length > 0 && (
+                                <select value={selectedAddressId} onChange={(e) => setSelectedAddressId(e.target.value)}>
+                                    {savedAddresses.map((a) => (
+                                        <option key={a.id} value={a.id}>
+                                            {a.fullName} — {a.line1}, {a.city}{a.isDefault ? " (Default)" : ""}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+
+                            {addressMode === "new" && (
+                                <>
+                                    {["fullName", "phone", "address", "city", "state", "pincode"].map((field) => (
+                                        <div key={field}>
+                                            <input type="text" placeholder={field} value={newAddress[field]} onChange={(e) => setNewAddress({ ...newAddress, [field]: e.target.value })}/>
+                                            {addressErrors[field] && <p className="error-message">{addressErrors[field]}</p>}
+                                        </div>
+                                    ))}
+                                    <label>
+                                        <input type="checkbox" checked={saveAddress} onChange={(e) => setSaveAddress(e.target.checked)} />Save this address for future orders
+                                    </label>
+                                </>
+                            )}
+
+                            <div>
+                                <button onClick={handleSaveAddress}>Save</button>
+                                <button onClick={() => setEditingAddress(false)}>Cancel</button>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="order-details-card">
                         <h3>Order Summary</h3>
 
@@ -240,7 +338,7 @@ const handleCompletePayment = async () => {
                         </button>
                     )}
 
-                    {(order.status === "Pending" || order.status === "Processing") && (
+                    {canModifyOrder && (
                         <button className="cancel-order-button" onClick={handleCancelOrder}>Cancel Order</button>
                     )}
 

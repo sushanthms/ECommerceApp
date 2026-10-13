@@ -6,17 +6,10 @@ import "./AdminReviews.css";
 
 const AdminReviews = () => {
 
-    const [menuOpen, setMenuOpen] = useState(true);
-    const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
-
     const [reviews, setReviews] = useState([]);
     const [productFilter, setProductFilter] = useState("all");
     const [userFilter, setUserFilter] = useState("all");
     const [ratingFilter, setRatingFilter] = useState("all");
-
-    useEffect(() => {
-        document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
-    }, [darkMode]);
 
     useEffect(() => {
         const loadReviews = async () => {
@@ -54,22 +47,20 @@ const userOptions = reviews.filter(
 
 const filteredReviews = reviews.filter((review) => {
 
-    const productMatches = productFilter === "all" || review.productName === productFilter;
-
-    const userMatches = userFilter === "all" || review.userId === Number(userFilter);
-
-    const ratingMatches = ratingFilter === "all" || review.rating === Number(ratingFilter);
+        const productMatches = productFilter === "all" || review.productName === productFilter;
+        const userMatches = userFilter === "all" || review.userId === Number(userFilter);
+        const ratingMatches = ratingFilter === "all" || review.rating === Number(ratingFilter);
 
     return productMatches && userMatches && ratingMatches;
 });
 
     return (
     <>
-        <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="Admin" />
+        <Header />
 
         <div className="page-layout">
 
-            <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} role="Admin" />
+            <Sidebar />
 
             <main className="main-content">
 

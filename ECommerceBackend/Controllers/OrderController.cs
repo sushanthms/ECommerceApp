@@ -48,9 +48,9 @@ namespace ECommerceBackend.Controllers
                     return Unauthorized();
                 }
 
-                await _logger.LogMessageAsync($"Order creation - UserId: {userId}, PaymentMethod: {dto.PaymentMethod}, CorrelationId: {correlationId}");
+                await _logger.LogMessageAsync($"Order creation - UserId: {userId}, PaymentMethod: Cash on Delivery, CorrelationId: {correlationId}");
 
-                var result = await _orderService.CreateOrderAsync(userId.Value, dto, dto.PaymentMethod, "Pending");
+                var result = await _orderService.CreateOrderAsync(userId.Value, dto, "Cash on Delivery", "Pending");
 
                 if (result.UnavailableItems.Count > 0)
                 {
@@ -87,6 +87,11 @@ namespace ECommerceBackend.Controllers
                 });
             }
 
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+
             catch (Exception ex)
             {
                 await _logger.LogMessageAsync($"Order creation failed - Unexpected error. Error: {ex.Message}, StackTrace: {ex.StackTrace}", "Error");
@@ -98,77 +103,41 @@ namespace ECommerceBackend.Controllers
             }
         }
 
-        [HttpPost("Pay")]
-        [Authorize(Roles = "User")]
-        public async Task<IActionResult> ProcessPayment(CreateOrderDto dto)
+        [HttpGet("admin")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetOrdersForAdmin(int page = 1, int pageSize = 20)
         {
-            try
+            var result = await _orderService.GetOrdersPagedAsync(page, pageSize);
+
+            return Ok(new
             {
-                await _logger.LogMessageAsync("Online payment started - User is attempting to make a payment.");
-
-                var userId = GetUserId();
-                if (userId == null)
-                {
-                    await _logger.LogMessageAsync("Online payment failed - NameIdentifier claim was missing.", "Warning");
-                    return Unauthorized();
-                }
-
-                await _logger.LogMessageAsync($"Online payment processing - UserId: {userId}");
-
-                var result = await _orderService.CreateOrderAsync(userId.Value, dto, "Online Payment", "Paid");
-
-                if (result.Order == null)
-                {
-                    await _logger.LogMessageAsync($"Online payment failed - Cart is empty for UserId: {userId.Value}.", "Warning");
-
-                    return BadRequest(new
-                    {
-                        message = "Your cart is empty."
-                    });
-                }
-
-                await _logger.LogMessageAsync($"Online payment successful - OrderId: {result.Order.Id}, UserId: {userId}, TotalAmount: {result.Order.TotalAmount}, PaymentMethod: {result.Order.PaymentMethod}, PaymentStatus: {result.Order.PaymentStatus}");
-
-                return Ok(new
-                {
-                    message = "Payment successful and order placed.",
-                    orderId = result.Order.Id,
-                    totalAmount = result.Order.TotalAmount,
-                    paymentMethod = result.Order.PaymentMethod,
-                    paymentStatus = result.Order.PaymentStatus
-                });
-            }
-            catch (Exception ex)
-            {
-                await _logger.LogMessageAsync($"Online payment failed - Unexpected error. Error: {ex.Message}, StackTrace: {ex.StackTrace}", "Error");
-
-                return StatusCode(500, new
-                {
-                    message = "An unexpected error occurred while processing the payment."
-                });
-            }
+                orders = result.Orders,
+                page,
+                pageSize,
+                totalOrders = result.TotalOrders,
+                totalPages = result.TotalPages
+            });
         }
 
-        // Orders table has userid, userid is the foriegn key, using userid it accessess Users table and can get the details of the user. public User User { get; set; } this helps to navigate from the Order to User table
-        [HttpGet]
+        [HttpGet("admin/stats")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetAllOrders()
+        public async Task<IActionResult> GetOrderStats()
         {
-            try
-            {
-                var orders = await _orderService.GetAllOrdersAsync();
+            return Ok(await _orderService.GetOrderStatsAsync());
+        }
 
-                return Ok(orders);
-            }
-            catch (Exception ex)
-            {
-                await _logger.LogMessageAsync($"Failed to retrieve all orders - Unexpected database or server error. Error: {ex.Message}, StackTrace: {ex.StackTrace}", "Error");
+        [HttpGet("admin/{id:int}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetOrderForAdmin(int id)
+        {
+            var order = await _orderService.GetOrderDetailsForAdminAsync(id);
 
-                return StatusCode(500, new
-                {
-                    message = "An unexpected error occurred while retrieving orders."
-                });
+            if (order == null)
+            {
+                return NotFound(new { message = "Order not found." });
             }
+
+            return Ok(order);
         }
 
         [HttpGet("UserOrders")]
@@ -241,7 +210,6 @@ namespace ECommerceBackend.Controllers
             }
         }
 
-        // Admin updates order status
         [HttpPut("admin/{id}/status")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] string status)
@@ -274,7 +242,6 @@ namespace ECommerceBackend.Controllers
             }
         }
 
-        // User cancels their own order
         [HttpPut("User/{id}/cancel")]
         [Authorize(Roles = "User")]
         public async Task<IActionResult> CancelOrder(int id)
@@ -314,6 +281,49 @@ namespace ECommerceBackend.Controllers
                     message = "An unexpected error occurred while cancelling the order."
                 });
             }
+        }
+
+        [HttpPut("User/{id}/address")]
+        [Authorize(Roles = "User")]
+        public async Task<IActionResult> ChangeOrderAddress(int id, CreateOrderDto dto)
+        {
+            try
+            {
+                var userId = GetUserId();
+
+                if (userId == null)
+                    return Unauthorized();
+
+                var success = await _orderService.ChangeOrderAddressAsync(userId.Value, id, dto);
+
+                if (!success)
+                    return BadRequest(new { message = "Address cannot be changed for this order." });
+
+                return Ok(new { message = "Delivery address updated." });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                await _logger.LogMessageAsync($"Failed to change order address - OrderId: {id}, Error: {ex.Message}", "Error");
+                return StatusCode(500, new { message = "An unexpected error occurred while updating the address." });
+            }
+        }
+
+        [HttpGet("Addresses")]
+        [Authorize(Roles = "User")]
+        public async Task<IActionResult> GetUserAddresses()
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdClaim, out var userId))
+                return Unauthorized();
+
+            var addresses = await _orderService.GetUserAddressesAsync(userId);
+
+            return Ok(addresses);
         }
 
     }

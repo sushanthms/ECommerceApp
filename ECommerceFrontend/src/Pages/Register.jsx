@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { registerUser} from "../Services/authService";
+import { useToast } from "../Context/ToastContext.jsx";
 
 import "./Login.css";
 
-function Register({ showToast, isPopup = false, onClose, onLogin }) {
+function Register({isPopup = false, onClose, onLogin }) {
+
+    const showToast = useToast();
 
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");

@@ -1,17 +1,14 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
-import {uploadProducts, getAdminProducts, addProduct, uploadProductImages, updateProduct, searchAdminProducts, hideProduct, restoreProduct,permanentDeleteProduct} from "../Services/ProductService";
+import { useToast } from "../Context/ToastContext.jsx";
+import {uploadProducts, getAdminProducts, addProduct, uploadProductImages, updateProduct, searchAdminProducts, hideProduct, restoreProduct, permanentDeleteProduct} from "../Services/ProductService";
 
 import "./AdminManageProducts.css";
 
-function AdminManageProducts({ showToast }) {
+function AdminManageProducts() {
 
-    const navigate = useNavigate();
-
-    const [menuOpen, setMenuOpen] = useState(true);
-    const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
+    const showToast = useToast();
 
     const [file, setFile] = useState(null);
     const [csvImageFiles, setCsvImageFiles] = useState([]);
@@ -36,13 +33,6 @@ function AdminManageProducts({ showToast }) {
 
     const [formError, setFormError] = useState("");
     const [formSuccess, setFormSuccess] = useState("");
-
-    const userData = localStorage.getItem("user");
-    const user = userData ? JSON.parse(userData) : null;
-
-    useEffect(() => {
-        document.documentElement.setAttribute("data-theme",darkMode ? "dark" : "light");
-    }, [darkMode]);
 
     const handleFileChange = (event) => {
         setFile(event.target.files[0]);
@@ -155,6 +145,7 @@ function AdminManageProducts({ showToast }) {
 
     const handleSearch = (value) => {
         setSearch(value);
+        setPage(1);
     };
 
     const handlePreviousPage = () => {
@@ -373,11 +364,11 @@ const handlePageChange = (pageNumber) => {
 
     return (
         <>
-            <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="Admin"/>
+            <Header />
 
             <div className="page-layout">
 
-                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} role="Admin"/>
+                <Sidebar />
 
                 <main className="main-content">
 

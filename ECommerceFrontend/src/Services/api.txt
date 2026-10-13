@@ -1,6 +1,6 @@
 api.js is the common entry point for all HTTP requests from the React frontend to the backend.
 
-different services needed common things:
+different services need common things:
 
 Request
  ├── Backend URL
@@ -9,17 +9,16 @@ Request
  ├── possibly other headers
  └── actual endpoint/data
 
- Instead of using Axios directly everywhere, we create our own Axios instance.
+Instead of using Axios directly everywhere, we create our own Axios instance.
 
 baseURL is not a JavaScript keyword.
 It is a configuration property understood by Axios.
 If we are using Vite, client-side environment variables must start with VITE_
 
 API_URL=https://localhost:7144/api
-will not be exposed to your the frontend through import.meta.env.
+will not be exposed to the frontend through import.meta.env.
 
-api.interceptors.request
-is an Axios request interceptor, means before the request goes to the backend or leaves the browser, it runs this code.
+api.interceptors.request is an Axios request interceptor, means before the request goes to the backend or leaves the browser, it runs this code.
 interceptor run the code inside it before leaving the browser
 
 It is not a feature built directly into the React core framework. 
@@ -57,3 +56,81 @@ cors preflight request donot to go to the backend through api.js, so its logs do
 
 CORS preflight request is not sent by the axios. it is sent by the browser. whenver there is a request ready to go for the backend axios prepares it and has the request in it
 when the origins are different browser see that request url and sends a preflight reequest to that url
+
+Refresh Token
+
+api.interceptors.response.use
+This interceptor runs after the backend responds.
+
+(response) => response,// function for successful repsonse from the backend. If successful, it gives that response.
+    async (error) => // function for the failed response. when the resposne we get from the backend is an error repsone then this runs
+        const original = error.config;
+Axios creates the error object if the backend sends error response.
+The error object has the config property that contains the original request configuration that triggered the error.
+This is useful for retrying the request or logging the error details.
+
+const original = error.config;
+passing the error.config to original to make the code shorter.
+
+const isAuthCall = original.url.includes("/auth/login") || original.url.includes("/auth/refresh");
+Checks whether the request that failed was a login request or a refresh-token request
+
+if (error.response?.status === 401 && !original._retry && !isAuthCall)
+
+Normal request. get /orders
+backend respone 401, _retry is undefined, isAuthCall is false
+true && !false && !false
+
+Successful request wont reach this block
+
+backend returns 400 for get /orders, so the if block becomes false
+
+Already retried, if block is false
+
+401 from the login
+here isAuthCall is true. !true is false. so the if block becomes false
+
+401 from refersh request
+now isAuthCall is true. !true is false. so the if block becomes false
+
+original = {
+    url: "/Orders",
+    method: "get",
+    headers: {
+        Authorization: "Bearer OLD_TOKEN"
+    },
+    _retry: true
+}
+
+inside the try block , if the refreshPromise is null it calls refershAccessToken function, this function is stored inside refreshPromise
+we want to keep track of the refresh operation while it is running, so other requests can wait for the same refresh instead of starting another one.
+
+Two requests fail at the same time, one request got response and its response interceptor is running.
+while the response interceptor of one request is running, the interceptor of another request reached
+So it doesn't start another refresh.
+
+whether the refresh succeeds or fails we set the refreshPromise to null
+
+refreshPromise stores the object that represents the running refreshAccessToken() operation.
+
+finally here is Promise .finally(), not try/catch/finally.
+
+refreshAccessToken is called inside the if block, while refreshAccessToken is running, Promise and finally attached to it,
+while the refreshAccessToken is running the next line const newToken = await refreshPromise; finally runs after the refresh Promise finishes
+
+
+const newToken = await refreshPromise;
+refreshPromise returns token
+Waits for the Promise currently stored in refreshPromise to finish, then stores its result.
+
+return api(original);
+Sends that original request again using the updated configuration. it has new access token now
+
+The request is sent to the backend.
+The backend validates the new JWT.
+If valid, the backend processes /api/Orders and returns 200.
+That successful response comes back through the response interceptor.
+The success handler (response) => response returns the response
+The component that called api.get("/Orders") finally receives the successful response.
+
+if (error.response?.status === 401 && !original._retry && !isAuthCall) if the block is false return Promise.reject(error); runs

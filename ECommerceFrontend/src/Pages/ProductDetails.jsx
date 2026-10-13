@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../Context/AuthContext.jsx";
+import { useToast } from "../Context/ToastContext.jsx";
 import { getProductById } from "../Services/ProductService";
 import { addToCart, getCart, updateCartItemQuantity  } from "../Services/CartService";
 import { addReview, getProductReviews, deleteOwnReview } from "../Services/ReviewService";
@@ -7,20 +9,13 @@ import "./ProductDetails.css";
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
 
-function ProductDetails({showToast, openLoginPopup}) {
+function ProductDetails({openLoginPopup}) {
+
+    const { user, isLoggedIn } = useAuth();
+    const showToast = useToast();
 
     const { id } = useParams();
     const navigate = useNavigate();
-
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
-    const user = userData ? JSON.parse(userData) : null;
-
-    const isLoggedIn = !!token;
-    const role = token ? user?.role : null;
-
-    const [menuOpen, setMenuOpen] = useState(true);
-    const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
 
     const [product, setProduct] = useState(null);
     const [originalStock, setOriginalStock] = useState(0);
@@ -267,9 +262,9 @@ const handleNextImage = () => {
 
     return (
         <>
-            <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role={role} onCartClick={() => navigate("/cart")} />
+            <Header />
             <div className="page-layout">
-                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} onCartClick={() => navigate("/cart")} role={role}/>
+                <Sidebar />
            
             <div className="product-details-page">
 

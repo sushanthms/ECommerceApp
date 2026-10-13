@@ -7,7 +7,6 @@ namespace ECommerceBackend
     {
         public static void SeedAdmin(AppDbContext context, IConfiguration configuration)
         {
-            // Check whether an Admin already exists
             var adminExists = context.Users
                 .Any(u => u.Role == "Admin");
 
@@ -16,7 +15,7 @@ namespace ECommerceBackend
                 return;
             }
 
-            // Get admin credentials from User Secrets
+            // Gets the admin credentials from User Secrets
             var adminEmail = configuration["Admin:Email"]?.Trim().ToLowerInvariant();
             var adminPassword = configuration["Admin:Password"];
 
@@ -27,7 +26,7 @@ namespace ECommerceBackend
                 );
             }
 
-            // Create the first Admin
+            // Creates the first Admin
             var admin = new User
             {
                 Name = "Admin",

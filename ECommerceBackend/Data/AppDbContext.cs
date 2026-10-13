@@ -1,6 +1,6 @@
 ﻿using ECommerceBackend.Logging;
 using ECommerceBackend.Models;
-using Payment = ECommerceBackend.Payments.Models.Payment;
+using Payment = ECommerceBackend.Models.Payment;
 using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceBackend.Data
@@ -15,6 +15,7 @@ namespace ECommerceBackend.Data
         }
 
         public DbSet<User> Users { get; set; }// DbSet means table with User objects. AppDbContext has access to the User entities/table.
+        public DbSet<Address> Addresses { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<ProductImage> ProductImages { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
@@ -25,6 +26,8 @@ namespace ECommerceBackend.Data
         public DbSet<ApplicationLog> ApplicationLogs { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Payment> Payments { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<OrderItem>()
@@ -52,6 +55,11 @@ namespace ECommerceBackend.Data
                 .HasIndex(p => p.OrderId)
                 .IsUnique()
                 .HasFilter("[Status] = 0");
+
+            modelBuilder.Entity<Payment>()
+                .HasIndex(p => p.OrderId)
+                .IsUnique()
+                .HasFilter("[OrderId] IS NOT NULL");
         }
     }
 }

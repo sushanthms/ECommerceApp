@@ -8,18 +8,15 @@ import "./Community.css";
 
 function Community() {
 
-    const [menuOpen, setMenuOpen] = useState(true);
-    const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
-
     const navigate = useNavigate();
 
     return (
         <>
-            <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="User" onCartClick={() => navigate("/cart")} />
+            <Header />
 
             <div className="page-layout">
 
-                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} onCartClick={() => navigate("/cart")} role="User" />
+                <Sidebar />
 
                 <main className="community-page">
 
@@ -69,7 +66,7 @@ function Community() {
                                     </p>
 
                                     <div className="community-footer">
-                                        <span>❤️ 24 Likes</span>
+                                        <span>❤️ 30 Likes</span>
                                         <span>💬 8 Comments</span>
                                     </div>
 

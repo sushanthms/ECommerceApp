@@ -21,7 +21,8 @@ namespace ECommerceBackend.Controllers
             public IFormFile File { get; set; } = null!;
             public List<IFormFile>? Images { get; set; }
         }
-        // swashbuckle cannot handle/resolve two fromfrom in one parameter so we get error in swagger so we make a class to receive two fromform 
+
+        // swagger cannot handle/resolve two fromfrom in one parameter so we get error in swagger so we make a class to receive two fromform 
         [HttpPost("upload")]
         [Authorize(Roles = "Admin")]// this parameter receives formdata container which contains csv file and images. the ProductCsvUploadRequest class has two fields/properties
         public async Task<IActionResult> UploadCsv([FromForm] ProductCsvUploadRequest request)
@@ -74,6 +75,18 @@ namespace ECommerceBackend.Controllers
             });
         }
 
+        [HttpGet("home")]
+        public async Task<IActionResult> GetHomeProducts(int? lastId = null, int pageSize = 20)// int has ? because first request doesn't have a previous product
+        {
+            var products = await _productService.GetHomeProductsAsync(lastId, pageSize);
+
+            return Ok(new
+            {
+                products,
+                hasMore = products.Count == pageSize
+            });
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetProduct(int id)
         {
@@ -106,11 +119,7 @@ namespace ECommerceBackend.Controllers
         [HttpGet("search")]
         public async Task<IActionResult> SearchProducts(string search, int page = 1, int pageSize = 20, string category = "")
         {
-            var result = await _productService.SearchProductsAsync(
-                search,
-                page,
-                pageSize,
-                category);
+            var result = await _productService.SearchProductsAsync(search, page, pageSize, category);
 
             return Ok(new
             {
@@ -156,7 +165,7 @@ namespace ECommerceBackend.Controllers
         }
         // nameof() is a C# keyword that converts a method name into a string at compile-time.
         // nameof(GetProduct) becomes "GetProduct".
-        // this return means it says the ASP.NET Core to find the action method called GetProduct in this controller and find its route and use it to the build the url
+        // this return means it says the ASP.NET Core to find the action method called GetProduct in this controller and find its route and uses it to the build the url
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
@@ -178,6 +187,20 @@ namespace ECommerceBackend.Controllers
             }
 
             return Ok(result.Product);
+        }
+
+        [HttpGet("admin/stats")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetDashboardStats()
+        {
+            var result = await _productService.GetDashboardStatsAsync();
+
+            return Ok(new
+            {
+                totalProducts = result.TotalProducts,
+                lowStockCount = result.LowStockCount,
+                lowStockProducts = result.LowStockProducts
+            });
         }
 
         [HttpPut("{id}/hide")]
@@ -280,12 +303,6 @@ namespace ECommerceBackend.Controllers
                     i.ImageUrl
                 })
             });
-        }
-
-        [HttpGet("test-crash")]
-        public IActionResult TestCrash()
-        {
-            throw new Exception("This is a test exception");
         }
     }
 }

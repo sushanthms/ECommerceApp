@@ -1,13 +1,17 @@
 using ECommerceBackend;
 using ECommerceBackend.Data;
+using ECommerceBackend.Hubs;
 using ECommerceBackend.Logging;
-using ECommerceBackend.Payments.Services;
 using ECommerceBackend.Services;
+using ECommerceBackend.Validators;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Text;// allows Encoding
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,15 +43,20 @@ builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<ReviewService>();
 builder.Services.AddScoped<PaymentService>();
+builder.Services.AddScoped<PaymentWebhookService>();
+builder.Services.AddScoped<ProfileService>();
+builder.Services.AddScoped<NotificationService>();
 builder.Services.AddControllers();
 builder.Services.AddMemoryCache();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
+builder.Services.AddRouting(options => options.LowercaseUrls = true);
+builder.Services.AddValidatorsFromAssemblyContaining<RegisterDtoValidator>();
+builder.Services.AddSignalR();
 
 builder.Services.AddHttpContextAccessor();
 
-var jwtKey = builder.Configuration["Jwt:Key"]
-    ?? throw new InvalidOperationException("Jwt:Key is missing in configuration.");
+var jwtKey = builder.Configuration["Jwt:Key"]?? throw new InvalidOperationException("Jwt:Key is missing in configuration.");
 
 if (jwtKey.Length < 32)
 {
@@ -67,9 +76,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
 
-            IssuerSigningKey = new SymmetricSecurityKey(// for checking the token we need key
-                Encoding.UTF8.GetBytes(jwtKey)
-            )
+            ClockSkew = TimeSpan.FromSeconds(30),
+
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+        // frontend first sends http request to establish connection between the backend
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+
+                if (!string.IsNullOrEmpty(accessToken) && context.HttpContext.Request.Path.StartsWithSegments("/notificationHub"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -93,18 +116,43 @@ builder.Services.AddSwaggerGen(options =>
         {
             [new OpenApiSecuritySchemeReference("Bearer", document)] = []
         });
-}); 
+});
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy("login", httpContext =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 6,
+                QueueLimit = 0
+            }));
+});
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactPolicy", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5173")
+            .WithOrigins(
+                    "http://localhost:5173",
+                    "http://localhost:8080"
+                )
             .AllowAnyHeader()
             .AllowAnyMethod()
+            .AllowCredentials()
             .WithExposedHeaders("X-Correlation-ID");
     });
+});
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 });
 
 // This takes everything we've configured and creates the actual ASP.NET Core application.
@@ -112,27 +160,28 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    // ASP.NET Core's DI container creates/gets an AppDbContext instance for this scope and stores that instance in context.
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    // calls the SeedAdmin function, SeedAdmin is the method inside AdminSeeder class
-    AdminSeeder.SeedAdmin(context, builder.Configuration);
+    
+    AdminSeeder.SeedAdmin(context, builder.Configuration);// gets admin data from the database or creates admin data in the database
 }
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+app.UseForwardedHeaders();
 app.UseHttpsRedirection();// If an HTTP request should use HTTPS, it redirects it to HTTPS. 
 app.UseStaticFiles();// ASP.NET Core can serve static files directly to the browser.
 app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseExceptionHandler();
 app.UseCors("ReactPolicy");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 // the ASP.NET Core already knows which methods have what attributes([Authorize]. the app.mapController is to map the requets to that method to execute the method
 app.MapControllers();// This connects incoming HTTP requests to the controllers. finds the controllers and maps their routes to the HTTP endpoints.
+app.MapHub<NotificationHub>("/notificationHub");// means any request(to establish connection between the frontend and the backend) to the URL /notificationHub is handled by the NotificationHub class
 
 app.Run();

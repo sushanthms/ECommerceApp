@@ -18,5 +18,6 @@ namespace ECommerceBackend.Models // belongs to Models folder
         public string Role { get; set; } = "User";// User is the default value
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public ICollection<Address> Addresses { get; set; } = new List<Address>();
     }
 }

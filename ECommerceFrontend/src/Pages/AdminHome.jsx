@@ -4,71 +4,60 @@ import { useNavigate } from "react-router-dom";
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
 
-import { getProducts } from "../Services/ProductService";
-import { getAllOrders } from "../Services/OrderService";
+import { getProductStats } from "../Services/ProductService";
+import { getOrderStats } from "../Services/OrderService";
 
 import "./AdminHome.css";
 
 function AdminHome() {
 
-    const [menuOpen, setMenuOpen] = useState(true);
-    const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
-
-    const [products, setProducts] = useState([]);
-    const [orders, setOrders] = useState([]);
-
     const navigate = useNavigate();
 
-    useEffect(() => {
-        document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
-    }, [darkMode]);
+    const [productStats, setProductStats] = useState({
+    totalProducts: 0,
+    lowStockCount: 0,
+    lowStockProducts: []
+});
+
+const [orderStats, setOrderStats] = useState({
+    totalOrders: 0,
+    pendingOrders: 0,
+    totalSales: 0,
+    recentOrders: []
+});
 
     useEffect(() => {
-
         const loadDashboardData = async () => {
-
             try {
+                const [prodStats, ordStats] = await Promise.all([
+                    getProductStats(),
+                    getOrderStats()
+                ]);
 
-                const productData = await getProducts(1, 100);
-                setProducts(productData.products);
-
-                const orderData = await getAllOrders();
-                setOrders(orderData);
-
+                setProductStats(prodStats);
+                setOrderStats(ordStats);
             } catch (error) {
-
                 console.error("Error loading dashboard data:", error);
-
             }
         };
 
         loadDashboardData();
-
     }, []);
 
-    const totalProducts = products.length;
+    const totalProducts = productStats.totalProducts;
+    const lowStockCount = productStats.lowStockCount;
 
-    const totalOrders = orders.length;
-
-    const pendingOrders = orders.filter(
-        order => order.status === "Pending"
-    ).length;
-
-    const lowStockProducts = products.filter(
-        product => product.stock <= 5
-    ).length;
-
-    const totalSales = orders
-        .filter(order => order.paymentStatus === "Paid")
-        .reduce((total, order) => total + order.totalAmount, 0);
+    const totalOrders = orderStats.totalOrders;
+    const pendingOrders = orderStats.pendingOrders;
+    const totalSales = orderStats.totalSales;
 
     return (
         <>
-            <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="Admin"/>
+            <Header />
 
             <div className="page-layout">
 
-                <Sidebar menuOpen={menuOpen} role="Admin"/>
+                <Sidebar />
 
                 <main className="main-content">
 
@@ -101,7 +90,7 @@ function AdminHome() {
 
                         <div className="dashboard-card">
                             <h3>Low Stock Products</h3>
-                            <strong>{lowStockProducts}</strong>
+                            <strong>{lowStockCount}</strong>
                         </div>
 
                     </div>
@@ -129,7 +118,7 @@ function AdminHome() {
                             <h2>Recent Orders</h2>
                         </div>
 
-                        {orders.length === 0 ? (
+                        {orderStats.recentOrders.length === 0 ? (
 
                             <p>No orders found.</p>
 
@@ -145,26 +134,17 @@ function AdminHome() {
                                     <span>Status</span>
                                 </div>
 
-                                {orders.slice(0, 5).map((order) => (
-
+                                {orderStats.recentOrders.map((order) => (
                                     <div className="table-row" key={order.id}
-                                        onClick={() =>
-                                            navigate(`/admin/orders/${order.id}`, {
-                                                state: { order }
-                                            })
-                                        }
-                                    >
+                                        onClick={() => navigate(`/admin/orders/${order.id}`)}>
                                         <span>#{order.id}</span>
                                         <span>{order.deliveryName}</span>
                                         <span>₹{order.totalAmount}</span>
                                         <span>{order.paymentStatus}</span>
                                         <span>{order.status}</span>
                                     </div>
-
                                 ))}
-
                             </div>
-
                         )}
 
                     </div>
@@ -175,7 +155,7 @@ function AdminHome() {
                             <h2>Low Stock Products</h2>
                         </div>
 
-                        {lowStockProducts === 0 ? (
+                        {lowStockCount === 0 ? (
 
                             <p>No low-stock products.</p>
 
@@ -183,17 +163,12 @@ function AdminHome() {
 
                             <div className="low-stock-list">
 
-                                {products
-                                    .filter(product => product.stock <= 5)
-                                    .slice(0, 5)
-                                    .map((product) => (
-
-                                        <div className="low-stock-item" key={product.id}>
-                                            <span>{product.name}</span>
-                                            <strong>{product.stock} left</strong>
-                                        </div>
-
-                                    ))}
+                                {productStats.lowStockProducts.map((product) => (
+                                    <div className="low-stock-item" key={product.id}>
+                                        <span>{product.name}</span>
+                                        <strong>{product.stock} left</strong>
+                                    </div>
+                                ))}
 
                             </div>
 

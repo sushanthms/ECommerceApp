@@ -719,5 +719,75 @@ namespace ECommerceBackend.Services
             await _logger.LogMessageAsync($"Product images uploaded - ProductId: {id}, ImageCount: {uploadedImages.Count}");
             return (true, null, uploadedImages);
         }
+
+        public async Task<List<ProductListDto>> GetHomeProductsAsync(int? lastId, int pageSize)
+        {
+            if (pageSize < 1 || pageSize > 100)
+            {
+                pageSize = 20;
+            }
+
+            var query = _context.Products
+                .AsNoTracking()
+                .Where(p => !p.IsDeleted);
+
+            if (lastId.HasValue)// we have ? with int, so we check whether lastId has a value, if lastId has a value then we build the query
+            {
+                query = query.Where(p => p.Id > lastId.Value);
+            }
+
+            var products = await query
+                .OrderBy(p => p.Id)
+                .Take(pageSize)
+                .Select(p => new ProductListDto
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Description = p.Description,
+                    Price = p.Price,
+                    Stock = p.Stock,
+                    Category = p.Category,
+
+                    Images = p.Images
+                        .Select(i => new ProductImageDto
+                        {
+                            ImageUrl = i.ImageUrl
+                        })
+                        .ToList()
+                })
+                .ToListAsync();
+
+            return products;
+        }
+
+        public async Task<(int TotalProducts, int LowStockCount, List<ProductListDto> LowStockProducts)> GetDashboardStatsAsync(int threshold = 5)
+        {
+            var query = _context.Products
+                .AsNoTracking()
+                .Where(p => !p.IsDeleted);
+
+            var totalProducts = await query.CountAsync();
+
+            var lowStockQuery = query.Where(p => p.Stock <= threshold);
+
+            var lowStockCount = await lowStockQuery.CountAsync();
+
+            var lowStockProducts = await lowStockQuery
+                .OrderBy(p => p.Stock)
+                .Take(5)
+                .Select(p => new ProductListDto
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Stock = p.Stock,
+                    Price = p.Price,
+                    Category = p.Category,
+                    Description = p.Description,
+                    Images = new List<ProductImageDto>()
+                })
+                .ToListAsync();
+
+            return (totalProducts, lowStockCount, lowStockProducts);
+        }
     }
 }

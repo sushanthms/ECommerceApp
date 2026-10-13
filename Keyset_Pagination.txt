@@ -1,0 +1,17 @@
+we have 47 products, 20 are visible, we clcik load more, the gethomeproductservcie returns next 20 products. 
+
+var products = await _productService.GetHomeProductsAsync(lastId, pageSize);
+here products variable contains the products from 21 to 40. 
+
+return Ok(new
+{
+    products,
+    hasMore = products.Count == pageSize
+});
+
+we return the 21 to 40 products values, in hasMore we check products.count===pagesize. 20==20 so we return 21-40 products values and true to the frontend
+
+now user clicks load more, the productservcie.js checks loadingproducts is false, !hasMore is !true false if block does not execute
+api call is done to the backend
+backend return 7 products, products.Count==pagesize, 7==20 is false hasMore is false
+now if the user load more button, api call is not done to the backend

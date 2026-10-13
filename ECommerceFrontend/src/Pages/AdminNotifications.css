@@ -1,0 +1,78 @@
+.page-layout {
+    display: flex;
+    width: 100%;
+}
+
+.notifications-page {
+    width: 100%;
+    padding: 25px;
+}
+
+.notifications-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.notifications-header h2 {
+    margin: 0;
+    color: #29251f;
+}
+
+.mark-all-button {
+    border: none;
+    background: #b4533c;
+    color: white;
+    padding: 9px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.mark-all-button:hover {
+    opacity: 0.9;
+}
+
+.notifications-list {
+    background: #fffdf8;
+    border: 1px solid #e5ddd0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.notification-item {
+    padding: 14px 18px;
+    border-bottom: 1px solid #e5ddd0;
+    cursor: pointer;
+    color: #29251f;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-item:hover {
+    background: #f8f3e8;
+}
+
+.notification-item.unread {
+    font-weight: 600;
+}
+
+.notification-message {
+    font-size: 15px;
+}
+
+.notification-date {
+    font-size: 13px;
+    color: #777;
+}
+
+.no-notifications {
+    color: #777;
+    padding: 20px 0;
+}

@@ -128,6 +128,48 @@
     font-weight: 600;
 }
 
+.form-group {
+    background: var(--card-bg);
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.form-group input[type="text"],
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0 10px;
+    box-sizing: border-box;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+
+.form-group label {
+    display: block;
+    margin: 10px 0;
+    color: var(--text-color);
+}
+
+.form-group button,
+.order-details-page > button {
+    padding: 9px 15px;
+    margin: 5px;
+    border: none;
+    border-radius: 5px;
+    background: var(--button-color);
+    color: white;
+    cursor: pointer;
+}
+
+.form-group .error-message {
+    color: var(--error-color);
+    font-size: 13px;
+}
+
 .summary-row {
     display: flex;
     justify-content: space-between;

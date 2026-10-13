@@ -24,38 +24,58 @@ namespace ECommerceBackend.Services
             return result;
         }
 
-        // admin sees their orders
-        // Orders table has userid, userid is the foriegn key, using userid it accessess Users table and can get the details of the user. public User User { get; set; } this helps to navigate from the Order to User table
-        public async Task<List<object>> GetAllOrdersAsync()
+        public async Task<(List<object> Orders, int TotalOrders, int TotalPages)> GetOrdersPagedAsync(int page, int pageSize)
         {
-            await _logger.LogMessageAsync("Admin requested all orders.");
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 100) pageSize = 20;
 
-            var orders = await _context.Orders
-                .Include(o => o.User)
-                .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.Product)
+            var query = _context.Orders.AsNoTracking();
+
+            var totalOrders = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling((double)totalOrders / pageSize);
+
+            var orders = await query
                 .OrderByDescending(o => o.OrderDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(o => new
+                {
+                    o.Id,
+                    o.DeliveryName,
+                    o.OrderDate,
+                    o.TotalAmount,
+                    o.PaymentMethod,
+                    o.PaymentStatus,
+                    o.Status
+                })
+                .Cast<object>()
+                .ToListAsync();
+
+            return (orders, totalOrders, totalPages);
+        }
+
+        public async Task<object?> GetOrderDetailsForAdminAsync(int id)
+        {
+            var order = await _context.Orders
+                .AsNoTracking()
+                .Where(o => o.Id == id)
                 .Select(o => new
                 {
                     o.Id,
                     o.UserId,
-
                     CustomerName = o.User.Name,
                     CustomerEmail = o.User.Email,
-
                     o.DeliveryName,
                     o.Phone,
                     o.Address,
                     o.City,
                     o.State,
                     o.Pincode,
-
                     o.TotalAmount,
                     o.Status,
                     o.PaymentMethod,
                     o.PaymentStatus,
                     o.OrderDate,
-
                     OrderItems = o.OrderItems.Select(oi => new
                     {
                         oi.Id,
@@ -65,12 +85,36 @@ namespace ECommerceBackend.Services
                         oi.Price
                     })
                 })
-                .Cast<object>()
+                .FirstOrDefaultAsync();
+
+            return order;
+        }
+
+        public async Task<object> GetOrderStatsAsync()
+        {
+            var orders = _context.Orders.AsNoTracking();
+
+            var totalOrders = await orders.CountAsync();
+            var pendingOrders = await orders.CountAsync(o => o.Status == "Pending");
+
+            var totalSales = await orders
+                .Where(o => o.PaymentStatus == "Paid")
+                .SumAsync(o => (decimal?)o.TotalAmount) ?? 0m;
+
+            var recentOrders = await orders
+                .OrderByDescending(o => o.OrderDate)
+                .Take(5)
+                .Select(o => new
+                {
+                    o.Id,
+                    o.DeliveryName,
+                    o.TotalAmount,
+                    o.PaymentStatus,
+                    o.Status
+                })
                 .ToListAsync();
 
-            await _logger.LogMessageAsync($"Admin retrieved all orders successfully - OrderCount: {orders.Count}");
-
-            return orders;
+            return new { totalOrders, pendingOrders, totalSales, recentOrders };
         }
 
         public async Task<List<object>> GetUserOrdersAsync(int userId)
@@ -79,8 +123,6 @@ namespace ECommerceBackend.Services
 
             var orders = await _context.Orders
                 .Where(o => o.UserId == userId)
-                .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.Product)
                 .OrderByDescending(o => o.OrderDate)
                 .Select(o => new
                 {
@@ -159,6 +201,8 @@ namespace ECommerceBackend.Services
 
         private async Task<(Order? Order, int ItemCount, List<string> UnavailableItems)> CreateOrderFromCart(int userId, CreateOrderDto dto, string paymentMethod, string paymentStatus)
         {
+            var address = await GetAddressAsync(userId, dto);
+
             var cartItems = await _context.CartItems
                 .Include(c => c.Product)
                 .Where(c => c.UserId == userId)
@@ -187,12 +231,13 @@ namespace ECommerceBackend.Services
             {
                 UserId = userId,
 
-                DeliveryName = dto.FullName,
-                Phone = dto.Phone,
-                Address = dto.Address,
-                City = dto.City,
-                State = dto.State,
-                Pincode = dto.Pincode,
+                DeliveryName = address.FullName,
+                Phone = address.Phone,
+                Address = string.Join(", ", new[] { address.Line1, address.Line2 }
+                            .Where(s => !string.IsNullOrWhiteSpace(s))),
+                City = address.City,
+                State = address.State,
+                Pincode = address.Pincode,
 
                 TotalAmount = totalAmount,
                 Status = "Pending",
@@ -221,6 +266,33 @@ namespace ECommerceBackend.Services
             _context.CartItems.RemoveRange(cartItems);
 
             await _context.SaveChangesAsync();
+
+            // the user typed a new address and said "yes, save it"
+            if (dto.AddressId == null && dto.SaveAddress)
+            {
+                try
+                {
+                    bool isFirst = !await _context.Addresses.AnyAsync(a => a.UserId == userId);
+
+                    _context.Addresses.Add(new Address
+                    {
+                        UserId = userId,
+                        FullName = address.FullName,
+                        Phone = address.Phone,
+                        Line1 = address.Line1,
+                        City = address.City,
+                        State = address.State,
+                        Pincode = address.Pincode,
+                        IsDefault = isFirst
+                    });
+
+                    await _context.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    await _logger.LogMessageAsync($"Saving new address failed - UserId: {userId}, Error: {ex.Message}", "Warning");
+                }
+            }
 
             return (order, cartItems.Count, new List<string>());
         }
@@ -358,6 +430,81 @@ namespace ECommerceBackend.Services
                 await transaction.RollbackAsync();
                 throw;
             }
+        }
+
+        public async Task<bool> ChangeOrderAddressAsync(int userId, int orderId, CreateOrderDto dto)
+        {
+            var address = await GetAddressAsync(userId, dto);
+
+            var fullAddress = string.Join(", ", new[] { address.Line1, address.Line2 }
+                .Where(s => !string.IsNullOrWhiteSpace(s)));
+
+            var rows = await _context.Orders
+                .Where(o => o.Id == orderId
+                         && o.UserId == userId
+                         && (o.Status == "Pending" || o.Status == "Processing"))
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(o => o.DeliveryName, address.FullName)
+                    .SetProperty(o => o.Phone, address.Phone)
+                    .SetProperty(o => o.Address, fullAddress)
+                    .SetProperty(o => o.City, address.City)
+                    .SetProperty(o => o.State, address.State)
+                    .SetProperty(o => o.Pincode, address.Pincode));
+
+            if (rows == 0)
+            {
+                await _logger.LogMessageAsync($"Order address change failed - UserId: {userId}, OrderId: {orderId}", "Warning");
+                return false;
+            }
+
+            await _logger.LogMessageAsync($"Order address changed - UserId: {userId}, OrderId: {orderId}");
+            return true;
+        }
+
+        public async Task<List<Address>> GetUserAddressesAsync(int userId)
+        {
+            return await _context.Addresses
+                .AsNoTracking()
+                .Where(a => a.UserId == userId)
+                .OrderByDescending(a => a.IsDefault)// puts the default address first
+                .ThenByDescending(a => a.Id)// sorts the remaining addresses by newest ID first.
+                .ToListAsync();
+        }
+
+        public async Task<Address> GetAddressAsync(int userId, CreateOrderDto dto)
+        {
+            // case 1: the user picked a saved address
+            if (dto.AddressId != null)
+            {
+                var saved = await _context.Addresses
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(a => a.Id == dto.AddressId && a.UserId == userId);
+
+                if (saved == null)
+                    throw new ArgumentException("Please select a valid delivery address.");
+
+                return saved;
+            }
+
+            // case 2: the user typed a new address
+            if (string.IsNullOrWhiteSpace(dto.FullName) ||
+                string.IsNullOrWhiteSpace(dto.Phone) ||
+                string.IsNullOrWhiteSpace(dto.Address) ||
+                string.IsNullOrWhiteSpace(dto.City) ||
+                string.IsNullOrWhiteSpace(dto.State) ||
+                string.IsNullOrWhiteSpace(dto.Pincode))
+                throw new ArgumentException("Please provide all delivery address details.");
+
+            return new Address
+            {
+                UserId = userId,
+                FullName = dto.FullName,
+                Phone = dto.Phone,
+                Line1 = dto.Address,
+                City = dto.City,
+                State = dto.State,
+                Pincode = dto.Pincode
+            };
         }
     }
 }

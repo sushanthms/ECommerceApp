@@ -1,26 +1,25 @@
 import api from "./api";
 
 export const getProducts = async (page = 1, pageSize = 20, category = "") => {
-    const response = await api.get(
-        `/Product?page=${page}&pageSize=${pageSize}&category=${encodeURIComponent(category)}`
-    );
+    const response = await api.get(`/Product?page=${page}&pageSize=${pageSize}&category=${encodeURIComponent(category)}`);
 
     return response.data;
 };
 
 export const getAdminProducts = async (page = 1, pageSize = 20) => {
-    const response = await api.get(
-        `/Product/admin?page=${page}&pageSize=${pageSize}`
-    );
+    const response = await api.get(`/Product/admin?page=${page}&pageSize=${pageSize}`);
+
+    return response.data;
+};
+
+export const getProductStats = async () => {
+    const response = await api.get("/Product/admin/stats");
 
     return response.data;
 };
 
 export const addProduct = async (product) => {
-    const response = await api.post(
-        "/Product",
-        product
-    );
+    const response = await api.post("/Product", product);
 
     return response.data;
 };
@@ -70,35 +69,25 @@ export const updateProduct = async (id, product) => {
 };
 
 export const searchProducts = async (search, page = 1, pageSize = 20, category = "") => {
-    const response = await api.get(
-        `/Product/search?search=${encodeURIComponent(search)}&page=${page}&pageSize=${pageSize}&category=${encodeURIComponent(category)}`
-    );
+    const response = await api.get(`/Product/search?search=${encodeURIComponent(search)}&page=${page}&pageSize=${pageSize}&category=${encodeURIComponent(category)}`);
 
     return response.data;
 };
 
 export const searchAdminProducts = async (search, page = 1, pageSize = 20) => {
-    const response = await api.get(
-        `/Product/admin/search?search=${encodeURIComponent(search)}&page=${page}&pageSize=${pageSize}`
-    );
+    const response = await api.get(`/Product/admin/search?search=${encodeURIComponent(search)}&page=${page}&pageSize=${pageSize}`);
 
     return response.data;
 };
 
 export const hideProduct = async (id) => {
-    const response = await api.put(
-        `/Product/${id}/hide`,
-        {}
-    );
+    const response = await api.put(`/Product/${id}/hide`,);
 
     return response.data;
 };
 
 export const restoreProduct = async (id) => {
-    const response = await api.put(
-        `/Product/${id}/restore`,
-        {}
-    );
+    const response = await api.put(`/Product/${id}/restore`,);
 
     return response.data;
 };
@@ -119,6 +108,20 @@ export const getCategories = async () => {
 
 export const getProductById = async (id) => {
     const response = await api.get(`/Product/${id}`);
+
+    return response.data;
+};
+
+export const getHomeProducts = async (lastId = null) => {
+    const params = {
+        pageSize: 20
+    };
+
+    if (lastId !== null) {
+        params.lastId = lastId;
+    }
+
+    const response = await api.get("/Product/home", { params });
 
     return response.data;
 };

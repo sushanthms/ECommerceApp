@@ -1,24 +1,47 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../Services/api.js";
 
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
 import { getCart } from "../Services/CartService";
+import { useToast } from "../Context/ToastContext.jsx";
 import "./Checkout.css";
 
-const API_URL = `${import.meta.env.VITE_API_URL}/Order`;
+const loadRazorpay = () => {
+    return new Promise((resolve) => {
 
-function Checkout({ showToast }) {
-    console.log("Checkout Page Rendered");
-    const [menuOpen, setMenuOpen] = useState(true);
-    const [darkMode, setDarkMode] = useState(localStorage.getItem("theme") === "dark");
+        if (window.Razorpay) {// is razorpay window opened/loaded
+            resolve(true);// Razorpay is already available, so loading is successful
+            return;
+        }
+
+        const script = document.createElement("script");// creates an element. It doesn't mean the browser has loaded it yet.
+
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+
+        script.onload = () => resolve(true);// onload is an event. Runs this code when the script has successfully finished loading. now our Promise finishes successfully.
+
+        script.onerror = () => resolve(false);
+
+        document.body.appendChild(script);// here the script is added to the webpage
+    });
+};
+
+function Checkout() {
+
+    const showToast = useToast();
+    
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
     const [paymentMethod, setPaymentMethod] = useState("Cash on Delivery");
     const [showPayment, setShowPayment] = useState(false);
     const [paymentProcessing, setPaymentProcessing] = useState(false);
+
+    const [savedAddresses, setSavedAddresses] = useState([]);
+    const [selectedAddressId, setSelectedAddressId] = useState("");
+    const [saveAddress, setSaveAddress] = useState(false);
 
     const navigate = useNavigate();
 
@@ -30,6 +53,8 @@ function Checkout({ showToast }) {
         state: "",
         pincode: ""
     });
+
+    const [addressMode, setAddressMode] = useState("new");
 
     const loadCart = async () => {
         setLoading(true);
@@ -44,13 +69,41 @@ function Checkout({ showToast }) {
         }
     };
 
+    const loadSavedAddresses = async () => {
+        try {
+            const response = await api.get("/Order/addresses");
+            const addresses = Array.isArray(response.data)
+                ? response.data
+                : [];
+
+            setSavedAddresses(addresses);
+
+            if (addresses.length > 0) {
+                const defaultAddress = addresses.find(a => a.isDefault);
+                const initialAddress = defaultAddress || addresses[0];
+
+                setSelectedAddressId(String(initialAddress.id));
+                setAddressMode("saved");
+            }
+        } catch (error) {
+            console.error("Error loading saved addresses:", error);
+        }
+    };
+
     useEffect(() => {
         loadCart();
+        loadSavedAddresses();
     }, []);
 
     const validateForm = () => {
-        const newErrors = {};
+    const newErrors = {};
 
+    if (addressMode === "saved") {
+        if (!selectedAddressId) {
+            newErrors.addressSelection = "Please select an address.";
+        }
+    }
+    else {
         if (!customerDetails.fullName.trim()) {
             newErrors.fullName = "Full name is required.";
         }
@@ -74,31 +127,37 @@ function Checkout({ showToast }) {
         if (!/^\d{6}$/.test(customerDetails.pincode)) {
             newErrors.pincode = "Pincode must be 6 digits.";
         }
+    }
 
-        setErrors(newErrors);
+    setErrors(newErrors);
 
-        return Object.keys(newErrors).length === 0;
+    return Object.keys(newErrors).length === 0;
+};
+
+const getOrderDetails = () => {
+    if (addressMode === "saved") {
+        return {
+            addressId: Number(selectedAddressId),
+            saveAddress: false
+        };
+    }
+
+    return {
+        ...customerDetails,
+        addressId: null,
+        saveAddress
     };
+};
 
 // this is called when we do cash on delivery
     const placeOrder = async () => {
         try {
             setLoading(true);
 
-            const token = localStorage.getItem("token");
-
-            const response = await axios.post(
-                API_URL,
-                {
-                    ...customerDetails,
-                    paymentMethod
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
+            const response = await api.post("/Order", {
+                ...getOrderDetails(),
+                paymentMethod
+            });
 
             showToast(response.data.message);
 
@@ -130,69 +189,38 @@ function Checkout({ showToast }) {
     try {
         setPaymentProcessing(true);
 
-        const token = localStorage.getItem("token");
+        const loaded = await loadRazorpay();
 
-        // Creating the order in Orders table
-        const orderResponse = await axios.post(
-            API_URL,
-            {
-                ...customerDetails,
-                paymentMethod: "Online Payment"
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            }
-        );
+        if (!loaded) {
+            showToast("Could not load payment. Check your connection.", "error");
+            setPaymentProcessing(false);
+            return;
+        }
 
-        const orderId = orderResponse.data.orderId;
-
-        // Asking the paymentservice in the backend to create Razorpay order
-        const paymentResponse = await axios.post(
-            `${import.meta.env.VITE_API_URL}/payment/create/${orderId}`,
-            {},
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            }
-        );
+        const paymentResponse = await api.post("/payment/create", getOrderDetails());
 
         const paymentData = paymentResponse.data;
 
-        // Creating a JavaScript object containing instructions for Razorpay. This doesn't open Razorpay yet.
-        // const options is creating settings/instructions the handler function does not run now, the call to verify in the backend does not go now
-        // after the payment is done the handler function runs.
         const options = {
-            key: paymentData.keyId,// this is from the paymentresponse where the razorpay order is created
-            amount: Math.round(paymentData.amount * 100),// amount is in paise
+            key: paymentData.keyId,
+            amount: Math.round(paymentData.amount * 100),
             currency: paymentData.currency,
             name: "ECommerceApp",
-            description: `Order #${orderId}`,
+            description: `Order Payment`,
             order_id: paymentData.razorpayOrderId,
 
-// It is called by Razorpay when the Checkout reports a successful payment. handler is a feature provided by the Razorpay Checkout JavaScript SDK
-// Handler is a property name defined by Razorpay's Checkout API.
+// handler is a feature provided by the Razorpay Checkout JavaScript SDK. Handler is a property name defined by Razorpay's Checkout API.
             handler: async function (response) {
                 try {
-                    // Sends the Razorpay result to the backend for verification
-                    await axios.post(
-                        `${import.meta.env.VITE_API_URL}/payment/verify`,
-                        {
-                            razorpayOrderId: response.razorpay_order_id,
-                            razorpayPaymentId: response.razorpay_payment_id,
-                            razorpaySignature: response.razorpay_signature
-                        },
-                        {
-                            headers: {
-                                Authorization: `Bearer ${token}`
-                            }
-                        }
-                    );
+                    await api.post("/payment/verify", {
+                        razorpayOrderId: response.razorpay_order_id,
+                        razorpayPaymentId: response.razorpay_payment_id,
+                        razorpaySignature: response.razorpay_signature,
+                        order: {...getOrderDetails(), paymentMethod}
+                    });
 
                     showToast("Payment successful and order placed.");
-                    navigate("/home");
+                    navigate("/home");  
                 } catch (error) {
                     console.error("Payment verification failed:", error);
                     alert(error.response?.data?.message || "Payment verification failed.");
@@ -214,9 +242,7 @@ function Checkout({ showToast }) {
 
     } catch (error) {
         console.error("Payment error:", error);
-
         alert(error.response?.data?.message || "Unable to start payment.");
-
         setPaymentProcessing(false);
     }
 };
@@ -232,11 +258,11 @@ function Checkout({ showToast }) {
 
     return (
         <>
-            <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} darkMode={darkMode} setDarkMode={setDarkMode} role="User" onCartClick={() => navigate("/cart")}/>
+            <Header />
 
             <div className="page-layout">
 
-                <Sidebar menuOpen={menuOpen} setMenuOpen={setMenuOpen} onCartClick={() => navigate("/cart")}/>
+                <Sidebar />
 
                 <div className="checkout-page">
 
@@ -267,9 +293,40 @@ function Checkout({ showToast }) {
 
                             <div className="checkout-form">
 
-                                <h2>Shipping Details</h2>
-
                                 <form onSubmit={handleSubmit}>
+
+                                    <h2>Shipping Details</h2>
+
+                                    {savedAddresses.length > 0 && (
+                                        <div className="form-group">
+                                            <label>
+                                                <input type="radio" checked={addressMode === "saved"} onChange={() => { setAddressMode("saved"); setErrors({}); }}/>Use a saved address
+                                            </label>
+
+                                            <label>
+                                                <input type="radio" checked={addressMode === "new"} onChange={() => { setAddressMode("new"); setErrors({}); }}/>Enter a new address
+                                            </label>
+                                        </div>
+                                    )}
+
+                                    {addressMode === "saved" && savedAddresses.length > 0 && (
+                                        <div className="form-group">
+                                            <label>Select Address</label>
+
+                                            <select value={selectedAddressId} onChange={(e) => setSelectedAddressId(e.target.value)}>
+                                                {savedAddresses.map((address) => (
+                                                    <option key={address.id} value={address.id}>{address.fullName} — {address.line1}, {address.city}{address.isDefault ? " (Default)" : ""}</option>
+                                                ))}
+                                            </select>
+
+                                            {errors.addressSelection && (
+                                                <p className="error-message">{errors.addressSelection}</p>
+                                            )}
+                                        </div>
+                                    )}
+
+                            {addressMode === "new" && (
+                                <>
 
                                     <div className="form-group">
                                         <label>Full Name</label>
@@ -310,6 +367,14 @@ function Checkout({ showToast }) {
                                         <input type="text" name="pincode" value={customerDetails.pincode} onChange={handleChange} placeholder="Enter pincode"/>
                                         {errors.pincode && (<p className="error-message">{errors.pincode}</p>)}
                                     </div>
+
+                                    <div className="form-group">
+                                        <label>
+                                            <input type="checkbox" checked={saveAddress} onChange={(e) => setSaveAddress(e.target.checked)}/>Save this address for future orders
+                                        </label>
+                                    </div>
+                                </>
+                            )}
 
                                     <div className="payment-section">
 

@@ -183,3 +183,242 @@ builder.Services.AddScoped<IProductService>(sp =>
     return new ProductService();
 });
 When somebody asks for IProductService, it runs this function to decide/create what to give them.
+
+When we write builder.Services.AddScoped<ProductService>(); we are telling the DI container to register ProductService as a scoped service
+.NET represents this registration using a ServiceDescriptor. It is like a registration record
+We can write Factory Delegate inside ServiceDescriptor
+
+ServiceDescriptor(
+    serviceType,
+    implementationType,
+    lifetime
+)
+
+Without interface
+
+new ServiceDescriptor(// here the object is created
+    typeof(ProductService),   // serviceType. it is requested
+    typeof(ProductService),   // implementationType. to give
+    ServiceLifetime.Scoped    // lifetime
+)
+
+Using Interface
+
+new ServiceDescriptor(
+    typeof(IProductService),
+    typeof(ProductService),
+    ServiceLifetime.Scoped
+)
+
+builder.Services.Add(
+    new ServiceDescriptor(
+        typeof(ProductService),
+        typeof(ProductService),
+        ServiceLifetime.Scoped
+    )
+);
+
+A ServiceDescriptor tells 3 things
+Service type IProductService
+Implementation type ProductService
+Lifetime Scoped
+
+DI has like this
+
+Service collection
+│
+├── ServiceDescriptor
+│     ProductService
+│     Scoped
+│
+├── ServiceDescriptor
+│     EmailService
+│     Singleton
+│
+└── ServiceDescriptor
+      PaymentService
+      Transient
+
+When we have multiple services under one Interface, we register them in program.cs
+But the last service overrides all the services above it, so if we want first or second services to use, we cant use them
+this problem was there till .NET 8. later it was solved using Keyed Dependency Injection
+
+we have an interface, two services(two files) are there under that interface. we register that two services
+in program.cs
+
+builder.Services.AddScoped<IProductService ProductService1>()
+builder.Services.AddScoped<IProductService ProductService2>()
+
+the methods in the both services will be same only the code inside the methods will be same
+so the http methods is same for both services
+we will se only one http methods for the method is in both the ProductService1 and ProductsService2 files
+so if we call the http method the services that is registered at last will be called, because it overrides the above service
+so this is the problem before .NET 8. it was solved using Keyed Dependency Injection
+
+Using Keyed Dependency Injection
+
+builder.Services.AddKeyedScoped<IProductService, ProductService1>("service1");
+builder.Services.AddKeyedScoped<IProductService, ProductService2>("service2");
+
+public ProductController([FromKeyedServices("service1")] IProductService productService)
+{
+    _productService = productService;
+}
+
+for two services the controller is only one
+so in controller we have to write the key which service we want
+later if we want to change the service we have to change in the controller
+
+If we have two services ad we wnat to use both at the same time. for one feature ProductService1 and for another feature ProductService2
+
+We can keep the controller independent of the key and make the selection somewhere else.
+
+public ProductController(ProductServiceFactory factory)
+{
+    _productService = factory.GetService();
+}
+
+If we have two services and we want to use both at the same time
+for one feature ProductService1 and for another feature ProductService2
+in this situation we write it like this
+
+public ProductController([FromKeyedServices("normal")] IProductService normalService, [FromKeyedServices("special")] IProductService specialService)
+{
+    _normalService = normalService;
+    _specialService = specialService;
+}
+
+based on the feature we can call _normalService.AddProducts or _specialService.AddProducts. we call in the controller.
+
+while registering services, if we use TryAddSingleton instead AddSingleton for two services
+now the first registered service will be selected. second registered services cannot override the first registered service
+
+builder.Services.TryAddSingleton<IProductService, ProductService1>();
+builder.Services.TryAddSingleton<IProductService, ProductService2>();
+
+builder.Services.TryAddKeyedSingleton<IProductService, ProductService1>("normal");
+builder.Services.TryAddKeyedSingleton<IProductService, ProductService2>("special");
+
+When we use same key for both the services during TryAddKeyed it is helpful.
+TryAddKeyed is used when we don't want to overwrite someone else's registration.
+
+IEnumerable is used to inject all registered implementations of a service/interface.
+It is useful when multiple implementations need to be used together
+
+builder.Services.TryAddEnumerable(ServiceDescriptor.Scoped<IProductService, ProductService1>());
+builder.Services.TryAddEnumerable(ServiceDescriptor.Scoped<IProductService, ProductService2>());
+
+public ProductController(IEnumerable<IProductService> services)
+{
+    _services = services;
+}
+
+foreach (var service in _services)
+{
+    service.GetProducts();
+}
+
+we can access services by _services.First, _services.Last.
+
+IServiceProvider
+
+we have
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+
+we access like this
+var service = serviceProvider.GetRequiredService<IOrderService>();
+
+This is the normal approach
+
+public ProductController(IProductService productService)
+{
+    _productService = productService;
+}
+
+IServiceProvider is used when we need to get a service dynamically/manually from DI, rather than having ASP.NET Core inject that service directly.
+
+if we have 3 implementations for one interface, such as sending notification using email, message, and push notification
+now if we register the services using IEnumerable, and call them inside a for loop using GetServices we can call all the 3 services
+
+builder.Services.AddScoped<INotificationService, EmailNotificationService>();
+builder.Services.AddScoped<INotificationService, MessageNotificationService>();
+builder.Services.AddScoped<INotificationService, PushNotificationService>();
+
+public NotificationController(IEnumerable<INotificationService> notificationServices)
+{
+    _notificationServices = notificationServices;
+}
+
+foreach (var service in _notificationServices)
+{
+    service.Send("Your order has been shipped");
+}
+
+We can also use
+var services = serviceProvider.GetServices<INotificationService>();
+
+foreach (var service in services)
+{
+    service.Send("Your order has been shipped");
+}
+
+Generic Services
+Generic services are useful when the same logic applies to many types.
+
+List<T> is a generic class
+T means some type will be provided later. T is generic type parameter. T is a placeholder
+List<Product>
+
+builder.Services.AddScoped(typeof(IGenericService<>), typeof(GenericService<>));
+in normal services registration the types/services are fixed
+IGenericService<> is a template
+but in generic services the type are yet to fill. T is not choosen. so we write typeof.
+here whenever a controller asks for IGenericServices of a type it gives(the type the controller puts in the < >) GenericService of the type it contains at that time
+
+public class Repository<T> where T : class
+T must be a reference type/class means a file not int, string
+
+ActivatorUtilities
+
+This is the class provided by Microsoft. It contains helper methods for creating objects using DI.
+
+ActivatorUtilities is used to create an instance of a service without registering the service in the DI.
+It creates an object while allowing constructor parameters to be obtained from Dependency Injection.
+
+this is a service
+
+public class EmailService
+{
+    private readonly AppDbContext _context;
+
+    public EmailService(AppDbContext context)
+    {
+        _context = context;
+    }
+}
+
+we create instance of EmailService in other controllers
+
+var emailService = ActivatorUtilities.CreateInstance<EmailService>(serviceProvider);
+emailService gets the 
+
+Creates a ProductService object, and gets its dependencies from serviceProvider
+serviceProvider represents the DI container/service provider.
+It can find registered services such as:
+AppDbContext
+IApplicationLogger
+IConfiguration
+ProductService
+
+we can add our own parameters which is not a registered DI service.
+ActivatorUtilities.CreateInstance is transient lifetime
+
+GetServiceOrCreateInstance
+
+CreateFactory
+It runs once and stores the preparation to create an instance in a variable
+when we want to create the instance we use that variable.
+for every request it does not need to look the DI and start the preparation.
