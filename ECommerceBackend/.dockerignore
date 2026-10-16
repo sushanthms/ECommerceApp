@@ -1,0 +1,6 @@
+bin/
+obj/
+.vs/
+*.user
+wwwroot/images/
+wwwroot/banners/

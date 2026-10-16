@@ -37,5 +37,15 @@ namespace ECommerceBackend.Controllers
                 user = User.Identity?.Name
             });
         }
+
+        [HttpGet("ip")]
+        public IActionResult Ip()
+        {
+            return Ok(new
+            {
+                remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                forwardedFor = Request.Headers["X-Forwarded-For"].ToString()
+            });
+        }
     }
 }

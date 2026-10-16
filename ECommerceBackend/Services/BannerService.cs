@@ -1,17 +1,18 @@
 ﻿using ECommerceBackend.Data;
 using ECommerceBackend.Models;
+using ECommerceBackend.Services.Caching;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using System.Text.Json;
 
 namespace ECommerceBackend.Services
 {
     public class BannerService
     {
         private readonly AppDbContext _context;
-        private readonly IMemoryCache _cache;
+        private readonly ICacheService _cache;
         private const string BannersCacheKey = "banners";
 
-        public BannerService(AppDbContext context, IMemoryCache cache)
+        public BannerService(AppDbContext context, ICacheService cache)
         {
             _context = context;
             _cache = cache;
@@ -19,16 +20,17 @@ namespace ECommerceBackend.Services
 
         public async Task<List<Banner>> GetBannersAsync()
         {
-            if (_cache.TryGetValue(BannersCacheKey, out List<Banner>? cached))
+            var cached = await _cache.GetStringAsync(BannersCacheKey);
+            if (cached is not null)
             {
-                return cached!;
+                var fromCache = JsonSerializer.Deserialize<List<Banner>>(cached);
+                if (fromCache is not null)
+                    return fromCache;
             }
 
-            var banners = await _context.Banners
-                .AsNoTracking()
-                .ToListAsync();
+            var banners = await _context.Banners.AsNoTracking().ToListAsync();
 
-            _cache.Set(BannersCacheKey, banners, TimeSpan.FromMinutes(10));
+            await _cache.SetStringAsync(BannersCacheKey, JsonSerializer.Serialize(banners), TimeSpan.FromMinutes(10));
 
             return banners;
         }
@@ -68,7 +70,7 @@ namespace ECommerceBackend.Services
             _context.Banners.Add(banner);
 
             await _context.SaveChangesAsync();
-            _cache.Remove(BannersCacheKey);
+            await _cache.RemoveAsync(BannersCacheKey);
 
             return banner;
         }
@@ -111,7 +113,7 @@ namespace ECommerceBackend.Services
             }
 
             await _context.SaveChangesAsync();
-            _cache.Remove(BannersCacheKey);
+            await _cache.RemoveAsync(BannersCacheKey);
 
             return banner;
         }
@@ -130,7 +132,7 @@ namespace ECommerceBackend.Services
 
             _context.Banners.Remove(banner);
             await _context.SaveChangesAsync();
-            _cache.Remove(BannersCacheKey);
+            await _cache.RemoveAsync(BannersCacheKey);
 
             if (File.Exists(oldPath)) File.Delete(oldPath);
 

@@ -1,0 +1,47 @@
+services:
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+
+  api:
+    build: ./ECommerceBackend
+    depends_on:
+      - redis
+      - sqlserver
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ECommerceDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
+      Redis__ConnectionString: "redis:6379,connectTimeout=2000,asyncTimeout=2000"
+      Jwt__Key: ${JWT_KEY}
+      Admin__Email: ${ADMIN_EMAIL}
+      Admin__Password: ${ADMIN_PASSWORD}
+      Razorpay__KeyId: ${RAZORPAY_KEY_ID}
+      Razorpay__KeySecret: ${RAZORPAY_KEY_SECRET}
+    volumes:
+      - productimages:/app/wwwroot/images
+      - bannerimages:/app/wwwroot/banners
+    ports:
+      - "5288:8080"
+
+  frontend:
+    build: ./ECommerceFrontend
+    depends_on:
+      - api
+    ports:
+      - "5173:5173"
+
+volumes:
+  sqldata:
+  productimages:
+  bannerimages:

@@ -1,0 +1,31 @@
+# Build output
+bin/
+obj/
+publish/
+TestResults/
+
+# Visual Studio and user-specific files
+.vs/
+*.user
+*.suo
+
+# Local configuration and secrets
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+# Runtime output
+Logs/
+*.log
+
+# Local databases, backups, and certificates
+*.db
+*.sqlite
+*.sqlite3
+*.mdf
+*.ldf
+*.bak
+*.pfx
+*.p12
+*.pem
+*.key

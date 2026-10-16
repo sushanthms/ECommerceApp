@@ -18,6 +18,9 @@
 # =========================
 **/node_modules/
 **/dist/
+**/dist-ssr/
+**/coverage/
+**/.vite/
 
 # =========================
 # Environment / Secrets
@@ -25,16 +28,32 @@
 .env
 .env.*
 !.env.example
+**/secrets.json
 
 # =========================
 # ASP.NET Development config
 # =========================
 appsettings.Development.json
+**/publish/
+**/TestResults/
+**/Logs/
 
 # =========================
 # Logs
 # =========================
 *.log
+
+# Local databases, backups, and signing certificates
+*.db
+*.sqlite
+*.sqlite3
+*.mdf
+*.ldf
+*.bak
+*.pfx
+*.p12
+*.pem
+*.key
 
 # =========================
 # OS files

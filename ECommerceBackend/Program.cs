@@ -3,6 +3,7 @@ using ECommerceBackend.Data;
 using ECommerceBackend.Hubs;
 using ECommerceBackend.Logging;
 using ECommerceBackend.Services;
+using ECommerceBackend.Services.Caching;
 using ECommerceBackend.Validators;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -150,9 +151,17 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration["Redis:ConnectionString"];
+    options.InstanceName = "ecommerce:";
+});
+
+builder.Services.AddScoped<ICacheService, CacheService>();
+
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor;
 });
 
 // This takes everything we've configured and creates the actual ASP.NET Core application.
@@ -172,6 +181,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseForwardedHeaders();
+
 app.UseHttpsRedirection();// If an HTTP request should use HTTPS, it redirects it to HTTPS. 
 app.UseStaticFiles();// ASP.NET Core can serve static files directly to the browser.
 app.UseMiddleware<RequestLoggingMiddleware>();

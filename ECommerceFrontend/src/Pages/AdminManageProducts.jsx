@@ -251,8 +251,8 @@ const handlePageChange = (pageNumber) => {
         setFormError("");
         setFormSuccess("");
 
-        if (!name || !price || !stock) {
-            setFormError("Name, Price, and Stock are required.");
+        if (!sku.trim() || !name || !price || !stock) {
+            setFormError("SKU, Name, Price, and Stock are required.");
             return;
         }
 
@@ -298,7 +298,7 @@ const handlePageChange = (pageNumber) => {
         } catch (error) {
 
             console.error("Save product error:", error);
-            setFormError(error.response?.data?.message || "Failed to save product.");
+            setFormError(error.response?.data?.message || Object.values(error.response?.data?.errors || {})[0]?.[0] ||"Failed to save product.");
         }
     };
 
@@ -419,6 +419,11 @@ const handlePageChange = (pageNumber) => {
                                     <h3>{editingId ? "Edit Product" : "New Product"}</h3>   
 
                                     <div className="form-row">
+
+                                        <div className="form-item">
+                                            <label>SKU</label>
+                                            <input type="text" value={sku} onChange={(e) => setSku(e.target.value)} placeholder="Unique product code"/>
+                                        </div>
 
                                         <div className="form-item">
                                             <label>Name</label>

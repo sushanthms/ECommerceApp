@@ -1,0 +1,3 @@
+frontend is accessed by nginx by mount
+we run SQL Server in a container, we add the data from the database to a container, it is called as volume.
+the data added through the website running in the container is not visible to the website running in localhost

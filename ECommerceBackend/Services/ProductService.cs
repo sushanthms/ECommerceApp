@@ -6,8 +6,9 @@ using ECommerceBackend.Logging;
 using ECommerceBackend.Models;
 using ECommerceBackend.Models.DTOs;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using System.Globalization;
+using System.Text.Json;
+using ECommerceBackend.Services.Caching;
 
 namespace ECommerceBackend.Services
 {
@@ -15,11 +16,21 @@ namespace ECommerceBackend.Services
     {
         private readonly AppDbContext _context;
         private readonly IApplicationLogger _logger;
-        private readonly IMemoryCache _cache;
-
+        private readonly ICacheService _cache;
         private const string CategoriesCacheKey = "product_categories";
+        private const string HomeProductsKeyPrefix = "home_products";
+        private const string HomeVersionKey = "home_products_version";// home_products_version is the name of the key
 
-        public ProductService(AppDbContext context, IApplicationLogger logger, IMemoryCache cache)
+        private async Task<string> GetHomeVersionAsync()
+        {
+            return await _cache.GetStringAsync(HomeVersionKey) ?? "0";// it returns value inside home_products_version if value is not there inside home_products_version then it gives 0 as value
+        }
+        private async Task UpdateHomeProductsVersionAsync()
+        {
+            // setstringasync parameter is the way of writitng, key, value, expiration time
+            await _cache.SetStringAsync(HomeVersionKey, DateTime.UtcNow.Ticks.ToString(), TimeSpan.FromDays(1));
+        }
+        public ProductService(AppDbContext context, IApplicationLogger logger, ICacheService cache)
         {
             _context = context;
             _logger = logger;
@@ -265,7 +276,8 @@ namespace ECommerceBackend.Services
             _context.Products.Add(product);
 
             await _context.SaveChangesAsync();
-            _cache.Remove(CategoriesCacheKey);
+            await _cache.RemoveAsync(CategoriesCacheKey);
+            await UpdateHomeProductsVersionAsync();
             await _logger.LogMessageAsync($"Product added - ProductId: {product.Id}, SKU: {product.SKU}");
             return (product, null);
         }
@@ -307,7 +319,8 @@ namespace ECommerceBackend.Services
             product.Category = dto.Category ?? string.Empty;
 
             await _context.SaveChangesAsync();
-            _cache.Remove(CategoriesCacheKey);
+            await _cache.RemoveAsync(CategoriesCacheKey);
+            await UpdateHomeProductsVersionAsync();
             await _logger.LogMessageAsync($"Product updated - ProductId: {id}, SKU: {product.SKU}");
             return (product, null, false);
         }
@@ -533,8 +546,8 @@ namespace ECommerceBackend.Services
                 try { File.Delete(path); } catch { }
             }
 
-            _cache.Remove(CategoriesCacheKey);
-
+            await _cache.RemoveAsync(CategoriesCacheKey);
+            await UpdateHomeProductsVersionAsync();
             return (added, updated);
         }
 
@@ -550,7 +563,8 @@ namespace ECommerceBackend.Services
             product.IsDeleted = true;
 
             await _context.SaveChangesAsync();
-            _cache.Remove(CategoriesCacheKey);
+            await _cache.RemoveAsync(CategoriesCacheKey);
+            await UpdateHomeProductsVersionAsync();
             await _logger.LogMessageAsync($"Product hidden - ProductId: {id}, SKU: {product.SKU}");
             return true;
         }
@@ -567,7 +581,8 @@ namespace ECommerceBackend.Services
             product.IsDeleted = false;
 
             await _context.SaveChangesAsync();
-            _cache.Remove(CategoriesCacheKey);
+            await _cache.RemoveAsync(CategoriesCacheKey);
+            await UpdateHomeProductsVersionAsync();
             await _logger.LogMessageAsync($"Product restored - ProductId: {id}, SKU: {product.SKU}");
             return true;
         }
@@ -600,7 +615,8 @@ namespace ECommerceBackend.Services
 
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
-            _cache.Remove(CategoriesCacheKey);
+            await _cache.RemoveAsync(CategoriesCacheKey);
+            await UpdateHomeProductsVersionAsync();
 
             foreach (var path in filePaths)
             {
@@ -612,13 +628,21 @@ namespace ECommerceBackend.Services
             return (true, null, false);
         }
 
+
+
         public async Task<List<string>> GetCategoriesAsync()
         {
-            if (_cache.TryGetValue(CategoriesCacheKey, out List<string>? cached))
+            // Tryng to get categories from Redis
+            var cached = await _cache.GetStringAsync(CategoriesCacheKey);
+
+            if (cached is not null)
             {
-                return cached!;
+                await _logger.LogMessageAsync("Redis cache read success");
+
+                return JsonSerializer.Deserialize<List<string>>(cached)?? new List<string>();
             }
 
+            // If Redis has no cached data, fetching from SQL Server
             var categories = await _context.Products
                 .AsNoTracking()
                 .Where(p => !p.IsDeleted && !string.IsNullOrEmpty(p.Category))
@@ -627,7 +651,10 @@ namespace ECommerceBackend.Services
                 .OrderBy(c => c)
                 .ToListAsync();
 
-            _cache.Set(CategoriesCacheKey, categories, TimeSpan.FromMinutes(10));
+            // Trying to store the result in Redis for 10 minutes
+            await _cache.SetStringAsync(CategoriesCacheKey, JsonSerializer.Serialize(categories), TimeSpan.FromMinutes(10));
+
+            await _logger.LogMessageAsync("Categories retrieved from SQL Server");
 
             return categories;
         }
@@ -716,6 +743,8 @@ namespace ECommerceBackend.Services
                 throw;
             }
 
+            await UpdateHomeProductsVersionAsync();
+
             await _logger.LogMessageAsync($"Product images uploaded - ProductId: {id}, ImageCount: {uploadedImages.Count}");
             return (true, null, uploadedImages);
         }
@@ -725,6 +754,17 @@ namespace ECommerceBackend.Services
             if (pageSize < 1 || pageSize > 100)
             {
                 pageSize = 20;
+            }
+
+            var version = await GetHomeVersionAsync();// for the first person who is suign the home page wont get cache from redis, for another person who is using the home page gets the key because first person visit has set the cache in the redis
+            var key = $"{HomeProductsKeyPrefix}:{version}:{lastId?.ToString() ?? "start"}:{pageSize}";
+
+            var cached = await _cache.GetStringAsync(key);
+
+            if (cached is not null)
+            {
+                var fromCache = JsonSerializer.Deserialize<List<ProductListDto>>(cached);
+                if (fromCache is not null) return fromCache;
             }
 
             var query = _context.Products
@@ -756,6 +796,8 @@ namespace ECommerceBackend.Services
                         .ToList()
                 })
                 .ToListAsync();
+
+            await _cache.SetStringAsync(key, JsonSerializer.Serialize(products), TimeSpan.FromSeconds(60));
 
             return products;
         }
