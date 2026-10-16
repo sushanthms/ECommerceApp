@@ -1,3 +1,12 @@
 frontend is accessed by nginx by mount
 we run SQL Server in a container, we add the data from the database to a container, it is called as volume.
 the data added through the website running in the container is not visible to the website running in localhost
+
+test: the command to run inside the container.
+$$MSSQL_SA_PASSWORD has two dollar signs so Compose passes a literal $MSSQL_SA_PASSWORD to the container’s shell, which reads the password from the container’s own environment.
+This keeps the password out of the file.
+|| exit 1: makes any failure count as “unhealthy”.
+interval: 10s: run the test every 10 seconds.
+timeout: 5s: a single try that takes longer than this counts as failed.
+retries: 10: after 10 failures in a row the container is marked unhealthy.
+start_period: 30s: failures during the first 30 seconds are not counted, because startup is slow.

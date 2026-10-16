@@ -1,0 +1,101 @@
+Doctype tells the browser the webpage uses modern html, HTML5
+! comes from SGML, Standard Generalized Markup Language. It is the older markup meta-language that HTML was originally built on top of.
+
+A webpage is called a "document" because the web was originally built to distribute and link actual documents (research papers),
+and even though pages today are highly interactive apps, the browser still internally represents every page as a structured tree of content,
+it is named the Document Object Model, which is exactly why JavaScript refers to the whole page as document
+
+metadata tag
+
+name="viewport" we are going to configure the viewing page, the page that is going to display.
+
+content has the settings for the name, viewport
+
+width=device-width this tells the webpage to take width as the device width, height depends on the content, this is for webpage not containers
+
+initial-scale=1.0 means the initial zoom level is 100 percent
+
+h1 h means heading
+
+href hypertext reference
+# means goes to top of the page
+
+aside means content that is related to the main content but is somewhat separate from it.
+
+* selects all the elements.
+default behaviour is content-box, 
+margin is space between the elements outside
+
+content-box
+
+width and height apply only to the content. Padding and border are added extra, on top of that(box grows)
+width: 200px;
+  padding: 20px;
+  border: 5px
+Total rendered width = content(200) + padding(20+20) + border(5+5) = 250px
+
+border-box
+
+width and height include the padding and border inside them. Nothing gets added — the content area just shrinks to fit.
+width: 200px;
+  padding: 20px;
+  border: 5px
+Total rendered width = 200px, box is 200px contents inside the box shrink to adjust with the padding. box dont become big.
+Content area shrinks to: 200 − padding(20+20) − border(5+5) = 150px
+
+font-family: Arial, sans-serif; if Arial is not availabe then it uses sans-serif
+
+in header
+padding makes how much space should be there between the content and the edge of the header.
+
+dispaly:flex makes a Flexbox container
+justify-content: space-between; pushes h1 to far left, nav to far right
+Header has 2 direct children, <h1>Web Page</h1> and <nav>...</nav>
+
+<div class="page-layout"> has two direct children, it makes aside and main display on two ends
+
+flex:1 takes the remaining space, here aside takes 220px
+
+display: block makes an element behave as a block-level box — it takes up the full available width of its parent,
+and forces a line break before and after it (so the next element starts on a new line below it, not beside it).
+
+gap is space between flex items
+
+transition is written inside aside because we want the browser to know in advance that changes to aside should be done when cursor is kept on it.
+when cursor is removed, aside a goes it its original state
+
+
+App.jsx is the parent of Header and Sidebar
+useState is used to remember the state 
+menuOpen stores true or false
+
+App gives the Header setMenuOpen function.
+
+<Header setMenuOpen={setMenuOpen} />
+             
+first setMenuOpen is the property name(variable)
+
+<aside className={menuOpen ? "sidebar open" : "sidebar close"}>
+
+if menuOpen is true className become sidebar open, if menuOpen is trfalseue className become sidebar close
+
+width: 220px and display: block are already the default state of .sidebar on its own — asides are display: block by default anyway, and width 220px is already set.
+So .sidebar.open was never really doing anything new — it was just re-stating values that were already true by default.
+
+documentrepresents the whole webpage
+document.documentElement this means the <html> tag.  fixed way to grab it.
+.setAttribute(name, value)this is a built-in browser function that adds or updates an HTML attribute on an element.
+root is the default value, when data-theme becomes dark theme, it overrides the styles written inside root
+
+.sidebar a {
+    display: block;
+    padding: 10px;
+    color: #333;
+    text-decoration: none;
+    border-radius: 6px;
+    color: var(--text-color);
+    transition: 0.2s;
+    
+}
+
+CSS reads the styles from top to bottum, which style satisfies for the current condition that style is applied

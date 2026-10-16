@@ -13,12 +13,20 @@ services:
       - "1433:1433"
     volumes:
       - sqldata:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   api:
     build: ./ECommerceBackend
     depends_on:
-      - redis
-      - sqlserver
+      redis:
+        condition: service_started
+      sqlserver:
+        condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ECommerceDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
@@ -33,13 +41,6 @@ services:
       - bannerimages:/app/wwwroot/banners
     ports:
       - "5288:8080"
-
-  frontend:
-    build: ./ECommerceFrontend
-    depends_on:
-      - api
-    ports:
-      - "5173:5173"
 
 volumes:
   sqldata:
