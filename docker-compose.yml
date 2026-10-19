@@ -1,9 +1,7 @@
 services:
   redis:
     image: redis:7
-    ports:
-      - "6379:6379"
-
+    
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2025-latest
     environment:
@@ -29,6 +27,9 @@ services:
         condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      LoggingSettings__Provider: File
+      Jwt__Issuer: ECommerceBackend
+      Jwt__Audience: ECommerceFrontend
       ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ECommerceDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
       Redis__ConnectionString: "redis:6379,connectTimeout=2000,asyncTimeout=2000"
       Jwt__Key: ${JWT_KEY}
@@ -39,8 +40,15 @@ services:
     volumes:
       - productimages:/app/wwwroot/images
       - bannerimages:/app/wwwroot/banners
+
+  web:
+    build:
+      context: .
+      dockerfile: Nginx/Dockerfile
+    depends_on:
+      - api
     ports:
-      - "5288:8080"
+      - "8081:80"
 
 volumes:
   sqldata:
