@@ -90,7 +90,6 @@ public class CacheService : ICacheService
         _redisPausedUntil = DateTime.UtcNow.Add(RedisPauseDuration);
     }
 
-
     private async Task<bool> ProcessPendingInvalidationsAsync()
     {
         foreach (var key in PendingInvalidations.Keys)

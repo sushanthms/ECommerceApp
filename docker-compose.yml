@@ -48,7 +48,10 @@ services:
     depends_on:
       - api
     ports:
-      - "8081:80"
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - ./Nginx/certs:/etc/nginx/certs:ro
 
 volumes:
   sqldata:

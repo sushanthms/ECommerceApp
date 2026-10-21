@@ -61,6 +61,8 @@ appsettings.Development.json
 .DS_Store
 Thumbs.db
 
+Nginx/certs/
+
 # Personal learning notes
 Backend.txt
 ECommerceFrontend/Frontend.txt
