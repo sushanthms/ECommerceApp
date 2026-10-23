@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import api from "../Services/api.js";
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
+import RecommendedProducts from "../Components/RecommendedProducts.jsx";
 import { cancelOrder } from "../Services/OrderService";
 import "./UserOrderDetails.css";
 
@@ -213,6 +214,10 @@ const handleSaveAddress = async () => {
                         <span className={`order-details-status ${order.status.toLowerCase()}`}>{order.status}</span>
                     </div>
 
+                    <div className="order-actions">
+                        <Link to="/orders" className="back-orders-button">Back to Orders</Link>
+                        {canModifyOrder && (<button className="cancel-order-button" onClick={handleCancelOrder}>Cancel Order</button>)}</div>
+
                     <div className="order-details-card">
                         <h3>Items in this order</h3>
 
@@ -253,7 +258,7 @@ const handleSaveAddress = async () => {
                     </div>
 
                     {canModifyOrder && !editingAddress && (
-                        <button onClick={openEditAddress}>Change Address</button>
+                        <button className="change-orders-address" onClick={openEditAddress}>Change Address</button>
                     )}
 
                     {editingAddress && (
@@ -330,16 +335,12 @@ const handleSaveAddress = async () => {
                         </div>
                     </div>
 
-                    <Link to="/orders" className="back-orders-button">Back to Orders</Link>
+                    {orderItems.length > 0 && (<RecommendedProducts productId={orderItems[0].productId}title="Customers also bought"/>)}
 
                     {order.paymentMethod === "Online Payment" && order.paymentStatus === "Pending" && (
                         <button className="place-order-btn" onClick={handleCompletePayment} disabled={paying}>
                             {paying ? "Processing..." : "Complete Payment"}
                         </button>
-                    )}
-
-                    {canModifyOrder && (
-                        <button className="cancel-order-button" onClick={handleCancelOrder}>Cancel Order</button>
                     )}
 
                 </div>

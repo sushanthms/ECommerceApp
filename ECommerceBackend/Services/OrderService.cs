@@ -10,6 +10,14 @@ namespace ECommerceBackend.Services
     {
         private readonly AppDbContext _context;
         private readonly IApplicationLogger _logger;
+        private static readonly Dictionary<string, string[]> AllowedTransitions = new()// static means one shared copy for the whole app
+        {
+            ["Pending"] = new[] { "Processing", "Cancelled" },
+            ["Processing"] = new[] { "Shipped", "Cancelled" },
+            ["Shipped"] = new[] { "Delivered" },
+            ["Delivered"] = Array.Empty<string>(),
+            ["Cancelled"] = Array.Empty<string>()
+        };
 
         public OrderService(AppDbContext context, IApplicationLogger logger)
         {
@@ -117,13 +125,24 @@ namespace ECommerceBackend.Services
             return new { totalOrders, pendingOrders, totalSales, recentOrders };
         }
 
-        public async Task<List<object>> GetUserOrdersAsync(int userId)
+        public async Task<(List<object> Orders, int TotalOrders)> GetUserOrdersAsync(int userId, int page, int pageSize)
         {
             await _logger.LogMessageAsync($"User requested their orders - UserId: {userId}");
 
-            var orders = await _context.Orders
-                .Where(o => o.UserId == userId)
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 50) pageSize = 10;
+
+            var query = _context.Orders
+                .AsNoTracking()
+                .Where(o => o.UserId == userId);
+
+            var totalOrders = await query.CountAsync();
+
+            var orders = await query
                 .OrderByDescending(o => o.OrderDate)
+                .ThenByDescending(o => o.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(o => new
                 {
                     o.Id,
@@ -156,7 +175,7 @@ namespace ECommerceBackend.Services
 
             await _logger.LogMessageAsync($"User orders retrieved successfully - UserId: {userId}, OrderCount: {orders.Count}");
 
-            return orders;
+            return (orders, totalOrders);
         }
 
         public async Task<object?> GetUserOrderDetailsAsync(int userId, int id)
@@ -311,6 +330,13 @@ namespace ECommerceBackend.Services
                 return false;
             }
 
+            // if there is a key called order.Status in the AllowedTransitions dictionary it gives the values of that key and stores in the variable called as next
+            if (!AllowedTransitions.TryGetValue(order.Status, out var next) || !next.Contains(status))
+            {
+                await _logger.LogMessageAsync($"Order status update failed - invalid transition {order.Status} to {status}. OrderId: {id}", "Warning");
+                return false;
+            }
+
             if (order.Status == "Cancelled")
             {
                 await _logger.LogMessageAsync($"Order status update failed - Cancelled order cannot be changed. OrderId: {id}", "Warning");
@@ -350,7 +376,7 @@ namespace ECommerceBackend.Services
             }
 
             var rows = await _context.Orders
-                .Where(o => o.Id == id && o.Status != "Cancelled")
+                .Where(o => o.Id == id && o.Status == order.Status)
                 .ExecuteUpdateAsync(s => s// this method does not need save changes to database
                     .SetProperty(o => o.Status, status)// changes the order status
                     .SetProperty(o => o.PaymentStatus,// changes the payment status

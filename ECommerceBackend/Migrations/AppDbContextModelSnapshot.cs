@@ -97,7 +97,7 @@ namespace ECommerceBackend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ApplicationLogs", (string)null);
+                    b.ToTable("ApplicationLogs");
                 });
 
             modelBuilder.Entity("ECommerceBackend.Models.Address", b =>
@@ -155,7 +155,7 @@ namespace ECommerceBackend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Addresses", (string)null);
+                    b.ToTable("Addresses");
                 });
 
             modelBuilder.Entity("ECommerceBackend.Models.Banner", b =>
@@ -188,7 +188,7 @@ namespace ECommerceBackend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Banners", (string)null);
+                    b.ToTable("Banners");
                 });
 
             modelBuilder.Entity("ECommerceBackend.Models.CartItem", b =>
@@ -215,7 +215,7 @@ namespace ECommerceBackend.Migrations
                     b.HasIndex("UserId", "ProductId")
                         .IsUnique();
 
-                    b.ToTable("CartItems", (string)null);
+                    b.ToTable("CartItems");
                 });
 
             modelBuilder.Entity("ECommerceBackend.Models.Notification", b =>
@@ -247,7 +247,7 @@ namespace ECommerceBackend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("ECommerceBackend.Models.Order", b =>
@@ -308,7 +308,7 @@ namespace ECommerceBackend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders", (string)null);
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("ECommerceBackend.Models.OrderItem", b =>
@@ -338,7 +338,7 @@ namespace ECommerceBackend.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("OrderItems", (string)null);
+                    b.ToTable("OrderItems");
                 });
 
             modelBuilder.Entity("ECommerceBackend.Models.Payment", b =>
@@ -388,7 +388,7 @@ namespace ECommerceBackend.Migrations
                         .IsUnique()
                         .HasFilter("[OrderId] IS NOT NULL");
 
-                    b.ToTable("Payments", (string)null);
+                    b.ToTable("Payments");
                 });
 
             modelBuilder.Entity("ECommerceBackend.Models.Product", b =>
@@ -434,7 +434,7 @@ namespace ECommerceBackend.Migrations
 
                     b.HasIndex("Category", "IsDeleted", "Id");
 
-                    b.ToTable("Products", (string)null);
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("ECommerceBackend.Models.ProductImage", b =>
@@ -456,7 +456,7 @@ namespace ECommerceBackend.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductImages", (string)null);
+                    b.ToTable("ProductImages");
                 });
 
             modelBuilder.Entity("ECommerceBackend.Models.RefreshToken", b =>
@@ -494,7 +494,7 @@ namespace ECommerceBackend.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens", (string)null);
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("ECommerceBackend.Models.Review", b =>
@@ -528,7 +528,7 @@ namespace ECommerceBackend.Migrations
                     b.HasIndex("UserId", "ProductId")
                         .IsUnique();
 
-                    b.ToTable("Reviews", (string)null);
+                    b.ToTable("Reviews");
                 });
 
             modelBuilder.Entity("ECommerceBackend.Models.User", b =>
@@ -564,7 +564,34 @@ namespace ECommerceBackend.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("ECommerceBackend.Models.WishlistItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("UserId", "ProductId")
+                        .IsUnique();
+
+                    b.ToTable("WishlistItems");
                 });
 
             modelBuilder.Entity("ECommerceBackend.Models.Address", b =>
@@ -671,6 +698,23 @@ namespace ECommerceBackend.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("ECommerceBackend.Models.WishlistItem", b =>
+                {
+                    b.HasOne("ECommerceBackend.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ECommerceBackend.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("ECommerceBackend.Models.Order", b =>

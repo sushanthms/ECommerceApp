@@ -55,6 +55,7 @@
     border: 1px solid var(--border-color);
     border-radius: 10px;
     padding: 18px;
+    margin-top: 10px;
     margin-bottom: 15px;
     box-shadow: var(--shadow-md);
 }
@@ -155,14 +156,18 @@
 }
 
 .form-group button,
-.order-details-page > button {
+.change-orders-address {
     padding: 9px 15px;
-    margin: 5px;
+    margin: 7px;
     border: none;
     border-radius: 5px;
     background: var(--button-color);
     color: white;
     cursor: pointer;
+}
+
+.change-orders-address:hover {
+    background: var(--button-hover);
 }
 
 .form-group .error-message {
@@ -206,14 +211,38 @@
     color: var(--button-color);
 }
 
+.order-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.cancel-order-button {
+    padding: 10px 15px;
+    margin: 0;
+    border: none;
+    border-radius: 6px;
+    background-color: var(--button-color);
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.cancel-order-button:hover {
+    background-color: var(--button-hover);
+}
+
 .back-orders-button {
-    display: inline-block;
-    padding: 8px 14px;
+    padding: 10px 15px;
     background: var(--button-color);
     color: white;
     text-decoration: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 15px;
 }
 
 .back-orders-button:hover {
@@ -239,21 +268,6 @@
 .place-order-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-}
-
-.cancel-order-button {
-    padding: 9px 16px;
-    margin-left: 10px;
-    border: none;
-    border-radius: 6px;
-    background-color: var(--button-color);
-    color: white;
-    cursor: pointer;
-    font-size: 14px;
-}
-
-.cancel-order-button:hover {
-    background-color: var(--button-hover);
 }
 
 @media (max-width: 768px) {

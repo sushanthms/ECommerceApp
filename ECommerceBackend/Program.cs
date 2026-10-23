@@ -47,6 +47,7 @@ builder.Services.AddScoped<PaymentService>();
 builder.Services.AddScoped<PaymentWebhookService>();
 builder.Services.AddScoped<ProfileService>();
 builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<WishlistService>();
 builder.Services.AddControllers();
 builder.Services.AddMemoryCache();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -161,8 +162,8 @@ builder.Services.AddScoped<ICacheService, CacheService>();
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor;
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Add(System.Net.IPNetwork.Parse("172.16.0.0/12"));// it checks did the ip address that is sent here came from nginx(172.16.0.0/12)
 });
 
 // This takes everything we've configured and creates the actual ASP.NET Core application.

@@ -13,6 +13,10 @@ function UserOrders() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+
     const [payingOrderId, setPayingOrderId] = useState(null);
 
 const handleCancelOrder = async (id) => {
@@ -104,25 +108,29 @@ const handleCompletePayment = async (orderId) => {
     }
 };
 
-    useEffect(() => {
-        const fetchOrders = async () => {
-            try {
+    const loadOrders = async (pageNumber) => {
+    try {
+        const response = await api.get("/Order/UserOrders", {
+            params: { page: pageNumber, pageSize: 10 }
+        });
 
-             // const result = window.confirm("Continue?");
-             // console.log(result);
+        setOrders(prev => pageNumber === 1 ? response.data.orders : [...prev, ...response.data.orders]);
+        setHasMore(response.data.hasMore);
+        setPage(pageNumber);
+    } catch (error) {
+        console.error("Error fetching orders:", error);
+    }
+};
 
-                const response = await api.get("/Order/UserOrders");
+useEffect(() => {
+    loadOrders(1).finally(() => setLoading(false));
+}, []);
 
-                setOrders(response.data);
-            } catch (error) {
-                console.error("Error fetching orders:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchOrders();
-    }, []);
+const handleLoadMore = async () => {
+    setLoadingMore(true);
+    await loadOrders(page + 1);
+    setLoadingMore(false);
+};
 
     return (
         <>
@@ -146,6 +154,7 @@ const handleCompletePayment = async (orderId) => {
                                     <p>You have not placed any orders yet.</p>
                                 </div>
                             ) : (
+                                <>
                                 <div className="orders-list">
 
                                     {orders.map((order) => {
@@ -228,6 +237,9 @@ const handleCompletePayment = async (orderId) => {
                                     })}
 
                                 </div>
+                                
+                                {hasMore && (<button className="load-more-button" onClick={handleLoadMore} disabled={loadingMore}>{loadingMore ? "Loading..." : "Load More Orders"}</button>)}
+                                </>
                             )}
 
                         </>

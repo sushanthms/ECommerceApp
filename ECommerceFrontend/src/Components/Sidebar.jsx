@@ -30,6 +30,7 @@ function Sidebar() {
                         <li><Link to="/products" className={location.pathname === "/products" ? "active" : ""}>Products</Link></li>
                         <li><Link to="/orders" className={location.pathname === "/orders" ? "active" : ""}>My Orders</Link></li>
                         <li><Link to="/cart" className={location.pathname === "/cart" ? "active" : ""}>My Cart</Link></li>
+                        <li><Link to="/wishlist" className={location.pathname === "/wishlist" ? "active" : ""}>My Wishlist</Link></li>
                         <li><Link to="#">Offers</Link></li>
                         <li><Link to="#">My Profile</Link></li>
                         <li><Link to="#">Settings</Link></li>

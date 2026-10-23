@@ -1,0 +1,72 @@
+.wishlist-page-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.wishlist-page-header h2 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.wishlist-count {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.wishlist-empty {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.wishlist-empty-icon {
+    font-size: 44px;
+    margin-bottom: 12px;
+}
+
+.wishlist-empty p {
+    margin: 0 0 20px;
+    font-size: 15px;
+}
+
+.wishlist-stock {
+    font-size: 13px;
+    margin: 0 0 12px;
+}
+
+.wishlist-stock.in-stock {
+    color: var(--success-color);
+}
+
+.wishlist-stock.out-of-stock {
+    color: var(--error-color);
+}
+
+.search-result-card .wishlist-remove-btn {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--error-color);
+    border-radius: 8px;
+    background-color: transparent;
+    color: var(--error-color);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.search-result-card .wishlist-remove-btn:hover {
+    background-color: var(--error-color);
+    color: #fff;
+}
+
+.search-result-card.is-sold-out .search-result-image {
+    opacity: 0.55;
+}

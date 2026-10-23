@@ -5,9 +5,11 @@ import { useToast } from "../Context/ToastContext.jsx";
 import { getProductById } from "../Services/ProductService";
 import { addToCart, getCart, updateCartItemQuantity  } from "../Services/CartService";
 import { addReview, getProductReviews, deleteOwnReview } from "../Services/ReviewService";
-import "./ProductDetails.css";
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
+import WishlistButton from "../Components/WishListButton.jsx";
+import RecommendedProducts from "../Components/RecommendedProducts.jsx";
+import "./ProductDetails.css";
 
 function ProductDetails({openLoginPopup}) {
 
@@ -284,7 +286,7 @@ const handleNextImage = () => {
                                 ) : (
                                     <span>📦</span>
                                 )}
-
+                                <WishlistButton productId={product.id} onLoginRequired={() => openLoginPopup()} />
                             </div>
 
                             {images.length > 1 && (
@@ -347,6 +349,7 @@ const handleNextImage = () => {
                             )}
 
                             <button className="buy-btn" disabled={saving} onClick={handleBuyNow}>Buy Now</button>
+
                         </div>
 
                         <div className="delivery-info">
@@ -439,6 +442,7 @@ const handleNextImage = () => {
                                             {loadingMoreReviews ? "Loading..." : `Load More (${totalReviews - reviews.length} more)`}
                                         </button>
                                     )}
+                                    <RecommendedProducts productId={product.id} openLoginPopup={openLoginPopup} />
                                 </>
                             )}
 

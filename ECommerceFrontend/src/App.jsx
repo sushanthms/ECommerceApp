@@ -20,6 +20,7 @@ import AdminNotifications from "./Pages/AdminNotifications.jsx";
 import Community from "./Pages/Community.jsx";
 import UserOrders from "./Pages/UserOrders.jsx";
 import UserOrderDetails from "./Pages/UserOrderDetails.jsx";
+import Wishlist from "./Pages/Wishlist.jsx";
 
 import { NotificationProvider } from "./Context/NotificationContext.jsx";
 import "./style.css";
@@ -60,10 +61,10 @@ const closeRegisterPopup = () => {
     <NotificationProvider >
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<UserHome />} />
+        <Route path="/" element={<UserHome openLoginPopup={openLoginPopup} />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/home" element={ <ProtectedRoute allowedRole="User"> <UserHome /> </ProtectedRoute> } />
+        <Route path="/home" element={ <ProtectedRoute allowedRole="User"> <UserHome openLoginPopup={openLoginPopup} /> </ProtectedRoute> } />
         <Route path="/admin" element={<ProtectedRoute allowedRole="Admin"> <AdminHome /> </ProtectedRoute>} />
         <Route path="/products" element={<Products openLoginPopup={openLoginPopup} />} />
         <Route path="/product/:id" element={<ProductDetails openLoginPopup={openLoginPopup} />} />
@@ -78,6 +79,7 @@ const closeRegisterPopup = () => {
         <Route path="/admin/reviews" element={<ProtectedRoute allowedRole="Admin"><AdminReviews /></ProtectedRoute>}/>
         <Route path="/admin/notifications" element={<ProtectedRoute allowedRole="Admin"><AdminNotifications /></ProtectedRoute>} />
         <Route path="/community" element={<ProtectedRoute allowedRole="User"><Community /></ProtectedRoute>} />
+        <Route path="/wishlist" element={<ProtectedRoute allowedRole="User"><Wishlist /></ProtectedRoute>} />
       </Routes>
 
       {loginPopup && (

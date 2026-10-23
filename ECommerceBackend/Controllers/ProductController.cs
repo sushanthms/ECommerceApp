@@ -304,5 +304,12 @@ namespace ECommerceBackend.Controllers
                 })
             });
         }
+
+        [HttpGet("{id:int}/recommendations")]
+        public async Task<IActionResult> GetRecommendations(int id, int count = 10)
+        {
+            var products = await _productService.GetRecommendationsAsync(id, count);
+            return Ok(products);
+        }
     }
 }

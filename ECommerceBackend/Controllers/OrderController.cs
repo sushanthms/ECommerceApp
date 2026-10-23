@@ -22,12 +22,9 @@ namespace ECommerceBackend.Controllers
 
         private int? GetUserId()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
-            {
-                return null;
-            }
-            return int.Parse(userIdClaim.Value);
+            var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            return int.TryParse(value, out var userId) ? userId : null;
         }
 
         [HttpPost]
@@ -142,7 +139,7 @@ namespace ECommerceBackend.Controllers
 
         [HttpGet("UserOrders")]
         [Authorize(Roles = "User")]
-        public async Task<IActionResult> GetUserOrders()
+        public async Task<IActionResult> GetUserOrders(int page = 1, int pageSize = 10)
         {
             try
             {
@@ -155,9 +152,19 @@ namespace ECommerceBackend.Controllers
                     return Unauthorized();
                 }
 
-                var orders = await _orderService.GetUserOrdersAsync(userId.Value);
+                if (page < 1) page = 1;
+                if (pageSize < 1 || pageSize > 50) pageSize = 10;
 
-                return Ok(orders);
+                var result = await _orderService.GetUserOrdersAsync(userId.Value, page, pageSize);
+
+                return Ok(new
+                {
+                    orders = result.Orders,
+                    page,
+                    pageSize,
+                    totalOrders = result.TotalOrders,
+                    hasMore = page * pageSize < result.TotalOrders
+                });
             }
             catch (Exception ex)
             {

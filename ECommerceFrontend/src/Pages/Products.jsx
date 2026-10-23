@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
 import { getProducts, searchProducts, getCategories } from "../Services/ProductService";
+import WishlistButton from "../Components/WishListButton.jsx";
 
 import "./Products.css";
 
@@ -171,11 +172,9 @@ const handlePageChange = (pageNumber) => {
                                                     loading="lazy"
                                                 />
                                             ) : (
-                                                <span className="product-fallback">
-                                                    📦
-                                                </span>
+                                                <span className="product-fallback">📦</span>
                                             )}
-
+                                            <WishlistButton productId={product.id} onLoginRequired={() => openLoginPopup()} />
                                         </div>
 
                                         <h3>{product.name}</h3>

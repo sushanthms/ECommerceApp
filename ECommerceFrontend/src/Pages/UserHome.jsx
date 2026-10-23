@@ -7,9 +7,11 @@ import Sidebar from "../Components/Sidebar.jsx";
 import { getBanners } from "../Services/BannerService";
 import { searchProducts, getHomeProducts } from "../Services/ProductService";
 
+import WishlistButton from "../Components/WishListButton.jsx";
+
 import "./UserHome.css";
 
-function UserHome() {
+function UserHome({ openLoginPopup }) {
 
     const { user } = useAuth();
 
@@ -218,6 +220,7 @@ useEffect(() => {
                                         ) : (
                                             <span className="product-fallback">📦</span>
                                         )}
+                                        <WishlistButton productId={product.id} onLoginRequired={() => openLoginPopup()} />
                                     </div>
 
                                     <h3>{product.name}</h3>
