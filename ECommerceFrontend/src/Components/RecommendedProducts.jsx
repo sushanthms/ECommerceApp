@@ -10,7 +10,7 @@ function RecommendedProducts({ productId, openLoginPopup, title = "You may also 
 
     useEffect(() => {
         if (!productId) return;
-// making git branch
+// making git branch, trying pull request.
         // if the user moves to another product before the request finishes, the old answer is ignored. Without it, a slow response could overwrite the new product’s row.
         let ignore = false;// avoids setting state from an old request
 
