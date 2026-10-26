@@ -7,7 +7,7 @@ import { addToCart, getCart, updateCartItemQuantity  } from "../Services/CartSer
 import { addReview, getProductReviews, deleteOwnReview } from "../Services/ReviewService";
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
-import WishlistButton from "../Components/WishListButton.jsx";
+import WishlistButton from "../Components/WishlistButton.jsx";
 import RecommendedProducts from "../Components/RecommendedProducts.jsx";
 import "./ProductDetails.css";
 

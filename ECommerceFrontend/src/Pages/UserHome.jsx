@@ -7,7 +7,7 @@ import Sidebar from "../Components/Sidebar.jsx";
 import { getBanners } from "../Services/BannerService";
 import { searchProducts, getHomeProducts } from "../Services/ProductService";
 
-import WishlistButton from "../Components/WishListButton.jsx";
+import WishlistButton from "../Components/WishlistButton.jsx";
 
 import "./UserHome.css";
 

@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
 import { getProducts, searchProducts, getCategories } from "../Services/ProductService";
-import WishlistButton from "../Components/WishListButton.jsx";
+import WishlistButton from "../Components/WishlistButton.jsx";
 
 import "./Products.css";
 
