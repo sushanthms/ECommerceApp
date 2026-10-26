@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getRecommendations } from "../Services/ProductService.js";
-import WishlistButton from "./WishListButton.jsx";
+import WishlistButton from "./WishlistButton.jsx";
 import "./RecommendedProducts.css";
 
 function RecommendedProducts({ productId, openLoginPopup, title = "You may also like" }) {
