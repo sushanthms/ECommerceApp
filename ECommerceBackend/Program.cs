@@ -5,7 +5,7 @@ using ECommerceBackend.Logging;
 using ECommerceBackend.Services;
 using ECommerceBackend.Services.Caching;
 using ECommerceBackend.Validators;
-using FluentValidation;
+using FluentValidation;// helps to write complex validation rules
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -13,8 +13,9 @@ using Microsoft.OpenApi;
 using System.Text;// allows Encoding
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
+using StackExchange.Redis;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args);// args are the words(storing passwords) we write after dotnet run
 
 // puts the SQL Server configuration and connection string into the options object.
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -48,11 +49,12 @@ builder.Services.AddScoped<PaymentWebhookService>();
 builder.Services.AddScoped<ProfileService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<WishlistService>();
+builder.Services.AddScoped<PopularProductsService>();
+builder.Services.AddHostedService<LowStockBackgroundService>();
 builder.Services.AddControllers();
 builder.Services.AddMemoryCache();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
-builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterDtoValidator>();
 builder.Services.AddSignalR();
 
@@ -152,11 +154,20 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Used for storing and retrieving cached data
+// This registers Redis as the storage provider for .NET's IDistributedCache interface.
+// Set, get, remove cached values
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = builder.Configuration["Redis:ConnectionString"];
     options.InstanceName = "ecommerce:";
 });
+
+// Used for directly executing Redis commands, such as incrementing product views
+// we inject IConnectionMulitplexer in other files and use the commands like incrementing counters
+// Increment counters, sorted sets, Redis commands
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+    ConnectionMultiplexer.Connect(builder.Configuration["Redis:ConnectionString"]!));
 
 builder.Services.AddScoped<ICacheService, CacheService>();
 

@@ -4,10 +4,12 @@ import { useAuth } from "../Context/AuthContext.jsx";
 
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
+import PopularProducts from "../Components/PopularProducts.jsx";
+import RecentProducts from "../Components/RecentProducts.jsx";
 import { getBanners } from "../Services/BannerService";
 import { searchProducts, getHomeProducts } from "../Services/ProductService";
 
-import WishlistButton from "../Components/WishlistButton.jsx";
+import WishlistButton from "../Components/WishListButton.jsx";
 
 import "./UserHome.css";
 
@@ -175,7 +177,6 @@ useEffect(() => {
                             </div>
                         </div>
 
-
                         <div className="categories-grid">
 
                             <div className="category-card" onClick={() =>navigate("/products?category=Furniture")}>
@@ -205,6 +206,9 @@ useEffect(() => {
                         </div>
 
                     </div>
+
+                    <RecentProducts />
+                    <PopularProducts openLoginPopup={openLoginPopup} />
 
                     <div className="home-section">
                         <h2>Explore Our Products</h2>

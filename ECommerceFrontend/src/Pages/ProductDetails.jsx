@@ -7,7 +7,7 @@ import { addToCart, getCart, updateCartItemQuantity  } from "../Services/CartSer
 import { addReview, getProductReviews, deleteOwnReview } from "../Services/ReviewService";
 import Header from "../Components/Header.jsx";
 import Sidebar from "../Components/Sidebar.jsx";
-import WishlistButton from "../Components/WishlistButton.jsx";
+import WishlistButton from "../Components/WishListButton.jsx";
 import RecommendedProducts from "../Components/RecommendedProducts.jsx";
 import "./ProductDetails.css";
 
@@ -416,7 +416,7 @@ const handleNextImage = () => {
 
                             </div>
                     ):(
-                        <p>Please <button onClick={() => openLoginPopup()}>login</button> to write a review.</p>
+                        <p className="login-review-message">Please <button onClick={() => openLoginPopup()} className="login-review-btn">login</button> to write a review.</p>
                         )}
 
                             {reviews.length === 0 ? (
@@ -442,12 +442,13 @@ const handleNextImage = () => {
                                             {loadingMoreReviews ? "Loading..." : `Load More (${totalReviews - reviews.length} more)`}
                                         </button>
                                     )}
-                                    <RecommendedProducts productId={product.id} openLoginPopup={openLoginPopup} />
                                 </>
                             )}
 
+                            <RecommendedProducts productId={product.id} openLoginPopup={openLoginPopup} />
+
                         </div>
-                        </div>
+                    </div>
             </div>
         </>
     );

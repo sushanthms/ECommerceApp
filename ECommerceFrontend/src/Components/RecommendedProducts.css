@@ -3,71 +3,75 @@
 }
 
 .recommended-section h2 {
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 22px;
+    font-weight: 700;
     color: var(--text-color);
-    margin: 0 0 16px;
+    margin-bottom: 18px;
 }
 
 .recommended-row {
     display: flex;
     gap: 16px;
     overflow-x: auto;
-    padding-bottom: 12px;
-    scroll-snap-type: x proximity;
+    padding: 4px 4px 14px;
 }
 
 .recommended-card {
-    flex: 0 0 180px;
-    background-color: var(--card-bg);
+    flex: 0 0 190px;
+    padding: 15px;
+    background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 12px;
+    border-radius: 15px;
     cursor: pointer;
-    scroll-snap-align: start;
-    transition: box-shadow 0.15s ease, transform 0.15s ease;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .recommended-card:hover {
+    transform: translateY(-4px);
     box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
 }
 
 .recommended-image {
     position: relative;
-    height: 120px;
+    height: 160px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(68, 124, 245, 0.1);
+    margin-bottom: 14px;
+    background: rgba(68, 124, 245, 0.08);
     border-radius: 8px;
     overflow: hidden;
-    margin-bottom: 10px;
-    font-size: 32px;
 }
 
 .recommended-image img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    padding: 8px;
+}
+
+.recommended-image span {
+    font-size: 36px;
 }
 
 .recommended-card h3 {
-    font-size: 14px;
-    font-weight: 600;
+    margin: 0 0 8px;
     color: var(--text-color);
-    margin: 0 0 4px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .recommended-card strong {
-    font-size: 15px;
     color: var(--text-color);
+    font-size: 16px;
+    font-weight: 700;
 }
 
-.recommended-card .wishlist-btn {
+.recommended-image .wishlist-btn {
     position: absolute;
     top: 8px;
     right: 8px;
@@ -76,10 +80,30 @@
     padding: 0;
     border: none;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.9);
+    background: white;
     color: #e0245e;
-    font-size: 18px;
+    font-size: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+}
+
+@media (max-width: 600px) {
+    .recommended-section h2 {
+        font-size: 19px;
+    }
+
+    .recommended-row {
+        gap: 12px;
+    }
+
+    .recommended-card {
+        flex-basis: 155px;
+        padding: 10px;
+    }
+
+    .recommended-image {
+        height: 130px;
+    }
 }

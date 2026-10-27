@@ -27,13 +27,14 @@ function Header() {
 
         const timer = setTimeout(() => {
             const query = search.trim();
-
-            if (query === (searchParams.get("search") || "")) return;
+            
+            // "search" is the name of the field that contains the searched text
+            if (query === (searchParams.get("search") || "")) return;// checks whether the search text the user typed is the same as the search value already present in the URL.
 // we are in the products page, browser history has products page, if we type smartphone, without replace:true
 // browser history adds smartphone after products, clicking back moves to products page
 // with replace true, when we type smartphone in the products page, browser history replaces products with /products/?search=smartphone
 // clicking back goes to the page we were there before visiting to the  products page
-            navigate(
+            navigate(// navigates to products page
                 query ? `${location.pathname}?search=${encodeURIComponent(query)}` : location.pathname,
                 { replace: true }
             );

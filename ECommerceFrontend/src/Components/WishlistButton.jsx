@@ -8,13 +8,13 @@ function WishlistButton({ productId, onLoginRequired }) {
     const saved = isWishlisted(productId);
 
     const handleClick = (e) => {
-        e.stopPropagation();// cards are clickable, so it doesnot open the product page
+        e.stopPropagation(); // cards are clickable, so it doesnot open the product page
 
         if (!isLoggedIn) {
             onLoginRequired?.();
             return;
         }
-        if (!isUser) return;// admins have no wishlist
+        if (!isUser) return; // admins have no wishlist
 
         toggleWishlist(productId);
     };

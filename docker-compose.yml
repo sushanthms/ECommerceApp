@@ -1,6 +1,8 @@
 services:
   redis:
     image: redis:7
+    ports:
+      - "6379:6379"
     
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2025-latest
@@ -31,7 +33,7 @@ services:
       Jwt__Issuer: ECommerceBackend
       Jwt__Audience: ECommerceFrontend
       ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ECommerceDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
-      Redis__ConnectionString: "redis:6379,connectTimeout=2000,asyncTimeout=2000"
+      Redis__ConnectionString: "redis:6379,connectTimeout=2000,asyncTimeout=2000,abortConnect=false"
       Jwt__Key: ${JWT_KEY}
       Admin__Email: ${ADMIN_EMAIL}
       Admin__Password: ${ADMIN_PASSWORD}

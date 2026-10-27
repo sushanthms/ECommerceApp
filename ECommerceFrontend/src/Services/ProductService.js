@@ -130,3 +130,13 @@ export const getRecommendations = async (productId, count = 10) => {
     const response = await api.get(`/product/${productId}/recommendations`, { params: { count } });
     return response.data;
 };
+
+export const getPopularProducts = async (count = 10) => {
+    const response = await api.get("/product/popular", { params: { count } });
+    return response.data;
+};
+
+export const getRecentProducts = async (count = 10) => {
+    const response = await api.get("/product/recent", { params: { count } });
+    return response.data;
+};

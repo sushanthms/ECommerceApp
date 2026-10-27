@@ -2,6 +2,7 @@
 using ECommerceBackend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace ECommerceBackend.Controllers
 {
@@ -10,10 +11,12 @@ namespace ECommerceBackend.Controllers
     public class ProductController : ControllerBase
     {
         private readonly ProductService _productService;
+        private readonly PopularProductsService _popularProducts;
 
-        public ProductController(ProductService productService)
+        public ProductController(ProductService productService, PopularProductsService popularProducts)
         {
             _productService = productService;
+            _popularProducts = popularProducts;
         }
 
         public class ProductCsvUploadRequest
@@ -95,6 +98,15 @@ namespace ECommerceBackend.Controllers
             if (product == null)
             {
                 return NotFound();
+            }
+
+            // this is for any logged in user and guest user
+            await _popularProducts.RecordViewAsync(id);
+
+            // this is for logged in user only
+            if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            {
+                await _popularProducts.RecordRecentAsync(userId, id);
             }
 
             return Ok(product);
@@ -310,6 +322,22 @@ namespace ECommerceBackend.Controllers
         {
             var products = await _productService.GetRecommendationsAsync(id, count);
             return Ok(products);
+        }
+
+        [HttpGet("popular")]
+        public async Task<IActionResult> GetPopular(int count = 10)
+        {
+            return Ok(await _popularProducts.GetTopAsync(count));
+        }
+
+        [HttpGet("recent")]
+        [Authorize(Roles = "User")]
+        public async Task<IActionResult> GetRecent(int count = 10)
+        {
+            var userId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : (int?)null;
+            if (userId == null) return Unauthorized();
+
+            return Ok(await _popularProducts.GetRecentAsync(userId.Value, count));
         }
     }
 }
