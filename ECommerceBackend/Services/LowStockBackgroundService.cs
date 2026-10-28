@@ -29,9 +29,9 @@ namespace ECommerceBackend.Services
 
                     var since = DateTime.UtcNow.AddHours(-24);
 
-                    var alreadyNotified = await db.Notifications
-                        .Where(n => n.Type == "LowStock" && n.CreatedAt > since && n.ProductId != null)
-                        .Select(n => n.ProductId!.Value)
+                    var alreadyNotified = await db.Notifications 
+                        .Where(n => n.Type == "LowStock" && n.CreatedAt > since && n.ProductId != null)// here it already checked that ProductId is not null, but the compiler may not carry that null check's information into the separate .Select() expression. 
+                        .Select(n => n.ProductId!.Value)// tells the compiler to assume the value is not null.
                         .ToListAsync(stoppingToken);
 
                     var lowStock = await db.Products

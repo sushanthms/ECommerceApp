@@ -16,8 +16,7 @@ namespace ECommerceBackend.Logging
 
         public async ValueTask<bool> TryHandleAsync(HttpContext context, Exception exception, CancellationToken cancellationToken)
         {
-            var correlationId = context.Items["CorrelationId"]?.ToString()
-                ?? Guid.NewGuid().ToString();
+            var correlationId = context.Items["CorrelationId"]?.ToString()?? Guid.NewGuid().ToString();
 
             var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             int? userId = int.TryParse(userIdClaim, out var uid) ? uid : null;

@@ -22,12 +22,19 @@ namespace ECommerceBackend.Services
 
         private static string RecentKey(int userId) => $"ecommerce:recent:{userId}";
 
-        public async Task RecordViewAsync(int productId)
+        public async Task RecordViewAsync(int productId, string viewer)
         {
             try
             {
-                // under the popularkey name field all the productid and count row is stored as list
-                await _redis.GetDatabase().SortedSetIncrementAsync(PopularKey, productId, 1);
+                var db = _redis.GetDatabase();
+
+                // marker: lives 1 hour. true only if it did not exist before
+                var isFirstViewThisHour = await db.StringSetAsync($"ecommerce:viewed:{viewer}:{productId}", 1, TimeSpan.FromHours(1), When.NotExists);
+
+                if (isFirstViewThisHour)
+                {
+                    await db.SortedSetIncrementAsync(PopularKey, productId, 1);
+                }
             }
             catch
             {

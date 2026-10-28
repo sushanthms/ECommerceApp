@@ -100,13 +100,17 @@ namespace ECommerceBackend.Controllers
                 return NotFound();
             }
 
+            int? currentUserId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : null;
+
+            var viewer = currentUserId != null? $"u{currentUserId}": $"ip{HttpContext.Connection.RemoteIpAddress}";
+
             // this is for any logged in user and guest user
-            await _popularProducts.RecordViewAsync(id);
+            await _popularProducts.RecordViewAsync(id, viewer);
 
             // this is for logged in user only
-            if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            if (currentUserId != null)
             {
-                await _popularProducts.RecordRecentAsync(userId, id);
+                await _popularProducts.RecordRecentAsync(currentUserId.Value, id);
             }
 
             return Ok(product);

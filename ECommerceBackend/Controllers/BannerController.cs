@@ -11,10 +11,10 @@ namespace ECommerceBackend.Controllers
     {
         private readonly BannerService _bannerService;
         private const long MaxImageSize = 5 * 1024 * 1024;
-        private static bool IsSafeLink(string link) =>
-            link.StartsWith("/") ||
-            (Uri.TryCreate(link, UriKind.Absolute, out var uri) &&
-             (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps));
+        private bool IsSafeLink(string link)
+        {
+            return !string.IsNullOrWhiteSpace(link) && Url.IsLocalUrl(link);
+        }
 
         public BannerController(BannerService bannerService)
         {
@@ -53,7 +53,7 @@ namespace ECommerceBackend.Controllers
 
             if (!IsSafeLink(dto.Link))
             {
-                return BadRequest(new { message = "Link must start with / or http(s)://." });
+                return BadRequest(new { message = "Link must be a local URL." });
             }
 
             if (dto.Image == null || dto.Image.Length == 0)
@@ -100,7 +100,7 @@ namespace ECommerceBackend.Controllers
 
             if (!IsSafeLink(dto.Link))
             {
-                return BadRequest(new { message = "Link must start with / or http(s)://." });
+                return BadRequest(new { message = "Link must be a local URL, such as /products or /login." });
             }
 
             if (dto.Image != null && dto.Image.Length > 0)

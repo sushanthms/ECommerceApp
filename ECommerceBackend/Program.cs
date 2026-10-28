@@ -5,7 +5,7 @@ using ECommerceBackend.Logging;
 using ECommerceBackend.Services;
 using ECommerceBackend.Services.Caching;
 using ECommerceBackend.Validators;
-using FluentValidation;// helps to write complex validation rules
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
